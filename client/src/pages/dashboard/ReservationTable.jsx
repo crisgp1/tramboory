@@ -1,8 +1,23 @@
-import React from 'react';
 import { FiEdit2, FiEye, FiTrash2 } from 'react-icons/fi';
 
-const ReservationTable = ({ data, onEditItem, onViewReservation }) => {
-    return (
+const ReservationTable = ({
+                              reservations,
+                              reservationSearch,
+                              setReservationSearch,
+                              handleViewReservation,
+                              handleEditItem,
+                              handleDeleteItem,
+                          }) => (
+    <>
+        <div className="mb-4">
+            <input
+                type="text"
+                placeholder="Buscar reserva..."
+                value={reservationSearch}
+                onChange={(e) => setReservationSearch(e.target.value)}
+                className="w-full p-2 border rounded"
+            />
+        </div>
         <table className="w-full">
             <thead>
             <tr className="bg-gray-100">
@@ -14,7 +29,7 @@ const ReservationTable = ({ data, onEditItem, onViewReservation }) => {
             </tr>
             </thead>
             <tbody>
-            {data.map((reservation) => (
+            {reservations.map((reservation) => (
                 <tr key={reservation.id} className="border-b border-gray-200 hover:bg-gray-50">
                     <td className="px-4 py-2">{reservation.id}</td>
                     <td className="px-4 py-2">{reservation.nombre_cliente}</td>
@@ -34,18 +49,21 @@ const ReservationTable = ({ data, onEditItem, onViewReservation }) => {
                     </td>
                     <td className="px-4 py-2">
                         <button
-                            onClick={() => onViewReservation(reservation)}
+                            onClick={() => handleViewReservation(reservation)}
                             className="text-blue-500 hover:text-blue-700 mr-2"
                         >
                             <FiEye />
                         </button>
                         <button
-                            onClick={() => onEditItem(reservation)}
+                            onClick={() => handleEditItem(reservation)}
                             className="text-green-500 hover:text-green-700 mr-2"
                         >
                             <FiEdit2 />
                         </button>
-                        <button className="text-red-500 hover:text-red-700">
+                        <button
+                            onClick={() => handleDeleteItem(reservation.id)}
+                            className="text-red-500 hover:text-red-700"
+                        >
                             <FiTrash2 />
                         </button>
                     </td>
@@ -53,7 +71,7 @@ const ReservationTable = ({ data, onEditItem, onViewReservation }) => {
             ))}
             </tbody>
         </table>
-    );
-};
+    </>
+);
 
 export default ReservationTable;

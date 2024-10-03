@@ -1,7 +1,8 @@
-const { Sequelize } = require('sequelize');
+const { Sequelize } = require ('sequelize');
 const sequelize = new Sequelize('tramboory', 'root', '', {
   host: 'localhost',
   dialect: 'mysql',
   logging: false,
 });
+
 module.exports = sequelize;

@@ -89,3 +89,34 @@ exports.deleteReserva = async (req, res) => {
     res.status(500).json({ error: 'Error al eliminar la reserva' });
   }
 };
+
+
+exports.getReservasByUserId = async (req, res) => {
+  try {
+    const userId = req.query.userId;
+    if (!userId) {
+      return res.status(400).json({ message: 'Se requiere el ID del usuario' });
+    }
+
+    const reservas = await Reserva.findAll({
+      where: { id_usuario: userId },
+      attributes: ['id', 'id_paquete', 'fecha_reserva', 'hora_inicio', 'estado', 'total', 'nombre_festejado', 'edad_festejado', 'tematica', 'cupcake', 'mampara', 'piñata', 'comentarios'],
+      include: [{
+        model: Paquete,
+        attributes: ['nombre'],
+        as: 'paquete'
+      }],
+      order: [['fecha_reserva', 'DESC']]
+    });
+
+    const reservasFormateadas = reservas.map(reserva => ({
+      ...reserva.toJSON(),
+      nombre_paquete: reserva.paquete ? reserva.paquete.nombre : 'No especificado'
+    }));
+
+    res.json(reservasFormateadas);
+  } catch (error) {
+    console.error('Error al obtener las reservas del usuario:', error);
+    res.status(500).json({ message: 'Error al obtener las reservas del usuario', details: error.message });
+  }
+};

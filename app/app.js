@@ -20,6 +20,7 @@ app.use('/api/paquetes', paqueteRoutes);
 app.use('/api/usuarios', authMiddleware, usuarioRoutes);
 app.use('/api/finanzas', authMiddleware, finanzaRoutes);
 app.use('/api/auth', authRoutes);
+
 app.use('/api/reservas', authMiddleware, reservaRoutes);
 app.use('/api/personalizaciones', authMiddleware, personalizacionRoutes);
 app.use('/api/opciones-alimentos', opcionAlimentoRoutes);
