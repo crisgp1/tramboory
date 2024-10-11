@@ -2,23 +2,25 @@ const Reserva = require('../models/Reserva');
 const Paquete = require('../models/Paquete');
 const Finanza = require('../models/Finanza');
 const { Sequelize } = require('sequelize');
+const Usuario = require('../models/Usuario');
 
 exports.getAllReservas = async (req, res) => {
   try {
     const reservas = await Reserva.findAll({
-      attributes: ['id', 'id_usuario', 'id_paquete', 'id_opcion_alimento', 'fecha_reserva', 'hora_inicio', 'estado', 'total', 'nombre_festejado', 'edad_festejado', 'tematica', 'cupcake', 'mampara', 'piñata', 'comentarios']
+      attributes: ['id', 'id_usuario', 'id_paquete', 'id_opcion_alimento', 'fecha_reserva', 'hora_inicio', 'estado', 'total', 'nombre_festejado', 'edad_festejado', 'tematica', 'cupcake', 'mampara', 'piñata', 'comentarios'],
+      include: [
+        {
+          model: Usuario,
+          attributes: ['nombre', 'email']
+        }
+      ]
     });
     res.json(reservas);
   } catch (error) {
     console.error('Error detallado al obtener las reservas:', error);
-    if (error instanceof Sequelize.DatabaseError) {
-      res.status(500).json({ error: 'Error de base de datos al obtener las reservas', details: error.message });
-    } else {
-      res.status(500).json({ error: 'Error al obtener las reservas', details: error.message });
-    }
+    res.status(500).json({ error: 'Error al obtener las reservas', details: error.message });
   }
 };
-
 
 exports.getReservaById = async (req, res) => {
   try {
@@ -75,21 +77,17 @@ exports.updateReserva = async (req, res) => {
 
 exports.deleteReserva = async (req, res) => {
   try {
-    const deleted = await Reserva.destroy({
-      where: { id: req.params.id },
+    const { id } = req.params;
+    await Reserva.update({ activo: false }, {
+      where: { id },
+      silent: true  // Esto evita que Sequelize intente actualizar campos de timestamp
     });
-
-    if (deleted) {
-      res.status(204).send();
-    } else {
-      res.status(404).json({ error: 'Reserva no encontrada' });
-    }
+    res.status(200).json({ message: 'Reserva desactivada con éxito' });
   } catch (error) {
-    console.error('Error al eliminar la reserva:', error);
-    res.status(500).json({ error: 'Error al eliminar la reserva' });
+    console.error('Error al desactivar la reserva:', error);
+    res.status(500).json({ error: 'Error al desactivar la reserva' });
   }
 };
-
 
 exports.getReservasByUserId = async (req, res) => {
   try {

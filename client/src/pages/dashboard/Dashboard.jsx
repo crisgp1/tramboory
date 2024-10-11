@@ -1,9 +1,7 @@
-import {useEffect, useState} from 'react';
-import {useNavigate} from 'react-router-dom';
-import {toast, ToastContainer} from 'react-toastify';
-import axios from "axios";
-import 'react-toastify/dist/ReactToastify.css';
-import Cookies from 'js-cookie';
+import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { toast } from 'react-toastify';
+import axiosInstance from '../../components/axiosConfig';
 import ScreenSizeAlert from './ScreenSizeAlert';
 import UserSummary from './UserSummary';
 import ReservationSummary from './ReservationSummary';
@@ -16,16 +14,19 @@ import PackageTable from './PackageTable';
 import MonthSelector from './MonthSelector';
 import ReservationModal from './ReservationModal';
 import ItemModal from './ItemModal';
-import UserModal from './UserModal';
+import FinanceDetailModal from './FinanceDetailModal';
+import UserForm from './UserForm';
+import ReservationForm from './ReservationForm';
+import FinanceForm from './FinanceForm';
+import PackageForm from './PackageForm';
 
 const Dashboard = () => {
     const [users, setUsers] = useState([]);
-    const [filteredUsers, setFilteredUsers] = useState([]);
     const [reservations, setReservations] = useState([]);
-    const [filteredReservations, setFilteredReservations] = useState([]);
     const [finances, setFinances] = useState([]);
-    const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth());
     const [packages, setPackages] = useState([]);
+    const [categories, setCategories] = useState([]);
+    const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth());
     const [activeTab, setActiveTab] = useState('users');
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [editingItem, setEditingItem] = useState(null);
@@ -37,32 +38,53 @@ const Dashboard = () => {
     const [loading, setLoading] = useState(false);
     const [isSmallScreen, setIsSmallScreen] = useState(false);
     const [showAlert, setShowAlert] = useState(true);
-    const [isUserModalOpen, setIsUserModalOpen] = useState(false);
-    const [selectedUser, setSelectedUser] = useState(null);
-    const [userReservations, setUserReservations] = useState([]);
+    const [selectedFinance, setSelectedFinance] = useState(null);
 
     const navigate = useNavigate();
 
-    useEffect(() => {
-        const token = Cookies.get('token');
-        if (token) {
-            fetchData(token);
-        } else {
-            console.error('No se encontró token de autenticación');
-            navigate('/signin');
+    const fetchData = useCallback(async () => {
+        setLoading(true);
+        try {
+            const [usersResponse, reservationsResponse, financesResponse, packagesResponse, categoriesResponse] = await Promise.all([
+                axiosInstance.get('/api/usuarios'),
+                axiosInstance.get('/api/reservas'),
+                axiosInstance.get('/api/finanzas'),
+                axiosInstance.get('/api/paquetes'),
+                axiosInstance.get('/api/categorias'),
+            ]);
+
+            setUsers(usersResponse.data);
+            setReservations(reservationsResponse.data);
+            setFinances(financesResponse.data.map(finance => ({
+                ...finance,
+                monto: Number(finance.monto)
+            })));
+            setPackages(packagesResponse.data);
+            setCategories(categoriesResponse.data);
+        } catch (error) {
+            handleError(error, 'cargar los datos');
+        } finally {
+            setLoading(false);
         }
-    }, [navigate]);
+    }, []);
 
     useEffect(() => {
-        setFilteredUsers(users.filter((user) => user.nombre.toLowerCase().includes(userSearch.toLowerCase()) || user.email.toLowerCase().includes(userSearch.toLowerCase()) || (user.id_personalizado && user.id_personalizado
-            .toLowerCase()
-            .includes(userSearch.toLowerCase()))));
+        fetchData();
+    }, [fetchData]);
+
+    const filteredUsers = useMemo(() => {
+        return users.filter((user) =>
+            user.nombre.toLowerCase().includes(userSearch.toLowerCase()) ||
+            user.email.toLowerCase().includes(userSearch.toLowerCase()) ||
+            (user.id_personalizado && user.id_personalizado.toLowerCase().includes(userSearch.toLowerCase()))
+        );
     }, [users, userSearch]);
 
-    useEffect(() => {
-        setFilteredReservations(reservations.filter((reservation) => reservation.id.toString().includes(reservationSearch) || (reservation.nombre_festejado && reservation.nombre_festejado
-            .toLowerCase()
-            .includes(reservationSearch.toLowerCase()))));
+    const filteredReservations = useMemo(() => {
+        return reservations.filter((reservation) =>
+            reservation.id.toString().includes(reservationSearch) ||
+            (reservation.nombre_festejado && reservation.nombre_festejado.toLowerCase().includes(reservationSearch.toLowerCase()))
+        );
     }, [reservations, reservationSearch]);
 
     useEffect(() => {
@@ -76,172 +98,51 @@ const Dashboard = () => {
         return () => window.removeEventListener('resize', checkScreenSize);
     }, []);
 
-    const fetchData = async (token) => {
-        setLoading(true);
-        try {
-            const config = {
-                headers: {
-                    Authorization: `Bearer ${token}`,
-                },
-            };
-
-            const [usersResponse, reservationsResponse, financesResponse, packagesResponse] = await Promise.all([
-                axios.get('/api/usuarios', config),
-                axios.get('/api/reservas', config),
-                axios.get('/api/finanzas', config),
-                axios.get('/api/paquetes', config),
-            ]);
-
-            setUsers(usersResponse.data);
-            setReservations(reservationsResponse.data);
-            setFinances(financesResponse.data);
-            setPackages(packagesResponse.data);
-        } catch (error) {
-            console.error('Error fetching data:', error);
-            if (error.response && error.response.status === 401) {
-                toast.error('Tu sesión ha expirado. Por favor, inicia sesión nuevamente.');
-                // Token inválido o expirado, redirigir al inicio de sesión
-               // navigate('/signin');
-            } else {
-                toast.error('Error al cargar los datos');
-            }
-        } finally {
-            setLoading(false);
-        }
-    };
-
-
-    const handleViewReservation = (reservation) => {
+    const handleViewReservation = useCallback((reservation) => {
         setSelectedReservation(reservation);
         setIsReservationModalOpen(true);
-    };
+    }, []);
 
-    const filterDataByMonth = (data, dateField) => {
+    const filterDataByMonth = useCallback((data, dateField) => {
         return data.filter((item) => {
             const itemDate = new Date(item[dateField]);
             return itemDate.getMonth() === selectedMonth;
         });
-    };
+    }, [selectedMonth]);
 
-    const handleAddItem = () => {
+    const handleAddItem = useCallback(() => {
         setEditingItem(null);
         setIsModalOpen(true);
-    };
+    }, []);
 
-    const handleEditItem = (item) => {
+    const handleEditItem = useCallback((item) => {
         setEditingItem(item);
         setIsModalOpen(true);
-    };
+    }, []);
 
-    const handleDeleteItem = async (id) => {
-        try {
-            const apiRoute = apiRoutes[activeTab];
-
-            if (!apiRoute) {
-                throw new Error(`Ruta de API no definida para el tab: ${activeTab}`);
-            }
-
-            const response = await axios.delete(`${apiRoute}/${id}`);
-            if (response.status === 204) {
-                toast.success('Elemento eliminado con éxito');
-            } else {
-                toast.error('Error al eliminar el elemento');
-            }
-        } catch (error) {
-            if (error.response) {
-                if (error.response.status === 404) {
-                    toast.warning('El elemento ya no existe');
-                } else {
-                    toast.error(`Error del servidor: ${error.response.data.message || 'Algo salió mal'}`);
-                }
-            } else if (error.request) {
-                toast.error('No se recibió respuesta del servidor');
-            } else {
-                toast.error('Error al eliminar el elemento');
-            }
-            console.error('Error al eliminar el elemento:', error);
-        } finally {
-            fetchData();
-        }
-    };
-
-    const handleViewUser = async (user) => {
-        setSelectedUser(user);
-        try {
-            const token = localStorage.getItem('token');
-            if (!token) {
-                throw new Error('No se encontró token de autenticación');
-            }
-
-            const config = {
-                headers: {
-                    'Authorization': `Bearer ${token}`
-                }
-            };
-
-            const response = await axios.get(`/api/reservas?userId=${user.id}`, config);
-            setUserReservations(response.data);
-            setIsUserModalOpen(true);
-        } catch (error) {
-            console.error('Error fetching user reservations:', error);
-            if (error.response && error.response.status === 401) {
+    const handleError = useCallback((error, action) => {
+        if (error.response) {
+            if (error.response.status === 404) {
+                toast.warning('El elemento ya no existe');
+            } else if (error.response.status === 401) {
                 toast.error('Tu sesión ha expirado. Por favor, inicia sesión nuevamente.');
-                // Aquí podrías redirigir al usuario a la página de inicio de sesión
                 navigate('/signin');
             } else {
-                toast.error('Error al cargar las reservas del usuario');
+                toast.error(`Error del servidor al ${action} el elemento: ${error.response.data.message || 'Algo salió mal'}`);
             }
-            setUserReservations([]);
+        } else if (error.request) {
+            toast.error('No se recibió respuesta del servidor');
+        } else {
+            toast.error(`Error al ${action} el elemento`);
         }
-    };
+        console.error(`Error al ${action} el elemento:`, error);
+    }, [navigate]);
 
-    const handleCreateReservation = async (data) => {
+    const handleSubmit = useCallback(async (data) => {
         setLoading(true);
         try {
-            const token = localStorage.getItem('token');
-            const response = await axios.post('/api/reservas', data, {
-                headers: {
-                    'Content-Type': 'application/json', Authorization: `Bearer ${token}`,
-                },
-            });
-
-            toast.success('Reserva creada exitosamente');
-            setIsModalOpen(false);
-            fetchReservations();
-        } catch (error) {
-            console.error('Error al crear la reserva:', error);
-            if (error.response) {
-                toast.error(error.response.data?.message || 'Error al crear la reserva');
-            } else {
-                toast.error('No se pudo conectar con el servidor. Revisa tu conexión a internet');
-            }
-        } finally {
-            setLoading(false);
-        }
-    };
-
-    const apiRoutes = {
-        users: '/api/usuarios', reservations: '/api/reservas', finances: '/api/finanzas', packages: '/api/paquetes',
-    };
-
-    const handleSubmit = async (data) => {
-        setLoading(true);
-        try {
-            const token = localStorage.getItem('token');
-            if (!token) {
-                throw new Error('No se encontró token de autenticación');
-            }
-
-            const config = {
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${token}`
-                }
-            };
-
-            let response;
-            let successMessage;
             let endpoint;
+            let successMessage;
 
             switch (activeTab) {
                 case 'users':
@@ -264,62 +165,44 @@ const Dashboard = () => {
                     throw new Error('Tipo de formulario no reconocido');
             }
 
+            // Asegúrate de que data sea un objeto, no FormData
+            const formData = data instanceof FormData ? Object.fromEntries(data) : data;
+
             if (editingItem) {
-                response = await axios.put(`${endpoint}/${editingItem.id}`, data, config);
+                await axiosInstance.put(`${endpoint}/${editingItem.id}`, formData);
             } else {
-                response = await axios.post(endpoint, data, config);
+                await axiosInstance.post(endpoint, formData);
             }
 
-            if (response && response.status === 200) {
-                toast.success(successMessage);
-                setIsModalOpen(false);
-
-                try {
-                    // Refrescar el token
-                    const refreshResponse = await axios.post('/api/auth/refresh-token', {}, {
-                        headers: {
-                            Authorization: `Bearer ${token}`,
-                        },
-                    });
-
-                    // Actualizar el token en el almacenamiento local y en las cookies
-                    localStorage.setItem('token', refreshResponse.data.token);
-                    Cookies.set('token', refreshResponse.data.token, { expires: 1 });
-
-                    // Llamar a fetchData con el token actualizado
-                    await fetchData(refreshResponse.data.token);
-                } catch (error) {
-                    console.error('Error al refrescar el token:', error);
-                    if (error.response && error.response.status === 401) {
-                        toast.error('Tu sesión ha expirado. Por favor, inicia sesión nuevamente.');
-                        navigate('/signin');
-                    } else {
-                        toast.error('Error al refrescar la sesión. Por favor, intenta nuevamente.');
-                    }
-                }
-            } else {
-                throw new Error('Error al procesar la solicitud');
-            }
+            toast.success(successMessage);
+            setIsModalOpen(false);
+            fetchData();
         } catch (error) {
             console.error('Error en handleSubmit:', error);
-            if (error.response && error.response.status === 401) {
-                toast.error('Tu sesión ha expirado. Por favor, inicia sesión nuevamente.');
-                navigate('/signin');
-            } else if (error.response) {
-                toast.error(error.response.data.message || 'Error al procesar la solicitud');
-            } else if (error.request) {
-                toast.error('No se recibió respuesta del servidor');
-            } else {
-                toast.error('Error al procesar la solicitud');
-            }
+            handleError(error, editingItem ? 'actualizar' : 'crear');
         } finally {
             setLoading(false);
         }
-    };
+    }, [activeTab, editingItem, fetchData, handleError, setIsModalOpen]);
 
-    const generateRandomPassword = () => {
-        const adjectives = ['Happy', 'Silly', 'Funny', 'Crazy', 'Lucky', 'Sunny', 'Brave', 'Kind', 'Cute', 'Cool', 'Fast', 'Smart', 'Strong', 'Wise',];
-        const nouns = ['Cat', 'Dog', 'Bird', 'Fish', 'Panda', 'Koala', 'Lion', 'Tiger', 'Bear', 'Monkey', 'Laundry', 'Pencil', 'Computer', 'Phone',];
+    const handleDeleteItem = useCallback(async (endpoint, id, successMessage) => {
+        try {
+            const response = await axiosInstance.delete(`${endpoint}/${id}`);
+            if (response.status === 204) {
+                toast.success(successMessage);
+            } else {
+                toast.error(`Error al eliminar el elemento`);
+            }
+        } catch (error) {
+            handleError(error, 'eliminar');
+        } finally {
+            fetchData();
+        }
+    }, [fetchData, handleError]);
+
+    const generateRandomPassword = useCallback(() => {
+        const adjectives = ['Happy', 'Silly', 'Funny', 'Crazy', 'Lucky', 'Sunny', 'Brave', 'Kind', 'Cute', 'Cool', 'Fast', 'Smart', 'Strong', 'Wise'];
+        const nouns = ['Cat', 'Dog', 'Bird', 'Fish', 'Panda', 'Koala', 'Lion', 'Tiger', 'Bear', 'Monkey', 'Laundry', 'Pencil', 'Computer', 'Phone'];
         const numbers = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9'];
 
         const adjective = adjectives[Math.floor(Math.random() * adjectives.length)];
@@ -328,85 +211,146 @@ const Dashboard = () => {
 
         const password = `${adjective}${noun}${number}`;
         setGeneratedPassword(password);
-    };
+    }, []);
 
-    return (<div className="min-h-screen bg-gradient-to-br from-blue-100 to-purple-100 p-8">
-        {isSmallScreen && showAlert && <ScreenSizeAlert setShowAlert={setShowAlert}/>}
-        <ToastContainer
-            position="top-right"
-            autoClose={3000}
-            hideProgressBar={false}
-            newestOnTop
-            closeOnClick
-            rtl={false}
-            pauseOnFocusLoss
-            draggable
-            pauseOnHover
-        />
-        <h1 className="text-4xl font-bold mb-8 text-center text-indigo-800">
-            Panel de Control
-        </h1>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 mb-8">
-            <UserSummary users={users}/>
-            <ReservationSummary reservations={reservations} filterDataByMonth={filterDataByMonth}/>
-            <FinancialSummary finances={finances} filterDataByMonth={filterDataByMonth}/>
-        </div>
-        <div className="bg-white rounded-lg shadow-lg p-6">
-            <TabNavigation
-                activeTab={activeTab}
-                setActiveTab={setActiveTab}
-                handleAddItem={handleAddItem}
-            />
-            {activeTab === 'users' && (
-                <UserTable
-                    users={filteredUsers}
-                    userSearch={userSearch}
-                    setUserSearch={setUserSearch}
-                    handleEditItem={handleEditItem}
-                    handleDeleteItem={handleDeleteItem}
-                    handleViewUser={handleViewUser}  // Añade esta línea
+    const handleDownloadFile = useCallback(async (id, type) => {
+        try {
+            const response = await axiosInstance.get(`/api/finanzas/${id}/download/${type}`, {responseType: 'blob'});
+            const url = window.URL.createObjectURL(new Blob([response.data]));
+            const link = document.createElement('a');
+            link.href = url;
+            link.setAttribute('download', `finanza_${id}_${type}.pdf`);
+            document.body.appendChild(link);
+            link.click();
+            link.parentNode.removeChild(link);
+        } catch (error) {
+            console.error('Error al descargar el archivo:', error);
+            toast.error('Error al descargar el archivo');
+        }
+    }, []);
+
+    const handleViewDetails = useCallback((finance) => {
+        setSelectedFinance(finance);
+    }, []);
+
+    const handleAddCategory = useCallback(async (newCategory) => {
+        try {
+            const response = await axiosInstance.post('/api/categorias', newCategory);
+            setCategories(prevCategories => [...prevCategories, response.data]);
+            toast.success('Categoría añadida con éxito');
+        } catch (error) {
+            console.error('Error al añadir la categoría:', error);
+            toast.error('Error al añadir la categoría');
+        }
+    }, []);
+
+    const renderModalContent = useCallback(() => {
+        const props = {
+            editingItem,
+            onSubmit: handleSubmit,
+            generateRandomPassword,
+            generatedPassword,
+            users,
+            packages,
+            categories,
+            onAddCategory: handleAddCategory,
+            reservations
+        };
+
+        switch (activeTab) {
+            case 'users':
+                return <UserForm {...props} />;
+            case 'reservations':
+                return <ReservationForm {...props} />;
+            case 'finances':
+                return <FinanceForm {...props} />;
+            case 'packages':
+                return <PackageForm {...props} />;
+            default:
+                return null;
+        }
+    }, [activeTab, editingItem, handleSubmit, generateRandomPassword, generatedPassword, users, packages, categories, handleAddCategory, reservations]);
+
+    return (
+        <div className="min-h-screen bg-gradient-to-br from-blue-100 to-purple-100 p-8">
+            {isSmallScreen && showAlert && <ScreenSizeAlert setShowAlert={setShowAlert} />}
+            <h1 className="text-4xl font-bold mb-8 text-center text-indigo-800">Panel de Control</h1>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 mb-8">
+                <UserSummary users={users} />
+                <ReservationSummary reservations={reservations} filterDataByMonth={filterDataByMonth} />
+                <FinancialSummary finances={finances} filterDataByMonth={filterDataByMonth} />
+            </div>
+            <div className="bg-white rounded-lg shadow-lg p-6">
+                <TabNavigation activeTab={activeTab} setActiveTab={setActiveTab} handleAddItem={handleAddItem} />
+                {activeTab === 'users' && (
+                    <UserTable
+                        users={filteredUsers}
+                        userSearch={userSearch}
+                        setUserSearch={setUserSearch}
+                        handleEditItem={handleEditItem}
+                        handleDeleteItem={(id) => handleDeleteItem('/api/usuarios', id, 'Usuario eliminado con éxito')}
+                    />
+                )}
+                {activeTab === 'reservations' && (
+                    <ReservationTable
+                        reservations={filteredReservations}
+                        reservationSearch={reservationSearch}
+                        setReservationSearch={setReservationSearch}
+                        handleViewReservation={handleViewReservation}
+                        handleEditItem={handleEditItem}
+                        handleDeleteItem={(id) => handleDeleteItem('/api/reservas', id, 'Reserva eliminada con éxito')}
+                    />
+                )}
+                {activeTab === 'finances' && (
+                    <FinanceTable
+                        finances={filterDataByMonth(finances, 'fecha')}
+                        handleEditItem={handleEditItem}
+                        handleDeleteItem={(id) => handleDeleteItem('/api/finanzas', id, 'Registro financiero eliminado con éxito')}
+                        handleDownloadFile={handleDownloadFile}
+                        handleViewDetails={handleViewDetails}
+                        categories={categories}
+                    />
+                )}
+                {activeTab === 'packages' && (
+                    <PackageTable
+                        packages={packages}
+                        handleEditItem={handleEditItem}
+                        handleDeleteItem={(id) => handleDeleteItem('/api/paquetes', id, 'Paquete eliminado con éxito')}
+                    />
+                )}
+            </div>
+            <MonthSelector selectedMonth={selectedMonth} setSelectedMonth={setSelectedMonth} />
+            {isReservationModalOpen && (
+                <ReservationModal
+                    reservation={selectedReservation}
+                    onClose={() => setIsReservationModalOpen(false)}
                 />
             )}
-            {activeTab === 'reservations' && (<ReservationTable
-                reservations={filteredReservations}
-                reservationSearch={reservationSearch}
-                setReservationSearch={setReservationSearch}
-                handleViewReservation={handleViewReservation}
-                handleEditItem={handleEditItem}
-                handleDeleteItem={handleDeleteItem}
-            />)}
-            {activeTab === 'finances' && (<FinanceTable
-                finances={filterDataByMonth(finances, 'fecha')}
-                handleEditItem={handleEditItem}
-                handleDeleteItem={handleDeleteItem}
-            />)}
-            {activeTab === 'packages' && (<PackageTable
-                packages={packages}
-                handleEditItem={handleEditItem}
-                handleDeleteItem={handleDeleteItem}
-            />)}
+            {isModalOpen && (
+                <ItemModal
+                    isOpen={isModalOpen}
+                    onClose={() => setIsModalOpen(false)}
+                    title={`${editingItem ? 'Editar' : 'Agregar'} ${activeTab.slice(0, -1)}`}
+                    loading={loading}
+                    activeTab={activeTab}
+                    handleSubmit={handleSubmit}
+                    editingItem={editingItem}
+                    generatedPassword={generatedPassword}
+                    generateRandomPassword={generateRandomPassword}
+                    users={users}  // Asegúrate de pasar users aquí
+                    packages={packages}
+                    reservations={reservations}
+                />
+            )}
+            {selectedFinance && (
+                <FinanceDetailModal
+                    finance={selectedFinance}
+                    onClose={() => setSelectedFinance(null)}
+                    onDownloadFile={handleDownloadFile}
+                />
+            )}
         </div>
-
-        <MonthSelector selectedMonth={selectedMonth} setSelectedMonth={setSelectedMonth}/>
-        {isReservationModalOpen && (<ReservationModal
-            reservation={selectedReservation}
-            onClose={() => setIsReservationModalOpen(false)}
-        />)}
-        {isModalOpen && (<ItemModal
-            activeTab={activeTab}
-            editingItem={editingItem}
-            setIsModalOpen={setIsModalOpen}
-            handleSubmit={handleSubmit}
-            generateRandomPassword={generateRandomPassword}
-            generatedPassword={generatedPassword}
-            users={users}
-            packages={packages}
-            reservations={reservations}
-            loading={loading}
-        />)}
-
-
-    </div>);
+    );
 };
 
 export default Dashboard;

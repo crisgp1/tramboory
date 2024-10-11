@@ -1,4 +1,7 @@
 const Finanza = require('../models/Finanza');
+const fs = require('fs');
+const upload = require('../config/multer');
+
 
 exports.getAllFinanzas = async (req, res) => {
     try {
@@ -24,65 +27,136 @@ exports.getFinanzaById = async (req, res) => {
     }
 };
 
-// FinanzaController.js
 exports.createFinanza = async (req, res) => {
     try {
-        let { id_reserva, tipo, monto, fecha, descripcion, archivo_prueba } = req.body;
+        const { tipo, monto, fecha, descripcion, id_reserva, categoria } = req.body;
 
-        // Si id_reserva es una cadena vacía o undefined, establécelo como null
-        if (id_reserva === '' || id_reserva === undefined) {
-            id_reserva = null;
+        if (tipo !== 'ingreso' && tipo !== 'gasto') {
+            return res.status(400).json({ error: 'Tipo de finanza inválido' });
         }
 
+        const facturaPDF = req.files && req.files['factura_pdf'] ? req.files['factura_pdf'][0].filename : null;
+        const facturaXML = req.files && req.files['factura_xml'] ? req.files['factura_xml'][0].filename : null;
+        const archivoPrueba = req.files && req.files['archivo_prueba'] ? req.files['archivo_prueba'][0].filename : null;
+
         const finanza = await Finanza.create({
-            id_reserva,
             tipo,
             monto,
             fecha,
             descripcion,
-            archivo_prueba
+            id_reserva,
+            categoria,
+            factura_pdf: facturaPDF,
+            factura_xml: facturaXML,
+            archivo_prueba: archivoPrueba
         });
 
         res.status(201).json(finanza);
     } catch (error) {
         console.error('Error al crear la finanza:', error);
-        res.status(500).json({
-            error: 'Error al crear la finanza',
-            details: error.message,
-            stack: error.stack
-        });
+        res.status(500).json({ error: 'Error al crear la finanza', details: error.message });
     }
 };
 
-exports.updateFinanza = async (req, res) => {
-    try {
-        const [updated] = await Finanza.update(req.body, {
-            where: { id: req.params.id }
-        });
-        if (updated) {
-            const updatedFinanza = await Finanza.findByPk(req.params.id);
-            res.json(updatedFinanza);
-        } else {
-            res.status(404).json({ error: 'Finanza no encontrada' });
+
+exports.updateFinanza = [
+    upload.fields([
+        { name: 'factura_pdf', maxCount: 1 },
+        { name: 'factura_xml', maxCount: 1 },
+        { name: 'archivo_prueba', maxCount: 1 }
+    ]),
+    async (req, res) => {
+        try {
+            const finanza = await Finanza.findByPk(req.params.id);
+            if (!finanza) {
+                return res.status(404).json({ error: 'Finanza no encontrada' });
+            }
+
+            const finanzaData = { ...req.body };
+
+            // Manejar archivos
+            ['factura_pdf', 'factura_xml', 'archivo_prueba'].forEach(field => {
+                if (req.files[field]) {
+                    // Si hay un nuevo archivo, eliminar el antiguo si existe
+                    if (finanza[field]) {
+                        fs.unlink(finanza[field], (err) => {
+                            if (err) console.error(`Error al eliminar archivo antiguo ${field}:`, err);
+                        });
+                    }
+                    finanzaData[field] = req.files[field][0].path;
+                }
+            });
+
+            await finanza.update(finanzaData);
+            res.json(finanza);
+        } catch (error) {
+            console.error('Error al actualizar la finanza:', error);
+            res.status(500).json({ error: 'Error al actualizar la finanza' });
         }
-    } catch (error) {
-        console.error('Error al actualizar la finanza:', error);
-        res.status(500).json({ error: 'Error al actualizar la finanza' });
     }
-};
+];
 
 exports.deleteFinanza = async (req, res) => {
     try {
-        const deleted = await Finanza.destroy({
-            where: { id: req.params.id }
-        });
-        if (deleted) {
-            res.status(204).send();
-        } else {
-            res.status(404).json({ error: 'Finanza no encontrada' });
+        const finanza = await Finanza.findByPk(req.params.id);
+        if (!finanza) {
+            return res.status(404).json({ error: 'Finanza no encontrada' });
         }
+
+        // Eliminar archivos asociados
+        ['factura_pdf', 'factura_xml', 'archivo_prueba'].forEach(field => {
+            if (finanza[field]) {
+                fs.unlink(finanza[field], (err) => {
+                    if (err) console.error(`Error al eliminar archivo ${field}:`, err);
+                });
+            }
+        });
+
+        await finanza.destroy();
+        res.status(204).send();
     } catch (error) {
         console.error('Error al eliminar la finanza:', error);
         res.status(500).json({ error: 'Error al eliminar la finanza' });
     }
+};
+
+exports.getFinanzasByCategory = async (req, res) => {
+    try {
+        const finanzas = await Finanza.findAll({
+            where: { categoria: req.params.categoria }
+        });
+        res.json(finanzas);
+    } catch (error) {
+        console.error('Error al obtener finanzas por categoría:', error);
+        res.status(500).json({ error: 'Error al obtener finanzas por categoría' });
+    }
+};
+
+exports.getCategories = async (req, res) => {
+    try {
+        const categories = await Finanza.findAll({
+            attributes: ['categoria'],
+            group: ['categoria'],
+            raw: true
+        });
+        res.json(categories.map(c => c.categoria));
+    } catch (error) {
+        console.error('Error al obtener las categorías:', error);
+        res.status(500).json({ error: 'Error al obtener las categorías' });
+    }
+};
+
+// Función auxiliar para eliminar archivos
+const deleteFile = (filePath) => {
+    fs.unlink(filePath, (err) => {
+        if (err) {
+            console.error('Error al eliminar el archivo:', err);
+        }
+    });
+};
+
+// Middleware para manejar errores
+exports.handleError = (err, req, res, next) => {
+    console.error(err.stack);
+    res.status(500).send('Algo salió mal!');
 };

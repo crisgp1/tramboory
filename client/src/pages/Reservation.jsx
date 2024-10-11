@@ -5,7 +5,7 @@ import * as yup from 'yup';
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import { FiCalendar, FiClock, FiUser, FiPackage, FiDollarSign, FiCheck } from 'react-icons/fi';
-import axios from 'axios';
+import axiosInstance from '../components/axiosConfig';
 import DatePicker from 'react-datepicker';
 import 'react-datepicker/dist/react-datepicker.css';
 import { gsap } from 'gsap';
@@ -30,7 +30,6 @@ const schema = yup.object().shape({
 export default function Reservation() {
   const [packages, setPackages] = useState([]);
   const [foodOptions, setFoodOptions] = useState([]);
-  const [loading, setLoading] = useState(false);
   const [reservationData, setReservationData] = useState(null);
   const [isConfirmationModalOpen, setIsConfirmationModalOpen] = useState(false);
   const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
@@ -40,16 +39,29 @@ export default function Reservation() {
 
   const formRef = useRef(null);
   const summaryRef = useRef(null);
+  const navigate = useNavigate();
 
   const { register, handleSubmit, setValue, watch, formState: { errors } } = useForm({
-    resolver: yupResolver(schema)
+    resolver: yupResolver(schema),
+    defaultValues: {
+      cupcake: false,
+      mampara: false,
+      piñata: false,
+    },
   });
 
   useEffect(() => {
+    const token = localStorage.getItem('token');
+    if (!token) {
+      toast.error("No se ha iniciado sesión. Redirigiendo al inicio de sesión...");
+      setTimeout(() => navigate('/signin'), 2000);
+      return;
+    }
+
+    fetchUserData();
     fetchPackages();
     fetchFoodOptions();
 
-    // Animaciones GSAP
     gsap.fromTo(formRef.current, 
       { opacity: 0, x: -50 }, 
       { opacity: 1, x: 0, duration: 1, scrollTrigger: { trigger: formRef.current, start: "top 80%" } }
@@ -58,11 +70,29 @@ export default function Reservation() {
       { opacity: 0, x: 50 }, 
       { opacity: 1, x: 0, duration: 1, scrollTrigger: { trigger: summaryRef.current, start: "top 80%" } }
     );
-  }, []);
+  }, [navigate]);
+
+  const getAuthHeader = () => {
+    const token = localStorage.getItem('token');
+    return { headers: { Authorization: `Bearer ${token}` } };
+  };
+
+  const fetchUserData = async () => {
+    try {
+        const response = await axiosInstance.get('/api/auth/me', getAuthHeader());
+        setUserData(response.data);
+    } catch (error) {
+      console.error('Error al obtener datos del usuario:', error);
+      toast.error('Error al cargar los datos del usuario');
+      if (error.response && error.response.status === 401) {
+        navigate('/signin');
+      }
+    }
+  };
 
   const fetchPackages = async () => {
     try {
-      const response = await axios.get('/api/paquetes');
+      const response = await axiosInstance.get('/api/paquetes', getAuthHeader());
       setPackages(response.data);
     } catch (error) {
       console.error('Error al obtener los paquetes:', error);
@@ -72,7 +102,7 @@ export default function Reservation() {
 
   const fetchFoodOptions = async () => {
     try {
-      const response = await axios.get('/api/opciones-alimentos');
+      const response = await axiosInstance.get('/api/opciones-alimentos', getAuthHeader());
       setFoodOptions(response.data);
     } catch (error) {
       console.error('Error al obtener las opciones de alimentos:', error);
@@ -80,7 +110,7 @@ export default function Reservation() {
     }
   };
 
-  const onSubmit = (data) => {
+  const onSubmit = async (data) => {
     const selectedPackage = packages.find((pkg) => pkg.id === data.id_paquete);
     const selectedFoodOption = foodOptions.find((option) => option.id === data.id_opcion_alimento);
 
@@ -91,108 +121,32 @@ export default function Reservation() {
 
     setReservationData({
       ...data,
-      id_usuario: userData?.id,
+      id_usuario: userData.id,
       estado: 'pendiente',
       total: total,
-    });
-    setIsConfirmationModalOpen(true);
-  };
+  });
+  setIsConfirmationModalOpen(true);
+};
 
   const saveReservation = async () => {
     try {
-      await axios.post('/api/reservas', reservationData);
-      toast.success('Reserva creada exitosamente');
-      setIsReservationModalOpen(true);
+      const response = await axiosInstance.post('/api/reservas', reservationData, getAuthHeader());
+      if (response.status === 201) {
+        toast.success('Reserva creada exitosamente');
+        setIsReservationModalOpen(true);
+      } else {
+        throw new Error('Error al crear la reserva');
+      }
     } catch (error) {
       console.error('Error al guardar la reserva:', error);
       toast.error('Error al guardar la reserva');
+      if (error.response && error.response.status === 401) {
+        navigate('/signin');
+      }
     }
-    const navigate = useNavigate();
-
-    useEffect(() => {
-        const token = localStorage.getItem('token');
-        if (!token) {
-            toast.error("No se ha iniciado sesión. Redirigiendo al inicio de sesión...");
-            setTimeout(() => navigate('/signin'), 2000);
-            return;
-        }
-
-        fetchUserData();
-        fetchPackages();
-        fetchFoodOptions();
-
-        // ... (animaciones GSAP)
-    }, [navigate]);
-
-    const getAuthHeader = () => {
-        const token = localStorage.getItem('token');
-        return { headers: { Authorization: `Bearer ${token}` } };
-    };
-
-    const fetchUserData = async () => {
-        try {
-            const response = await axios.get('/api/user', getAuthHeader());
-            setUserData(response.data);
-            setIsAdmin(response.data.tipo_usuario === 'admin');
-            if (response.data.tipo_usuario === 'admin') {
-                fetchClients();
-            }
-        } catch (error) {
-            console.error('Error al obtener datos del usuario:', error);
-            toast.error('Error al cargar los datos del usuario');
-            if (error.response && error.response.status === 401) {
-                navigate('/signin');
-            }
-        }
-    };
-
-    const fetchClients = async () => {
-        try {
-            const response = await axios.get('/api/usuarios?tipo=cliente', getAuthHeader());
-            setClients(response.data);
-        } catch (error) {
-            console.error('Error al obtener los clientes:', error);
-            toast.error('Error al cargar los clientes');
-        }
-    };
-
-    const fetchPackages = async () => {
-        try {
-            const response = await axios.get('/api/paquetes', getAuthHeader());
-            setPackages(response.data);
-        } catch (error) {
-            console.error('Error al obtener los paquetes:', error);
-            toast.error('Error al cargar los paquetes');
-        }
-    };
-
-    const fetchFoodOptions = async () => {
-        try {
-            const response = await axios.get('/api/opciones-alimentos', getAuthHeader());
-            setFoodOptions(response.data);
-        } catch (error) {
-            console.error('Error al obtener las opciones de alimentos:', error);
-            toast.error('Error al cargar las opciones de alimentos');
-        }
-    };
-
-    const onSubmit = async (data) => {
-        // ... (lógica de onSubmit)
-        try {
-            await axios.post('/api/reservas', reservationData, getAuthHeader());
-            toast.success('Reserva creada exitosamente');
-            setIsReservationModalOpen(true);
-        } catch (error) {
-            console.error('Error al guardar la reserva:', error);
-            toast.error('Error al guardar la reserva');
-            if (error.response && error.response.status === 401) {
-                navigate('/signin');
-            }
-        }
-    };
   };
 
-  
+  const today = new Date();
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-purple-100 to-indigo-200 py-12 px-4 sm:px-6 lg:px-8">
@@ -235,6 +189,7 @@ export default function Reservation() {
                       setValue('fecha_reserva', date);
                     }}
                     dateFormat="yyyy-MM-dd"
+                    minDate={today}
                     className="block w-full pl-10 pr-3 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md"
                     placeholderText="Seleccionar fecha"
                   />
@@ -251,8 +206,8 @@ export default function Reservation() {
                     className="block w-full pl-10 pr-3 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md"
                   >
                     <option value="">Seleccionar hora</option>
-                    <option value="mañana">Mañana</option>
-                    <option value="tarde">Tarde</option>
+                    <option value="mañana">Tramboory Express (Matutino)</option>
+                    <option value="tarde">Tramboory </option>
                   </select>
                 </div>
                 {errors.hora_inicio && <p className="mt-1 text-sm text-red-600">{errors.hora_inicio.message}</p>}
@@ -303,51 +258,51 @@ export default function Reservation() {
               </div>
 
               <div>
-    <label className="block font-bold mb-2">Temática</label>
-    <input 
-      {...register('tematica')}
-      type="text"
-      className="w-full px-4 py-3 rounded-md border border-gray-300 focus:border-indigo-500 focus:ring-indigo-500"
-      placeholder="Temática del evento"
-    />
-    {errors.tematica && <span className="text-red-500 text-sm">{errors.tematica.message}</span>}
-  </div>
+                <label className="block font-bold mb-2">Temática</label>
+                <input 
+                  {...register('tematica')}
+                  type="text"
+                  className="w-full px-4 py-3 rounded-md border border-gray-300 focus:border-indigo-500 focus:ring-indigo-500"
+                  placeholder="Temática del evento"
+                />
+                {errors.tematica && <span className="text-red-500 text-sm">{errors.tematica.message}</span>}
+              </div>
 
-  <div>
-    <label className="block font-bold mb-2">¿Incluye Cupcake?</label>
-    <input 
-      {...register('cupcake')}
-      type="checkbox" 
-      className="form-checkbox h-5 w-5 text-indigo-600"
-    />
-  </div>
+              <div>
+                <label className="block font-bold mb-2">¿Incluye Cupcake?</label>
+                <input 
+                  {...register('cupcake')}
+                  type="checkbox" 
+                  className="form-checkbox h-5 w-5 text-indigo-600"
+                />
+              </div>
 
-  <div>
-    <label className="block font-bold mb-2">¿Incluye Mampara?</label>
-    <input
-      {...register('mampara')}
-      type="checkbox"
-      className="form-checkbox h-5 w-5 text-indigo-600" 
-    />
-  </div>
+              <div>
+                <label className="block font-bold mb-2">¿Incluye Mampara?</label>
+                <input
+                  {...register('mampara')}
+                  type="checkbox"
+                  className="form-checkbox h-5 w-5 text-indigo-600" 
+                />
+              </div>
 
-  <div>  
-    <label className="block font-bold mb-2">¿Incluye Piñata?</label>
-    <input
-      {...register('piñata')} 
-      type="checkbox"
-      className="form-checkbox h-5 w-5 text-indigo-600"
-    />
-  </div>
-    
-  <div>
-    <label className="block font-bold mb-2">Comentarios Adicionales</label>
-    <textarea
-      {...register('comentarios')}
-      className="w-full px-4 py-3 rounded-md border border-gray-300 focus:border-indigo-500 focus:ring-indigo-500"
-      placeholder="Ingresa comentarios adicionales sobre la reserva"  
-    ></textarea>
-  </div>
+              <div>  
+                <label className="block font-bold mb-2">¿Incluye Piñata?</label>
+                <input
+                  {...register('piñata')} 
+                  type="checkbox"
+                  className="form-checkbox h-5 w-5 text-indigo-600"
+                />
+              </div>
+                
+              <div>
+                <label className="block font-bold mb-2">Comentarios Adicionales</label>
+                <textarea
+                  {...register('comentarios')}
+                  className="w-full px-4 py-3 rounded-md border border-gray-300 focus:border-indigo-500 focus:ring-indigo-500"
+                  placeholder="Ingresa comentarios adicionales sobre la reserva"
+                ></textarea>
+              </div>
 
               <button
                 type="submit"
@@ -421,25 +376,15 @@ const ConfirmationModal = ({ reservationData, onCancel, onConfirm }) => {
   const modalRef = useRef(null);
 
   useEffect(() => {
-    // Asegúrate de que los elementos existan antes de animarlos
-    const formElement = document.querySelector('.form-class');
-    const summaryElement = document.querySelector('.summary-class');
-  
-    if (formElement && summaryElement) {
-      gsap.fromTo(formElement, 
-        { opacity: 0, x: -50 }, 
-        { opacity: 1, x: 0, duration: 1, scrollTrigger: { trigger: formElement, start: "top 80%" } }
-      );
-      gsap.fromTo(summaryElement, 
-        { opacity: 0, x: 50 }, 
-        { opacity: 1, x: 0, duration: 1, scrollTrigger: { trigger: summaryElement, start: "top 80%" } }
-      );
-    }
+    gsap.fromTo(modalRef.current,
+      { opacity: 0, y: -50 },
+      { opacity: 1, y: 0, duration: 0.5, ease: "power3.out" }
+    );
   }, []);
 
   return (
     <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full flex justify-center items-center z-50">
-      <div ref={modalRef} className="bg-white p-8 rounded-lg shadow-xl max-w-md w-full">
+      <div ref={modalRef} className="bg-white rounded-lg p-8 w-full max-w-md">
         <h2 className="text-2xl font-bold mb-4 text-indigo-700">Confirmar Reserva</h2>
         <p className="mb-4 text-gray-600">Por favor, verifica los datos de tu reserva:</p>
 
@@ -579,4 +524,3 @@ const ReservationModal = ({ reservationData, onClose }) => {
     </div>
   );
 };
-

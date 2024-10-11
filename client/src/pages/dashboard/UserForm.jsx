@@ -4,7 +4,7 @@ import withValidation from '../../components/withValidation';
 const Input = withValidation('input');
 const Select = withValidation('select');
 
-const UserForm = ({ editingItem, generatedPassword, generateRandomPassword, onSubmit }) => {
+const UserForm = ({ editingItem, generatedPassword, generateRandomPassword, onSave }) => {
     const handleSubmit = (e) => {
         e.preventDefault();
         const formData = new FormData(e.target);
@@ -12,21 +12,17 @@ const UserForm = ({ editingItem, generatedPassword, generateRandomPassword, onSu
 
         const errors = {};
 
-
         if (!data.nombre) errors.nombre = 'El nombre es requerido';
         if (!data.email) errors.email = 'El email es requerido';
         if (!data.tipo_usuario) errors.tipo_usuario = 'El tipo de usuario es requerido';
         if (!editingItem && !data.clave) errors.clave = 'La contraseña es requerida para nuevos usuarios';
 
         if (Object.keys(errors).length > 0) {
-            // Manejar errores (por ejemplo, mostrarlos en el formulario)
             console.log(errors);
             return;
         }
 
-
-
-        onSubmit(data);
+        onSave(data);
     };
 
     return (
@@ -44,7 +40,6 @@ const UserForm = ({ editingItem, generatedPassword, generateRandomPassword, onSu
                     />
                 </div>
             </div>
-
 
             <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
@@ -154,6 +149,5 @@ const UserForm = ({ editingItem, generatedPassword, generateRandomPassword, onSu
         </form>
     );
 };
-
 
 export default UserForm;

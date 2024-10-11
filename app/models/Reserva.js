@@ -75,10 +75,21 @@ const Reserva = sequelize.define('Reserva', {
     type: DataTypes.TEXT,
     allowNull: true
   },
+  activo: {
+    type: DataTypes.BOOLEAN,
+    defaultValue: true
+  }
 }, {
   tableName: 'Reservas',
-  timestamps: true
+  timestamps: false  // Añade esta línea
 });
 
+
+Reserva.associate = function(models) {
+  Reserva.hasMany(models.Finanza, {
+    foreignKey: 'id_reserva',
+    onDelete: 'CASCADE'
+  });
+};
 
 module.exports = Reserva;

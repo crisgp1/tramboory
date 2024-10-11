@@ -1,5 +1,6 @@
 const { DataTypes } = require('sequelize');
 const sequelize = require('../config/database');
+const Reserva = require('./Reserva');
 
 const Finanza = sequelize.define('Finanza', {
   id: {
@@ -11,7 +12,7 @@ const Finanza = sequelize.define('Finanza', {
     type: DataTypes.INTEGER,
     allowNull: true,
     references: {
-      model: 'Reservas',
+      model: Reserva,
       key: 'id'
     }
   },
@@ -31,13 +32,27 @@ const Finanza = sequelize.define('Finanza', {
     type: DataTypes.TEXT,
     allowNull: true
   },
+  categoria: {
+    type: DataTypes.STRING(100),
+    allowNull: true
+  },
+  factura_pdf: {
+    type: DataTypes.STRING(255),
+    allowNull: true
+  },
+  factura_xml: {
+    type: DataTypes.STRING(255),
+    allowNull: true
+  },
   archivo_prueba: {
     type: DataTypes.STRING(255),
     allowNull: true
   }
 }, {
   tableName: 'Finanzas',
-  timestamps: false
+  timestamps: true // Habilita createdAt y updatedAt
 });
+
+Finanza.belongsTo(Reserva, { foreignKey: 'id_reserva' });
 
 module.exports = Finanza;

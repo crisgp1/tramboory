@@ -1,13 +1,18 @@
-import React from 'react';
+import  { useState } from 'react';
 import { motion } from 'framer-motion';
 import {
     FiCalendar, FiClock, FiDollarSign, FiUser, FiPackage,
-    FiMail, FiPhone, FiMessageCircle, FiGift, FiCoffee,
-    FiImage, FiBox, FiCheckCircle, FiXCircle, FiPrinter
+    FiMail, FiPhone, FiGift,
+      FiCheckCircle, FiXCircle, FiPrinter,
+    FiAlertCircle
 } from 'react-icons/fi';
 import PrintableReservation from '../../components/PrintableReservation';
+import axiosInstance from '../../components/axiosConfig';
+import { toast } from 'react-toastify';
 
-const ReservationModal = ({ reservation, onClose, onSendEmail, onContactUser }) => {
+const ReservationModal = ({ reservation, onClose, onSendEmail, onContactUser, onStatusChange }) => {
+    const [status, setStatus] = useState(reservation.estado);
+
     if (!reservation) return null;
 
     const handlePrint = () => {
@@ -20,12 +25,37 @@ const ReservationModal = ({ reservation, onClose, onSendEmail, onContactUser }) 
         winPrint.close();
     };
 
+    const handleStatusChange = async (newStatus) => {
+        try {
+            await axiosInstance.put(`/api/reservas/${reservation.id}/status`, { estado: newStatus });
+            setStatus(newStatus);
+            onStatusChange(newStatus);
+            toast.success(`Estado de la reserva actualizado a ${newStatus}`);
+        } catch (error) {
+            console.error('Error al actualizar el estado de la reserva:', error);
+            toast.error('Error al actualizar el estado de la reserva');
+        }
+    };
+
     const IconWrapper = ({ icon: Icon, text, color = "text-gray-700" }) => (
         <div className={`flex items-center mb-3 ${color}`}>
             <Icon className="mr-2 text-xl" />
             <span className="text-sm">{text}</span>
         </div>
     );
+
+    const getStatusColor = (status) => {
+        switch (status) {
+            case 'pendiente':
+                return 'text-yellow-500';
+            case 'confirmada':
+                return 'text-green-500';
+            case 'cancelada':
+                return 'text-red-500';
+            default:
+                return 'text-gray-500';
+        }
+    };
 
     return (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4 overflow-y-auto">
@@ -52,6 +82,11 @@ const ReservationModal = ({ reservation, onClose, onSendEmail, onContactUser }) 
                                     <IconWrapper icon={FiClock} text={`Hora: ${reservation.hora_inicio}`} />
                                     <IconWrapper icon={FiDollarSign} text={`Total: $${reservation.total}`} />
                                     <IconWrapper icon={FiPackage} text={`Paquete: ${reservation.nombre_paquete}`} />
+                                    <IconWrapper
+                                        icon={FiAlertCircle}
+                                        text={`Estado: ${status.charAt(0).toUpperCase() + status.slice(1)}`}
+                                        color={getStatusColor(status)}
+                                    />
                                 </div>
                             </div>
                             <div>
@@ -92,6 +127,35 @@ const ReservationModal = ({ reservation, onClose, onSendEmail, onContactUser }) 
                         <h3 className="text-lg font-medium text-gray-900 mb-3">Comentarios</h3>
                         <div className="bg-gray-50 p-4 rounded-lg">
                             <p className="text-gray-700 text-sm">{reservation.comentarios || 'Sin comentarios'}</p>
+                        </div>
+                    </div>
+                    <div className="mt-6">
+                        <h3 className="text-lg font-medium text-gray-900 mb-3">Cambiar Estado de la Reserva</h3>
+                        <div className="flex space-x-2">
+                            <button
+                                onClick={() => handleStatusChange('pendiente')}
+                                className={`px-4 py-2 rounded ${
+                                    status === 'pendiente' ? 'bg-yellow-500 text-white' : 'bg-gray-200 text-gray-700'
+                                }`}
+                            >
+                                Pendiente
+                            </button>
+                            <button
+                                onClick={() => handleStatusChange('confirmada')}
+                                className={`px-4 py-2 rounded ${
+                                    status === 'confirmada' ? 'bg-green-500 text-white' : 'bg-gray-200 text-gray-700'
+                                }`}
+                            >
+                                Confirmada
+                            </button>
+                            <button
+                                onClick={() => handleStatusChange('cancelada')}
+                                className={`px-4 py-2 rounded ${
+                                    status === 'cancelada' ? 'bg-red-500 text-white' : 'bg-gray-200 text-gray-700'
+                                }`}
+                            >
+                                Cancelada
+                            </button>
                         </div>
                     </div>
                 </div>

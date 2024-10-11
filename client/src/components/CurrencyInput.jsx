@@ -1,26 +1,34 @@
 import { useState } from 'react';
+import { formatNumber } from '../utils/formatters.js';
 
-const CurrencyInput = ({ name, defaultValue, placeholder, icon: Icon, className }) => {
+const CurrencyInput = ({ name, defaultValue, placeholder, icon: Icon, className, readOnly = false }) => {
     const [displayValue, setDisplayValue] = useState(
         defaultValue ? formatNumber(defaultValue) : ''
     );
 
-    const formatNumber = (num) => {
-        const parts = num.toString().split('.');
-        parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ',');
-        return parts.join('.');
-    };
-
     const handleChange = (e) => {
-        const value = e.target.value.replace(/[^0-9.]/g, '');
+        let value = e.target.value.replace(/,/g, '');
+
+        // Permitir solo números y un punto decimal
+        value = value.replace(/[^0-9.]/g, '');
+
+        // Asegurar que solo haya un punto decimal
         const parts = value.split('.');
-        if (parts.length > 1) {
-            parts[1] = parts[1].slice(0, 2);
+        if (parts.length > 2) {
+            parts.pop();
+            value = parts.join('.');
         }
-        const formattedValue = formatNumber(parts.join('.'));
+
+        // Limitar a dos decimales
+        if (parts.length === 2) {
+            parts[1] = parts[1].slice(0, 2);
+            value = parts.join('.');
+        }
+
+        const formattedValue = formatNumber(value);
         setDisplayValue(formattedValue);
 
-        // Actualizar el valor real (sin formato) en el formulario
+        // Actualizar el valor real (sin comas) en el formulario
         e.target.form[name].value = value;
     };
 
@@ -34,6 +42,7 @@ const CurrencyInput = ({ name, defaultValue, placeholder, icon: Icon, className 
                 onChange={handleChange}
                 placeholder={placeholder}
                 className={`w-full pl-10 pr-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 ${className}`}
+                readOnly={readOnly}
             />
             <input type="hidden" name={name} value={displayValue.replace(/,/g, '')} />
         </div>

@@ -100,3 +100,17 @@ exports.refreshToken = (req, res) => {
         res.status(401).json({ message: 'Token inválido' });
     }
 };
+
+exports.getAuthenticatedUser = async (req, res) => {
+    try {
+      const usuario = await Usuario.findByPk(req.userId);
+      if (usuario) {
+        res.json(usuario);
+      } else {
+        res.status(404).json({ error: 'Usuario no encontrado' });
+      }
+    } catch (error) {
+      console.error('Error al obtener el usuario autenticado:', error);
+      res.status(500).json({ error: 'Error al obtener el usuario autenticado' });
+    }
+  };
