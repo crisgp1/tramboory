@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { FiDollarSign, FiCalendar, FiFileText, FiTag, FiPackage, FiUpload, FiFile, FiPlus, FiMinus, FiX } from 'react-icons/fi';
 import { TwitterPicker } from 'react-color';
 
-const FinanceForm = ({ editingItem, onSubmit, categories, onAddCategory, onClose }) => {
+const FinanceForm = ({ editingItem, onSubmit, categories, onAddCategory, onClose,  reservations = []}) => {
     const [formData, setFormData] = useState(editingItem || {});
     const [newCategory, setNewCategory] = useState('');
     const [selectedCategoryId, setSelectedCategoryId] = useState(editingItem?.categoria?.id || '');
@@ -10,11 +10,12 @@ const FinanceForm = ({ editingItem, onSubmit, categories, onAddCategory, onClose
     const [categoryColor, setCategoryColor] = useState('#FF6900');
     const [showColorPicker, setShowColorPicker] = useState(false);
 
+    
     useEffect(() => {
-        if (editingItem?.categoria) {
-            setSelectedCategoryId(editingItem.categoria.id);
+        if (categories.length > 0) {
+            console.log('Categorías actualizadas:', categories);
         }
-    }, [editingItem]);
+    }, [categories]);
 
     const handleAddCategory = () => {
         if (newCategory && !categories.find(cat => cat.name === newCategory)) {
@@ -99,9 +100,9 @@ const FinanceForm = ({ editingItem, onSubmit, categories, onAddCategory, onClose
                         className="pl-10 w-full p-2 border rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500"
                     >
                         <option value="">Seleccionar categoría</option>
-                        {categories?.map((cat) => (
-                            <option key={cat.id} value={cat.id}>{cat.name}</option>
-                        ))}
+                        {categories.map((cat, index) => (
+    <option key={index} value={cat.nombre}>{cat.nombre}</option>
+))}
                     </select>
                     <button
                         type="button"
@@ -178,7 +179,11 @@ const FinanceForm = ({ editingItem, onSubmit, categories, onAddCategory, onClose
                         className="pl-10 w-full p-2 border rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500"
                     >
                         <option value="">Sin reserva asociada</option>
-                        {/* Aquí deberías mapear las reservas disponibles */}
+                        {reservations.map((reserva) => (
+                         <option key={reserva.id} value={reserva.id}>
+                    {`Reserva #${reserva.id} - ${reserva.nombre_festejado}`}
+                </option>
+            ))}
                     </select>
                 </div>
             </div>
