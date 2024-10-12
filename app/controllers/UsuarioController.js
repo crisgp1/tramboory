@@ -10,6 +10,7 @@ exports.getAllUsuarios = async (req, res) => {
     if (search) {
       usuarios = await Usuario.findAll({
         where: {
+          activo: true,  // Solo usuarios activos
           [Op.or]: [
             { nombre: { [Op.like]: `%${search}%` } },
             { email: { [Op.like]: `%${search}%` } }
@@ -17,7 +18,11 @@ exports.getAllUsuarios = async (req, res) => {
         }
       })
     } else {
-      usuarios = await Usuario.findAll()
+      usuarios = await Usuario.findAll({
+        where: {
+          activo: true  // Solo usuarios activos
+        }
+      })
     }
 
     res.json(usuarios)
@@ -29,10 +34,14 @@ exports.getAllUsuarios = async (req, res) => {
 
 exports.getUsuarioById = async (req, res) => {
   try {
-    const usuario = await Usuario.findByPk(req.params.id)
+    const usuario = await Usuario.findOne({
+      where: {
+        id: req.params.id,
+        activo: true  // Solo usuarios activos
+      }
+    })
     if (usuario) {
       res.json(usuario)
-     
     } else {
       res.status(404).json({ error: 'Usuario no encontrado' })
     }
@@ -42,20 +51,31 @@ exports.getUsuarioById = async (req, res) => {
   }
 }
 
+
 exports.createUsuario = async (req, res) => {
   try {
-    const usuario = await Usuario.create(req.body)
-    res.status(201).json(usuario)
+    const { nombre, email, tipo_usuario, clave } = req.body;
+    
+    if (!nombre || !email || !tipo_usuario || !clave) {
+      return res.status(400).json({ error: 'Todos los campos son obligatorios' });
+    }
+
+    // Cifrar la contraseña antes de crear el usuario
+    const hashedPassword = await bcrypt.hash(clave, 10);
+    
+    const usuario = await Usuario.create({ ...req.body, clave: hashedPassword });
+    res.status(201).json(usuario);
   } catch (error) {
-    console.error('Error al crear el usuario:', error)
-    res.status(500).json({ error: 'Error al crear el usuario' })
+    console.error('Error al crear el usuario:', error);
+    res.status(500).json({ error: 'Error al crear el usuario' });
   }
 }
+
 
 exports.updateUsuario = async (req, res) => {
   try {
     const [updated] = await Usuario.update(req.body, {
-      where: { id: req.params.id }
+      where: { id: req.params.id, activo: true }  // Solo usuarios activos
     })
     if (updated) {
       const updatedUsuario = await Usuario.findByPk(req.params.id)
@@ -71,23 +91,26 @@ exports.updateUsuario = async (req, res) => {
 
 exports.deleteUsuario = async (req, res) => {
   try {
-    const deleted = await Usuario.destroy({
-      where: { id: req.params.id }
-    })
-    if (deleted) {
-      res.status(204).send()
-    } else {
-      res.status(404).json({ error: 'Usuario no encontrado' })
-    }
+    const { id } = req.params;
+    await Usuario.update({ activo: false }, {
+      where: { id },
+      silent: true  // Evita la actualización de timestamps
+    });
+    res.status(200).json({ message: 'Usuario desactivado con éxito' });
   } catch (error) {
-    console.error('Error al eliminar el usuario:', error)
-    res.status(500).json({ error: 'Error al eliminar el usuario' })
+    console.error('Error al desactivar el usuario:', error);
+    res.status(500).json({ error: 'Error al desactivar el usuario' });
   }
 }
 
 exports.getAuthenticatedUser = async (req, res) => {
   try {
-    const usuario = await Usuario.findByPk(req.userId)
+    const usuario = await Usuario.findOne({
+      where: {
+        id: req.userId,
+        activo: true  // Solo usuarios activos
+      }
+    })
     if (usuario) {
       res.json(usuario)
     } else {

@@ -1,24 +1,24 @@
-import  { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { FiDollarSign, FiCalendar, FiFileText, FiTag, FiPackage, FiUpload, FiFile, FiPlus, FiMinus, FiX } from 'react-icons/fi';
 import { TwitterPicker } from 'react-color';
 
-const FinanceForm = ({ editingItem, onSave, categories = [], onAddCategory }) => {
+const FinanceForm = ({ editingItem, onSubmit, categories, onAddCategory, onClose }) => {
+    const [formData, setFormData] = useState(editingItem || {});
     const [newCategory, setNewCategory] = useState('');
-    const [selectedCategory, setSelectedCategory] = useState(editingItem?.categoria || '');
+    const [selectedCategoryId, setSelectedCategoryId] = useState(editingItem?.categoria?.id || '');
     const [showNewCategoryInput, setShowNewCategoryInput] = useState(false);
     const [categoryColor, setCategoryColor] = useState('#FF6900');
     const [showColorPicker, setShowColorPicker] = useState(false);
 
     useEffect(() => {
         if (editingItem?.categoria) {
-            setSelectedCategory(editingItem.categoria);
+            setSelectedCategoryId(editingItem.categoria.id);
         }
     }, [editingItem]);
 
     const handleAddCategory = () => {
-        if (newCategory && !categories.includes(newCategory)) {
-            onAddCategory({ name: newCategory, color: categoryColor });
-            setSelectedCategory(newCategory);
+        if (newCategory && !categories.find(cat => cat.name === newCategory)) {
+            onAddCategory({ nombre: newCategory, color: categoryColor });
             setNewCategory('');
             setShowNewCategoryInput(false);
         }
@@ -26,16 +26,25 @@ const FinanceForm = ({ editingItem, onSave, categories = [], onAddCategory }) =>
 
     const handleSubmit = (e) => {
         e.preventDefault();
-        const formData = new FormData(e.target);
-        const data = Object.fromEntries(formData.entries());
-        data.categoria = selectedCategory;
-        onSave(data);
+        onSubmit({
+            ...formData,
+            categoria: categories.find(cat => cat.id === selectedCategoryId),
+        });
+    };
+
+    const handleChange = (e) => {
+        const { name, value, type, checked } = e.target;
+        const newValue = type === 'checkbox' ? checked : value;
+        setFormData(prevData => ({
+            ...prevData,
+            [name]: newValue,
+        }));
     };
 
     return (
         <form onSubmit={handleSubmit} className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
+               
                     <label className="block text-sm font-medium text-gray-700 mb-1">Tipo</label>
                     <div className="relative">
                         <FiDollarSign className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
@@ -80,27 +89,27 @@ const FinanceForm = ({ editingItem, onSave, categories = [], onAddCategory }) =>
                 </div>
 
                 <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Categoría</label>
-                    <div className="relative flex items-center">
-                        <FiTag className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"/>
-                        <select
-                            value={selectedCategory}
-                            onChange={(e) => setSelectedCategory(e.target.value)}
-                            className="pl-10 w-full p-2 border rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500"
-                        >
-                            <option value="">Seleccionar categoría</option>
-                            {categories?.map((cat, index) => (
-                                <option key={index} value={cat.name}>{cat.name}</option>
-                            ))}
-                        </select>
-                        <button
-                            type="button"
-                            onClick={() => setShowNewCategoryInput(!showNewCategoryInput)}
-                            className="ml-2 p-2 bg-indigo-500 text-white rounded-md hover:bg-indigo-600 focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                        >
-                            {showNewCategoryInput ? <FiMinus/> : <FiPlus/>}
-                        </button>
-                    </div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Categoría</label>
+                <div className="relative flex items-center">
+                    <FiTag className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"/>
+                    <select
+                        name="categoria"
+                        value={selectedCategoryId}
+                        onChange={(e) => setSelectedCategoryId(e.target.value)}
+                        className="pl-10 w-full p-2 border rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500"
+                    >
+                        <option value="">Seleccionar categoría</option>
+                        {categories?.map((cat) => (
+                            <option key={cat.id} value={cat.id}>{cat.name}</option>
+                        ))}
+                    </select>
+                    <button
+                        type="button"
+                        onClick={() => setShowNewCategoryInput(!showNewCategoryInput)}
+                        className="ml-2 p-2 bg-indigo-500 text-white rounded-md hover:bg-indigo-600 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                    >
+                        {showNewCategoryInput ? <FiMinus/> : <FiPlus/>}
+                    </button>
                 </div>
             </div>
 
@@ -221,5 +230,6 @@ const FinanceForm = ({ editingItem, onSave, categories = [], onAddCategory }) =>
         </form>
     );
 };
+
 
 export default FinanceForm;

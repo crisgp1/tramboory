@@ -27,12 +27,28 @@ exports.getFinanzaById = async (req, res) => {
     }
 };
 
+
 exports.createFinanza = async (req, res) => {
     try {
+        console.log('Datos recibidos:', req.body);
+        console.log('Archivos recibidos:', req.files);
+
         const { tipo, monto, fecha, descripcion, id_reserva, categoria } = req.body;
 
+        // Validación de campos requeridos
+        if (!tipo || !monto || !fecha) {
+            return res.status(400).json({ error: 'Faltan campos requeridos' });
+        }
+
+        // Validación del tipo
         if (tipo !== 'ingreso' && tipo !== 'gasto') {
             return res.status(400).json({ error: 'Tipo de finanza inválido' });
+        }
+
+        // Conversión y validación del monto
+        const montoNumerico = parseFloat(monto);
+        if (isNaN(montoNumerico)) {
+            return res.status(400).json({ error: 'Monto inválido' });
         }
 
         const facturaPDF = req.files && req.files['factura_pdf'] ? req.files['factura_pdf'][0].filename : null;
@@ -41,7 +57,7 @@ exports.createFinanza = async (req, res) => {
 
         const finanza = await Finanza.create({
             tipo,
-            monto,
+            monto: montoNumerico,
             fecha,
             descripcion,
             id_reserva,
@@ -57,7 +73,6 @@ exports.createFinanza = async (req, res) => {
         res.status(500).json({ error: 'Error al crear la finanza', details: error.message });
     }
 };
-
 
 exports.updateFinanza = [
     upload.fields([
@@ -98,28 +113,18 @@ exports.updateFinanza = [
 
 exports.deleteFinanza = async (req, res) => {
     try {
-        const finanza = await Finanza.findByPk(req.params.id);
-        if (!finanza) {
-            return res.status(404).json({ error: 'Finanza no encontrada' });
-        }
-
-        // Eliminar archivos asociados
-        ['factura_pdf', 'factura_xml', 'archivo_prueba'].forEach(field => {
-            if (finanza[field]) {
-                fs.unlink(finanza[field], (err) => {
-                    if (err) console.error(`Error al eliminar archivo ${field}:`, err);
-                });
-            }
-        });
-
-        await finanza.destroy();
-        res.status(204).send();
+      const { id } = req.params;
+      await Finanza.update({ activo: false }, {
+        where: { id },
+        silent: true
+      });
+      res.status(200).json({ message: 'Finanza desactivada con éxito' });
     } catch (error) {
-        console.error('Error al eliminar la finanza:', error);
-        res.status(500).json({ error: 'Error al eliminar la finanza' });
+      console.error('Error al desactivar la finanza:', error);
+      res.status(500).json({ error: 'Error al desactivar la finanza' });
     }
-};
-
+  };
+  
 exports.getFinanzasByCategory = async (req, res) => {
     try {
         const finanzas = await Finanza.findAll({

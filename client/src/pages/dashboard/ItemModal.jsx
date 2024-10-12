@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useEffect } from 'react';
+import React from 'react';
 import { FiX } from 'react-icons/fi';
 import UserForm from './UserForm';
 import ReservationForm from './ReservationForm';
@@ -21,41 +21,11 @@ const ItemModal = ({
                        categories,
                        onAddCategory
                    }) => {
-    const [errors, setErrors] = useState({});
-    const [formData, setFormData] = useState(editingItem || {});
-
-    useEffect(() => {
-        setFormData(editingItem || {});
-        setErrors({});
-    }, [editingItem]);
-
-    const updateFormData = useCallback((newData) => {
-        setFormData(prevData => ({ ...prevData, ...newData }));
-        setErrors(prevErrors => {
-            const updatedErrors = { ...prevErrors };
-            Object.keys(newData).forEach(key => {
-                delete updatedErrors[key];
-            });
-            return updatedErrors;
-        });
-    }, []);
-
-    const onSave = useCallback(async (data) => {
-        try {
-            await handleSubmit(data);
-            onClose();
-        } catch (error) {
-            console.error('Error al guardar:', error);
-            setErrors(prev => ({ ...prev, submit: 'Hubo un error al guardar los datos. Por favor, intente de nuevo.' }));
-        }
-    }, [handleSubmit, onClose]);
-
     const renderForm = () => {
         const commonProps = {
-            editingItem: formData,
-            onSave: updateFormData,
-            errors,
-            setErrors
+            editingItem,
+            onSubmit: handleSubmit,
+            onClose,
         };
 
         switch (activeTab) {
@@ -94,8 +64,8 @@ const ItemModal = ({
     if (!isOpen) return null;
 
     return (
-        <div className="fixed inset-0 z-50 overflow-hidden bg-gray-500 bg-opacity-75 flex items-center justify-center p-4">
-            <div className="bg-white rounded-lg shadow-xl w-full max-w-4xl flex flex-col max-h-[90vh]">
+        <div className="fixed inset-0 z-50 overflow-auto bg-gray-500 bg-opacity-75 flex items-center justify-center p-4">
+            <div className="bg-white rounded-lg shadow-xl w-full max-w-4xl flex flex-col">
                 {/* Header */}
                 <div className="px-6 py-4 border-b border-gray-200 flex justify-between items-center">
                     <h2 className="text-2xl font-semibold text-gray-800">
@@ -110,17 +80,12 @@ const ItemModal = ({
                 </div>
 
                 {/* Body */}
-                <div className="flex-grow overflow-y-auto px-6 py-4">
+                <div className="flex-grow overflow-y-auto p-6">
                     {renderForm()}
-                    {errors.submit && (
-                        <div className="mt-4 p-2 bg-red-100 border border-red-300 rounded-md">
-                            <p className="text-red-700 text-sm">{errors.submit}</p>
-                        </div>
-                    )}
                 </div>
 
                 {/* Footer */}
-                <div className="px-6 py-4 border-t border-gray-200 flex justify-end items-center bg-gray-50">
+                <div className="px-6 py-4 border-t border-gray-200 flex justify-end items-center">
                     <button
                         onClick={onClose}
                         className="px-4 py-2 bg-gray-200 text-gray-800 rounded-md mr-2 hover:bg-gray-300 transition duration-150 ease-in-out"
@@ -128,9 +93,10 @@ const ItemModal = ({
                         Cancelar
                     </button>
                     <button
-                        onClick={() => onSave(formData)}
+                        type="submit"
+                        form={activeTab + 'Form'}
                         className="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 transition duration-150 ease-in-out disabled:opacity-50 disabled:cursor-not-allowed"
-                        disabled={loading || Object.keys(errors).length > 0}
+                        disabled={loading}
                     >
                         {loading ? 'Guardando...' : 'Guardar'}
                     </button>

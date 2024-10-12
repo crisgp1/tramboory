@@ -47,6 +47,10 @@ const Finanza = sequelize.define('Finanza', {
   archivo_prueba: {
     type: DataTypes.STRING(255),
     allowNull: true
+  },
+  activo: {
+    type: DataTypes.BOOLEAN,
+    defaultValue: true
   }
 }, {
   tableName: 'Finanzas',

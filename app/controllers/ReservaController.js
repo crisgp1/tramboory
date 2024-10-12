@@ -7,6 +7,9 @@ const Usuario = require('../models/Usuario');
 exports.getAllReservas = async (req, res) => {
   try {
     const reservas = await Reserva.findAll({
+      where : {
+        activo : true
+        },
       attributes: ['id', 'id_usuario', 'id_paquete', 'id_opcion_alimento', 'fecha_reserva', 'hora_inicio', 'estado', 'total', 'nombre_festejado', 'edad_festejado', 'tematica', 'cupcake', 'mampara', 'piñata', 'comentarios'],
       include: [
         {
@@ -80,7 +83,7 @@ exports.deleteReserva = async (req, res) => {
     const { id } = req.params;
     await Reserva.update({ activo: false }, {
       where: { id },
-      silent: true  // Esto evita que Sequelize intente actualizar campos de timestamp
+      silent: true
     });
     res.status(200).json({ message: 'Reserva desactivada con éxito' });
   } catch (error) {
@@ -88,6 +91,7 @@ exports.deleteReserva = async (req, res) => {
     res.status(500).json({ error: 'Error al desactivar la reserva' });
   }
 };
+
 
 exports.getReservasByUserId = async (req, res) => {
   try {
