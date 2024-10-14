@@ -1,15 +1,19 @@
 import { FiPackage, FiFileText, FiDollarSign, FiClock, FiUsers, FiCalendar, FiImage, FiToggleRight } from 'react-icons/fi';
+import { useForm } from 'react-hook-form';
 
-const PackageForm = ({ editingItem, onSave }) => {
+const PackageForm = ({ editingItem, onSave, activeTab }) => {
     const handleSubmit = (e) => {
         e.preventDefault();
         const formData = new FormData(e.target);
         const data = Object.fromEntries(formData.entries());
+        const errors = {};
         onSave(data);
     };
 
+   
+
     return (
-        <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <form  id={activeTab + 'Form'} onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="col-span-1 md:col-span-2">
                 <label className="block text-sm font-medium text-gray-700 mb-1">Nombre del Paquete</label>
                 <div className="relative">

@@ -4,7 +4,7 @@ import withValidation from '../../components/withValidation';
 const Input = withValidation('input');
 const Select = withValidation('select');
 
-const UserForm = ({ editingItem, generatedPassword, generateRandomPassword, onSave }) => {
+const UserForm = ({ editingItem, generatedPassword, generateRandomPassword, onSave, activeTab }) => {
     const handleSubmit = (e) => {
         e.preventDefault();
         const formData = new FormData(e.target);
@@ -31,7 +31,7 @@ const UserForm = ({ editingItem, generatedPassword, generateRandomPassword, onSa
     
 
     return (
-        <form id="usersForm" onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <form id={activeTab + 'Form'} onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="col-span-1 md:col-span-2">
                 <label className="block text-sm font-medium text-gray-700 mb-1">Nombre</label>
                 <div className="relative">

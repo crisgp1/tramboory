@@ -1,4 +1,3 @@
-import React from 'react';
 import { FiX } from 'react-icons/fi';
 import UserForm from './UserForm';
 import ReservationForm from './ReservationForm';
@@ -18,13 +17,15 @@ const ItemModal = ({
                        users,
                        packages,
                        reservations,
+                       finances,
                        categories,
                        onAddCategory
                    }) => {
     const renderForm = () => {
         const commonProps = {
             editingItem,
-            onSubmit: handleSubmit,
+            onSave: handleSubmit,    
+            activeTab, 
             onClose,
         };
 
@@ -63,6 +64,13 @@ const ItemModal = ({
 
     if (!isOpen) return null;
 
+    const handleSaveClick = () => {
+        const form = document.getElementById(activeTab + 'Form');
+        if (form) {
+          form.dispatchEvent(new Event('submit', { cancelable: true, bubbles: true }));
+        }
+      };
+
     return (
         <div className="fixed inset-0 z-50 overflow-auto bg-gray-500 bg-opacity-75 flex items-center justify-center p-4">
             <div className="bg-white rounded-lg shadow-xl w-full max-w-4xl flex flex-col">
@@ -86,21 +94,20 @@ const ItemModal = ({
 
                 {/* Footer */}
                 <div className="px-6 py-4 border-t border-gray-200 flex justify-end items-center">
-                    <button
-                        onClick={onClose}
-                        className="px-4 py-2 bg-gray-200 text-gray-800 rounded-md mr-2 hover:bg-gray-300 transition duration-150 ease-in-out"
-                    >
-                        Cancelar
-                    </button>
-                    <button
-                        type="submit"
-                        form={activeTab + 'Form'}
-                        className="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 transition duration-150 ease-in-out disabled:opacity-50 disabled:cursor-not-allowed"
-                        disabled={loading}
-                    >
-                        {loading ? 'Guardando...' : 'Guardar'}
-                    </button>
-                </div>
+      <button
+        onClick={onClose}
+        className="px-4 py-2 bg-gray-200 text-gray-800 rounded-md mr-2 hover:bg-gray-300 transition duration-150 ease-in-out"
+      >
+        Cancelar
+      </button>
+      <button
+        onClick={handleSaveClick}
+        className="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 transition duration-150 ease-in-out"
+        disabled={loading}
+      >
+        {loading ? 'Guardando...' : 'Guardar'}
+      </button>
+    </div>
             </div>
         </div>
     );

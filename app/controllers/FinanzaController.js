@@ -61,8 +61,7 @@ exports.createFinanza = async (req, res) => {
             fecha,
             descripcion,
             id_reserva,
-            categoria,
-            factura_pdf: facturaPDF,
+            categoria: categoria.toString(), // Asegúrate de que categoria sea una cadena            factura_pdf: facturaPDF,
             factura_xml: facturaXML,
             archivo_prueba: archivoPrueba
         });
@@ -74,42 +73,40 @@ exports.createFinanza = async (req, res) => {
     }
 };
 
-exports.updateFinanza = [
-    upload.fields([
-        { name: 'factura_pdf', maxCount: 1 },
-        { name: 'factura_xml', maxCount: 1 },
-        { name: 'archivo_prueba', maxCount: 1 }
-    ]),
-    async (req, res) => {
-        try {
-            const finanza = await Finanza.findByPk(req.params.id);
-            if (!finanza) {
-                return res.status(404).json({ error: 'Finanza no encontrada' });
-            }
-
-            const finanzaData = { ...req.body };
-
-            // Manejar archivos
-            ['factura_pdf', 'factura_xml', 'archivo_prueba'].forEach(field => {
-                if (req.files[field]) {
-                    // Si hay un nuevo archivo, eliminar el antiguo si existe
-                    if (finanza[field]) {
-                        fs.unlink(finanza[field], (err) => {
-                            if (err) console.error(`Error al eliminar archivo antiguo ${field}:`, err);
-                        });
-                    }
-                    finanzaData[field] = req.files[field][0].path;
-                }
-            });
-
-            await finanza.update(finanzaData);
-            res.json(finanza);
-        } catch (error) {
-            console.error('Error al actualizar la finanza:', error);
-            res.status(500).json({ error: 'Error al actualizar la finanza' });
+exports.updateFinanza = async (req, res) => {
+    try {
+        const finanza = await Finanza.findByPk(req.params.id);
+        if (!finanza) {
+            return res.status(404).json({ error: 'Finanza no encontrada' });
         }
+
+        const finanzaData = { ...req.body };
+
+        // Convertir id_reserva vacío a null
+        if (finanzaData.id_reserva === '') {
+            finanzaData.id_reserva = null;
+        }
+
+        // Manejar archivos
+        ['factura_pdf', 'factura_xml', 'archivo_prueba'].forEach(field => {
+            if (req.files && req.files[field]) {
+                // Si hay un nuevo archivo, eliminar el antiguo si existe
+                if (finanza[field]) {
+                    fs.unlink(finanza[field], (err) => {
+                        if (err) console.error(`Error al eliminar archivo antiguo ${field}:`, err);
+                    });
+                }
+                finanzaData[field] = req.files[field][0].path;
+            }
+        });
+
+        await finanza.update(finanzaData);
+        res.json(finanza);
+    } catch (error) {
+        console.error('Error al actualizar la finanza:', error);
+        res.status(500).json({ error: 'Error al actualizar la finanza', details: error.message });
     }
-];
+};
 
 exports.deleteFinanza = async (req, res) => {
     try {

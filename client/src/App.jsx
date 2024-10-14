@@ -7,6 +7,9 @@ import { Header, Footer } from './components/ui/';
 import ProtectedRoute from './components/ProtectedRoute';
 import PublicRoute from "./components/PublicRoute.jsx";
 import Logo from './img/logo.webp';
+import withTokenValidation from './components/withTokenValidation.jsx';
+import { ToastContainer } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 
 // Importaciones perezosas para mejorar el rendimiento
 const Home = lazy(() => import('./pages/Home'));
@@ -18,6 +21,10 @@ const PaquetesPersonalizaciones = lazy(() => import("./pages/PaquetesPersonaliza
 const ForgotPassword = lazy(() => import("./pages/ForgotPassword.jsx"));
 const Appointment = lazy(() => import("./pages/Appointment.jsx"));
 
+// Aplicar el HOC a los componentes que requieren autenticación
+const ValidatedDashboard = withTokenValidation(Dashboard);
+const ValidatedReservation = withTokenValidation(Reservation);
+const ValidatedPaquetesPersonalizaciones = withTokenValidation(PaquetesPersonalizaciones);
 // Componente Layout que incluye el Header y Footer
 const Layout = () => (
     <>
@@ -26,6 +33,8 @@ const Layout = () => (
       <Footer />
     </>
 );
+
+
 
 // Componente de carga sutil mejorado con mensaje estilizado
 const SubtleLoader = () => {
@@ -172,6 +181,7 @@ const SubtleLoader = () => {
 function App() {
   return (
       <Router>
+              <ToastContainer position="top-right" autoClose={5000} />
         <Suspense fallback={<SubtleLoader />}>
           <Routes>
             {/* Rutas sin Header ni Footer */}
@@ -186,19 +196,22 @@ function App() {
                 </PublicRoute>
               } />
               <Route path="/signup" element={<Signup />} />
-              <Route path="/dashboard" element={
-                <ProtectedRoute>
-                  <Dashboard />
-                </ProtectedRoute>
-              } />
+              <Route
+  path="/dashboard"
+  element={
+    <ProtectedRoute allowedRoles={['admin']}>
+      <Dashboard />
+    </ProtectedRoute>
+  }
+/>
               <Route path="/reservations" element={
-                <ProtectedRoute>
-                  <Reservation />
+                <ProtectedRoute allowedRoles={['admin,  cliente']}>
+                  <ValidatedReservation />
                 </ProtectedRoute>
               } />
               <Route path="/dashboard/paquetes" element={
                 <ProtectedRoute>
-                  <PaquetesPersonalizaciones />
+                  <ValidatedPaquetesPersonalizaciones />
                 </ProtectedRoute>
               } />
               <Route path="/forgot-password" element={<ForgotPassword />} />
@@ -210,5 +223,4 @@ function App() {
       </Router>
   );
 }
-
 export default App;

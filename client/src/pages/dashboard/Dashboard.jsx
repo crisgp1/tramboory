@@ -167,54 +167,97 @@ const Dashboard = () => {
     [navigate]
   )
 
-  const handleSubmit = useCallback(async (data) => {
-    setLoading(true);
-    try {
-        let endpoint;
-        let successMessage;
+  function removeCircularReferences (obj, seen = new WeakSet()) {
+    if (typeof obj !== 'object' || obj === null) {
+      return obj
+    }
+    if (seen.has(obj)) {
+      return '[Circular]'
+    }
+    seen.add(obj)
+    const newObj = Array.isArray(obj) ? [] : {}
+    for (const key in obj) {
+      if (Object.prototype.hasOwnProperty.call(obj, key)) {
+        newObj[key] = removeCircularReferences(obj[key], seen)
+      }
+    }
+    return newObj
+  }
 
+  const handleSubmit = useCallback(
+    async data => {
+      setLoading(true)
+      try {
+        console.log('Datos recibidos en handleSubmit:', data);
+        let endpoint
+        let successMessage
+
+        // Determinar el endpoint y el mensaje de éxito basado en activeTab
         switch (activeTab) {
-            case 'users':
-                endpoint = '/api/usuarios';
-                successMessage = editingItem ? 'Usuario actualizado exitosamente' : 'Usuario creado exitosamente';
-                break;
-            case 'reservations':
-                endpoint = '/api/reservas';
-                successMessage = editingItem ? 'Reserva actualizada exitosamente' : 'Reserva creada exitosamente';
-                break;
-            case 'finances':
-                endpoint = '/api/finanzas';
-                successMessage = editingItem ? 'Registro financiero actualizado exitosamente' : 'Registro financiero creado exitosamente';
-                break;
-            case 'packages':
-                endpoint = '/api/paquetes';
-                successMessage = editingItem ? 'Paquete actualizado exitosamente' : 'Paquete creado exitosamente';
-                break;
-            default:
-                throw new Error('Tipo de formulario no reconocido');
+          case 'users':
+            endpoint = '/api/usuarios'
+            successMessage = editingItem
+              ? 'Usuario actualizado exitosamente'
+              : 'Usuario creado exitosamente'
+            break
+          case 'reservations':
+            endpoint = '/api/reservas'
+            successMessage = editingItem
+              ? 'Reserva actualizada exitosamente'
+              : 'Reserva creada exitosamente'
+            break
+          case 'finances':
+            endpoint = '/api/finanzas'
+            successMessage = editingItem
+              ? 'Registro financiero actualizado exitosamente'
+              : 'Registro financiero creado exitosamente'
+            break
+          case 'packages':
+            endpoint = '/api/paquetes'
+            successMessage = editingItem
+              ? 'Paquete actualizado exitosamente'
+              : 'Paquete creado exitosamente'
+            break
+          default:
+            throw new Error('Tipo de formulario no reconocido')
         }
 
+        const cleanedData = removeCircularReferences(data)
+        console.log('Datos limpios a enviar al servidor:', cleanedData)
+
+        // Serializar los datos limpios
+        const serializedData = JSON.stringify(cleanedData)
+
+        // Realizar la petición al servidor
         if (editingItem) {
-            await axiosInstance.put(`${endpoint}/${editingItem.id}`, data);
+          await axiosInstance.put(
+            `${endpoint}/${editingItem.id}`,
+            JSON.parse(serializedData)
+          )
         } else {
-            await axiosInstance.post(endpoint, data);
+          await axiosInstance.post(endpoint, JSON.parse(serializedData))
         }
 
-        toast.success(successMessage);
-        setIsModalOpen(false);
-        fetchData();
-    } catch (error) {
+        // Mostrar mensaje de éxito y actualizar el estado
+        toast.success(successMessage)
+        setIsModalOpen(false)
+        fetchData()
+      } catch (error) {
         console.error('Error en handleSubmit:', error);
-        if (error.response) {
-            toast.error(`Error al ${editingItem ? 'actualizar' : 'crear'} el registro: ${error.response.data.message}`);
+        if (error.response && error.response.status === 401) {
+            // Error de autenticación
+            toast.error('Tu sesión ha expirado. Por favor, inicia sesión nuevamente.');
+            // Redirigir al login
+            navigate('/signin');
+            return; // Agregar esta línea para detener la ejecución
         } else {
-            toast.error(`Error al ${editingItem ? 'actualizar' : 'crear'} el registro`);
+            handleError(error, editingItem ? 'actualizar' : 'crear');
         }
     } finally {
         setLoading(false);
     }
-}, [activeTab, editingItem, fetchData, setIsModalOpen]);
-
+}, [activeTab, editingItem, fetchData, handleError, setIsModalOpen, navigate]);
+  
   const handleDeleteItem = async (endpoint, id, successMessage, onClose) => {
     const result = await Swal.fire({
       title: '¿Estás seguro?',
@@ -315,7 +358,10 @@ const Dashboard = () => {
 
   const handleAddCategory = useCallback(async newCategory => {
     try {
-      const response = await axiosInstance.post('/api/categorias', newCategory)
+      const response = await axiosInstance.post('/api/categorias',  {
+        nombre: newCategory.nombre,
+        color: newCategory.color || '#000000' // Asegúrate de incluir el color
+    })
       setCategories(prevCategories => [...prevCategories, response.data])
       toast.success('Categoría añadida con éxito')
     } catch (error) {
@@ -327,7 +373,7 @@ const Dashboard = () => {
   const renderModalContent = useCallback(() => {
     const props = {
       editingItem,
-      onSubmit: handleSubmit,
+      onSave: handleSubmit,
       generateRandomPassword,
       generatedPassword,
       users,
@@ -424,6 +470,7 @@ const Dashboard = () => {
           <FinanceTable
             finances={filterDataByMonth(finances, 'fecha')}
             handleEditItem={handleEditItem}
+            categories={categories}
             handleDeleteItem={id =>
               handleDeleteItem(
                 '/api/finanzas',
@@ -460,24 +507,27 @@ const Dashboard = () => {
           onClose={() => setIsReservationModalOpen(false)}
         />
       )}
-       {isModalOpen && (
-            <ItemModal
-                isOpen={isModalOpen}
-                onClose={() => setIsModalOpen(false)}
-                title={`${editingItem ? 'Editar' : 'Agregar'} ${activeTab.slice(0, -1)}`}
-                loading={loading}
-                activeTab={activeTab}
-                handleSubmit={handleSubmit}
-                editingItem={editingItem}
-                generatedPassword={generatedPassword}
-                generateRandomPassword={generateRandomPassword}
-                users={users}
-                packages={packages}
-                reservations={reservations}
-                categories={categories}
-                onAddCategory={handleAddCategory}
-            />
-        )}
+      {isModalOpen && (
+        <ItemModal
+          isOpen={isModalOpen}
+          onClose={() => setIsModalOpen(false)}
+          title={`${editingItem ? 'Editar' : 'Agregar'} ${activeTab.slice(
+            0,
+            -1
+          )}`}
+          loading={loading}
+          activeTab={activeTab}
+          handleSubmit={handleSubmit}
+          editingItem={editingItem}
+          generatedPassword={generatedPassword}
+          generateRandomPassword={generateRandomPassword}
+          users={users}
+          packages={packages}
+          reservations={reservations}
+          categories={categories}
+          onAddCategory={handleAddCategory}
+        />
+      )}
       {selectedFinance && (
         <FinanceDetailModal
           finance={selectedFinance}

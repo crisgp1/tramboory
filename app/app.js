@@ -26,7 +26,6 @@ if (!fs.existsSync(uploadDir)){
 }
 
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
-
 app.use('/api/paquetes', paqueteRoutes);
 app.use('/api/usuarios', authMiddleware, usuarioRoutes);
 app.use('/api/finanzas', authMiddleware, finanzaRoutes);
@@ -35,6 +34,8 @@ app.use('/api/reservas', authMiddleware, reservaRoutes);
 app.use('/api/personalizaciones', authMiddleware, personalizacionRoutes);
 app.use('/api/opciones-alimentos', opcionAlimentoRoutes);
 app.use('/api/categorias', categoriaRoutes);
+
+
 app.use(cookieParser());
 
 sequelize.sync({force: false})

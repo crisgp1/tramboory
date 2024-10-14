@@ -1,57 +1,55 @@
-import { useState, useEffect } from 'react';
+import React from 'react';
+import { useForm, Controller } from 'react-hook-form';
 import { FiDollarSign, FiCalendar, FiFileText, FiTag, FiPackage, FiUpload, FiFile, FiPlus, FiMinus, FiX } from 'react-icons/fi';
 import { TwitterPicker } from 'react-color';
+import CurrencyInput from '../../components/CurrencyInput';
 
-const FinanceForm = ({ editingItem, onSubmit, categories, onAddCategory, onClose,  reservations = []}) => {
-    const [formData, setFormData] = useState(editingItem || {});
-    const [newCategory, setNewCategory] = useState('');
-    const [selectedCategoryId, setSelectedCategoryId] = useState(editingItem?.categoria?.id || '');
-    const [showNewCategoryInput, setShowNewCategoryInput] = useState(false);
-    const [categoryColor, setCategoryColor] = useState('#FF6900');
-    const [showColorPicker, setShowColorPicker] = useState(false);
+const FinanceForm = ({ editingItem, onSave, categories, onAddCategory, reservations, activeTab }) => {
+    const { register, handleSubmit, control, setValue, watch } = useForm({
+        defaultValues: editingItem || {}
+    });
 
-    
-    useEffect(() => {
-        if (categories.length > 0) {
-            console.log('Categorías actualizadas:', categories);
-        }
-    }, [categories]);
+    const [showNewCategoryInput, setShowNewCategoryInput] = React.useState(false);
+    const [newCategory, setNewCategory] = React.useState('');
+    const [categoryColor, setCategoryColor] = React.useState('#FF6900');
+    const [showColorPicker, setShowColorPicker] = React.useState(false);
+
+    const selectedCategoryId = watch('categoria');
+
+    const onSubmit = (data) => {
+      console.log('Formulario enviado:', data); // Para depuración
+      onSave({
+        ...data,
+        categoria: data.categoria, // Asegúrate de que esto sea el ID de la categoría, no el objeto completo
+        reserva: data.id_reserva
+      });
+    };
+  
 
     const handleAddCategory = () => {
-        if (newCategory && !categories.find(cat => cat.name === newCategory)) {
-            onAddCategory({ nombre: newCategory, color: categoryColor });
+        if (newCategory && !categories.find(cat => cat.nombre === newCategory)) {
+          onAddCategory({ nombre: newCategory, color: categoryColor || '#000000' }); // Proporciona un color por defecto si no se selecciona uno
             setNewCategory('');
             setShowNewCategoryInput(false);
         }
     };
 
-    const handleSubmit = (e) => {
-        e.preventDefault();
-        onSubmit({
-            ...formData,
-            categoria: categories.find(cat => cat.id === selectedCategoryId),
-        });
-    };
+    const getCategoryColor = (categoryName) => {
+      const category = categories.find(cat => cat.nombre === categoryName);
+      return category && category.color ? category.color : '#CCCCCC'; // Color por defecto si no se encuentra la categoría o el color
+  };
 
-    const handleChange = (e) => {
-        const { name, value, type, checked } = e.target;
-        const newValue = type === 'checkbox' ? checked : value;
-        setFormData(prevData => ({
-            ...prevData,
-            [name]: newValue,
-        }));
-    };
+    
 
-    return (
-        <form onSubmit={handleSubmit} className="space-y-4">
+    return (  
+        <form id={activeTab + 'Form'} onSubmit={handleSubmit(onSubmit)} className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-               
+                <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">Tipo</label>
                     <div className="relative">
                         <FiDollarSign className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
                         <select
-                            name="tipo"
-                            defaultValue={editingItem?.tipo || ''}
+                            {...register('tipo', { required: 'Este campo es requerido' })}
                             className="pl-10 w-full p-2 border rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500"
                         >
                             <option value="">Seleccionar tipo</option>
@@ -63,17 +61,19 @@ const FinanceForm = ({ editingItem, onSubmit, categories, onAddCategory, onClose
 
                 <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">Monto</label>
-                    <div className="relative">
-                        <FiDollarSign className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
-                        <input
-                            name="monto"
-                            type="number"
-                            step="0.01"
-                            placeholder="Monto"
-                            defaultValue={editingItem?.monto || ''}
-                            className="pl-10 w-full p-2 border rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500"
-                        />
-                    </div>
+                    <Controller
+    name="monto"
+    control={control}
+    rules={{ required: 'Este campo es requerido' }}
+    render={({ field }) => (
+        <CurrencyInput
+            {...field}
+            className="pl-10 w-full p-2 border rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500"
+            placeholder="Monto"
+            icon={FiDollarSign}
+        />
+    )}
+/>
                 </div>
 
                 <div>
@@ -81,36 +81,34 @@ const FinanceForm = ({ editingItem, onSubmit, categories, onAddCategory, onClose
                     <div className="relative">
                         <FiCalendar className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
                         <input
-                            name="fecha"
                             type="date"
-                            defaultValue={editingItem?.fecha || ''}
+                            {...register('fecha', { required: 'Este campo es requerido' })}
                             className="pl-10 w-full p-2 border rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500"
                         />
                     </div>
                 </div>
 
                 <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Categoría</label>
-                <div className="relative flex items-center">
-                    <FiTag className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"/>
-                    <select
-                        name="categoria"
-                        value={selectedCategoryId}
-                        onChange={(e) => setSelectedCategoryId(e.target.value)}
-                        className="pl-10 w-full p-2 border rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500"
-                    >
-                        <option value="">Seleccionar categoría</option>
-                        {categories.map((cat, index) => (
-    <option key={index} value={cat.nombre}>{cat.nombre}</option>
-))}
-                    </select>
-                    <button
-                        type="button"
-                        onClick={() => setShowNewCategoryInput(!showNewCategoryInput)}
-                        className="ml-2 p-2 bg-indigo-500 text-white rounded-md hover:bg-indigo-600 focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                    >
-                        {showNewCategoryInput ? <FiMinus/> : <FiPlus/>}
-                    </button>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Categoría</label>
+                    <div className="relative flex items-center">
+                        <FiTag className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+                        <select
+                            {...register('categoria', { required: 'Este campo es requerido' })}
+                            className="pl-10 w-full p-2 border rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500"
+                        >
+                            <option value="">Seleccionar categoría</option>
+                            {categories.map((cat) => (
+                                <option key={cat.id} value={cat.id}>{cat.nombre}</option>
+                            ))}
+                        </select>
+                        <button
+                            type="button"
+                            onClick={() => setShowNewCategoryInput(!showNewCategoryInput)}
+                            className="ml-2 p-2 bg-indigo-500 text-white rounded-md hover:bg-indigo-600 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                        >
+                            {showNewCategoryInput ? <FiMinus /> : <FiPlus />}
+                        </button>
+                    </div>
                 </div>
             </div>
 
@@ -160,11 +158,10 @@ const FinanceForm = ({ editingItem, onSubmit, categories, onAddCategory, onClose
                 <div className="relative">
                     <FiFileText className="absolute left-3 top-3 text-gray-400" />
                     <textarea
-                        name="descripcion"
-                        placeholder="Descripción"
-                        defaultValue={editingItem?.descripcion || ''}
+                        {...register('descripcion')}
                         className="pl-10 w-full p-2 border rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500"
                         rows="3"
+                        placeholder="Descripción"
                     ></textarea>
                 </div>
             </div>
@@ -174,17 +171,16 @@ const FinanceForm = ({ editingItem, onSubmit, categories, onAddCategory, onClose
                 <div className="relative">
                     <FiPackage className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
                     <select
-                        name="id_reserva"
-                        defaultValue={editingItem?.id_reserva || ''}
-                        className="pl-10 w-full p-2 border rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500"
-                    >
-                        <option value="">Sin reserva asociada</option>
-                        {reservations.map((reserva) => (
-                         <option key={reserva.id} value={reserva.id}>
-                    {`Reserva #${reserva.id} - ${reserva.nombre_festejado}`}
-                </option>
-            ))}
-                    </select>
+    {...register('id_reserva')}
+    className="pl-10 w-full p-2 border rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500"
+>
+    <option value="">Sin reserva asociada</option>
+    {reservations.map((reserva) => (
+        <option key={reserva.id} value={reserva.id}>
+            {`Reserva #${reserva.id} - ${reserva.nombre_festejado}`}
+        </option>
+    ))}
+</select>
                 </div>
             </div>
 
@@ -193,9 +189,9 @@ const FinanceForm = ({ editingItem, onSubmit, categories, onAddCategory, onClose
                 <div className="relative">
                     <FiUpload className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
                     <input
-                        name="factura_pdf"
                         type="file"
                         accept=".pdf"
+                        {...register('factura_pdf')}
                         className="pl-10 w-full p-2 border rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500"
                     />
                 </div>
@@ -206,9 +202,9 @@ const FinanceForm = ({ editingItem, onSubmit, categories, onAddCategory, onClose
                 <div className="relative">
                     <FiFile className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
                     <input
-                        name="factura_xml"
                         type="file"
                         accept=".xml"
+                        {...register('factura_xml')}
                         className="pl-10 w-full p-2 border rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500"
                     />
                 </div>
@@ -216,18 +212,24 @@ const FinanceForm = ({ editingItem, onSubmit, categories, onAddCategory, onClose
 
             {editingItem && editingItem.archivo_prueba && (
                 <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Archivo de prueba actual</label>
-                    <div className="text-sm text-gray-500">{editingItem.archivo_prueba}</div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Archivo de prueba actual
+                    </label>
+                    <div className="text-sm text-gray-500">
+                        {editingItem.archivo_prueba}
+                    </div>
                 </div>
             )}
 
             <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Archivo de Prueba (Opcional)</label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Archivo de Prueba (Opcional)
+                </label>
                 <div className="relative">
                     <FiUpload className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
                     <input
-                        name="archivo_prueba"
                         type="file"
+                        {...register('archivo_prueba')}
                         className="pl-10 w-full p-2 border rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500"
                     />
                 </div>
@@ -235,6 +237,5 @@ const FinanceForm = ({ editingItem, onSubmit, categories, onAddCategory, onClose
         </form>
     );
 };
-
 
 export default FinanceForm;

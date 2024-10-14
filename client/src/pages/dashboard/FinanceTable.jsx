@@ -1,4 +1,3 @@
-import React from 'react';
 import { FiEdit2, FiTrash2, FiDownload, FiEye } from 'react-icons/fi';
 import PropTypes from 'prop-types';
 import { formatDate, formatNumber } from '../../utils/formatters';
@@ -123,7 +122,7 @@ FinanceTable.propTypes = {
     categories: PropTypes.arrayOf(PropTypes.shape({
         id: PropTypes.number.isRequired,
         nombre: PropTypes.string.isRequired,
-        color: PropTypes.string.isRequired
+        color: PropTypes.string
     })).isRequired
 };
 

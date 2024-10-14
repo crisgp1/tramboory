@@ -3,7 +3,7 @@ const sequelize = require('../config/database');
 
 const Categoria = sequelize.define('Categoria', {
     id: {
-        type: DataTypes.INTEGER,
+        type: DataTypes.STRING,
         autoIncrement: true,
         primaryKey: true
     },
@@ -11,6 +11,11 @@ const Categoria = sequelize.define('Categoria', {
         type: DataTypes.STRING(100),
         allowNull: false,
         unique: true
+    },
+    color: {
+        type: DataTypes.STRING,
+        allowNull: false,
+        defaultValue: '#000000' // Color negro por defecto
     }
 }, {
     tableName: 'Categorias',

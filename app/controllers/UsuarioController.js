@@ -1,6 +1,7 @@
 // controllers/UsuarioController.js
 const { Op } = require('sequelize')
 const Usuario = require('../models/Usuario')
+const  bcrypt = require('bcrypt')
 
 exports.getAllUsuarios = async (req, res) => {
   try {

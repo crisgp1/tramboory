@@ -12,8 +12,8 @@ const Finanza = sequelize.define('Finanza', {
     type: DataTypes.INTEGER,
     allowNull: true,
     references: {
-      model: Reserva,
-      key: 'id'
+        model: 'Reservas',
+        key: 'id'
     }
   },
   tipo: {
