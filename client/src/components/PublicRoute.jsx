@@ -1,8 +1,6 @@
-// PublicRoute.jsx
-
 import { Navigate, Outlet } from 'react-router-dom';
 import { useState, useEffect } from 'react';
-import { jwtDecode } from 'jwt-decode'; // Importación correcta
+import { jwtDecode } from 'jwt-decode';
 import { motion } from 'framer-motion';
 
 const PublicRoute = ({ redirectPath = '/dashboard', children }) => {
@@ -10,7 +8,7 @@ const PublicRoute = ({ redirectPath = '/dashboard', children }) => {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    const checkAuth = async () => {
+    const checkAuth = () => {
       const token = localStorage.getItem('token');
       if (token) {
         try {
@@ -19,75 +17,21 @@ const PublicRoute = ({ redirectPath = '/dashboard', children }) => {
             setIsAuthenticated(true);
           } else {
             localStorage.removeItem('token');
-            setIsAuthenticated(false);
           }
         } catch (error) {
           console.error('Error decoding token:', error);
           localStorage.removeItem('token');
-          setIsAuthenticated(false);
         }
-      } else {
-        setIsAuthenticated(false);
       }
-      await new Promise((resolve) => setTimeout(resolve, 3000));
       setIsLoading(false);
     };
-    checkAuth();
+    
+    // Usamos un setTimeout para simular una carga mínima y evitar parpadeos
+    setTimeout(checkAuth, 500);
   }, []);
 
-  const containerVariants = {
-    start: { opacity: 1 },
-    end: { opacity: 1, transition: { staggerChildren: 0.2 } },
-  };
-
-  const blockVariants = {
-    start: { y: '100%', opacity: 0, rotate: 0 },
-    end: {
-      y: 0,
-      opacity: 1,
-      rotate: 360,
-      transition: {
-        type: 'spring',
-        stiffness: 50,
-        damping: 10,
-        duration: 0.8,
-        repeat: Infinity,
-        repeatType: 'reverse',
-      },
-    },
-  };
-
   if (isLoading) {
-    return (
-      <div className='flex flex-col items-center justify-center h-screen bg-gradient-to-r from-blue-500 to-purple-600'>
-        <motion.div
-          className='grid grid-cols-3 gap-2'
-          variants={containerVariants}
-          initial='start'
-          animate='end'
-        >
-          {[...Array(9)].map((_, i) => (
-            <motion.div
-              key={i}
-              className='w-8 h-8 bg-white rounded-sm'
-              variants={blockVariants}
-              style={{
-                originX: 0.5,
-                originY: 0.5,
-              }}
-            />
-          ))}
-        </motion.div>
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.5, duration: 0.5 }}
-          className='mt-8 text-2xl font-bold text-white'
-        >
-          Verificando acceso...
-        </motion.div>
-      </div>
-    );
+    return <LoadingAnimation />;
   }
 
   if (isAuthenticated) {
@@ -95,6 +39,43 @@ const PublicRoute = ({ redirectPath = '/dashboard', children }) => {
   }
 
   return children ? children : <Outlet />;
+};
+
+const LoadingAnimation = () => {
+  return (
+    <div className="flex flex-col items-center justify-center h-screen bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500">
+      <motion.div
+        className="flex space-x-2"
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ duration: 0.5 }}
+      >
+        {[...Array(3)].map((_, i) => (
+          <motion.div
+            key={i}
+            className="w-4 h-4 bg-white rounded-full"
+            animate={{
+              y: ['0%', '-50%', '0%'],
+              scale: [1, 1.2, 1],
+            }}
+            transition={{
+              duration: 0.6,
+              repeat: Infinity,
+              delay: i * 0.2,
+            }}
+          />
+        ))}
+      </motion.div>
+      <motion.p
+        className="mt-4 text-xl font-semibold text-white"
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.5 }}
+      >
+        Verificando acceso...
+      </motion.p>
+    </div>
+  );
 };
 
 export default PublicRoute;

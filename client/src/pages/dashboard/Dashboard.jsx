@@ -262,18 +262,25 @@ const Dashboard = () => {
   }, [navigate, fetchData]);
   
 
-  const handleReservationStatusChange = useCallback(
-    (reservationId, newStatus) => {
-      setReservations(prevReservations =>
-        prevReservations.map(reservation =>
-          reservation.id === reservationId
-            ? { ...reservation, estado: newStatus }
-            : reservation
-        )
+  const handleReservationStatusChange = useCallback((reservationId, newStatus) => {
+    setReservations(prevReservations =>
+      prevReservations.map(reservation =>
+        reservation.id === reservationId
+          ? { ...reservation, estado: newStatus }
+          : reservation
       )
-    },
-    []
-  )
+    );
+  
+    // Si el estado es "cancelado" o "pendiente", actualizar las fechas disponibles
+    if (newStatus === 'cancelada' || newStatus === 'pendiente') {
+      const updatedReservation = reservations.find(r => r.id === reservationId);
+      if (updatedReservation) {
+        setUnavailableDates(prevDates => 
+          prevDates.filter(date => date.getTime() !== new Date(updatedReservation.fecha_reserva).getTime())
+        );
+      }
+    }
+  }, [reservations]);
   
 
   // Functions for sending email and contacting user (implement as needed)
@@ -644,20 +651,14 @@ const Dashboard = () => {
         )}
         {activeTab === 'reservations' && (
           <ReservationTable
-            reservations={filteredReservations}
-            reservationSearch={reservationSearch}
-            setReservationSearch={setReservationSearch}
-            handleViewReservation={handleViewReservation}
-            handleEditItem={handleEditItem}
-            handleDeleteItem={id =>
-              handleDeleteItem(
-                '/api/reservas',
-                id,
-                'Reserva desactivada con éxito',
-                () => setIsModalOpen(false)
-              )
-            }
-          />
+          reservations={reservations}
+          reservationSearch={reservationSearch}
+          setReservationSearch={setReservationSearch}
+          handleViewReservation={handleViewReservation}
+          handleEditItem={handleEditItem}
+          handleDeleteItem={handleDeleteItem}
+          selectedMonth={selectedMonth}
+        />
         )}
         {activeTab === 'finances' && (
           <FinanceTable

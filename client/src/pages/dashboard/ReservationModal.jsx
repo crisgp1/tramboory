@@ -1,6 +1,6 @@
 // ReservationModal.jsx
 
-import { useState } from 'react';
+import { useState, useEffect  } from 'react';
 import { motion } from 'framer-motion';
 import {
   FiCalendar,
@@ -22,6 +22,8 @@ import axiosInstance from '../../components/axiosConfig';
 import { toast } from 'react-toastify';
 import Swal from 'sweetalert2';
 
+
+
 const ReservationModal = ({
   reservation,
   onClose,
@@ -31,6 +33,7 @@ const ReservationModal = ({
   extras// This function will be called when status changes
 }) => {
   const [status, setStatus] = useState(reservation.estado);
+  const [fechaProtegida, setFechaProtegida] = useState(true);
 
   if (!reservation) return null;
 
@@ -67,6 +70,13 @@ const ReservationModal = ({
         });
         setStatus(newStatus);
         onStatusChange(newStatus); // Notify parent component
+  
+        // Liberar la fecha si el estado es "cancelado" o "pendiente"
+        if (newStatus === 'cancelada' || newStatus === 'pendiente') {
+          // Aquí deberías llamar a una función para liberar la fecha en el backend
+          await axiosInstance.post(`/api/reservas/${reservation.id}/liberar-fecha`);
+        }
+  
         toast.success(`Estado de la reserva actualizado a ${newStatus}`);
       } catch (error) {
         console.error('Error al actualizar el estado de la reserva:', error);
@@ -88,6 +98,17 @@ const ReservationModal = ({
         return 'text-gray-500';
     }
   };
+
+  useEffect(() => {
+    // Actualizar la visualización de la fecha basada en el estado actual
+    if (status === 'cancelada' || status === 'pendiente') {
+      // Aquí puedes actualizar la UI para mostrar la fecha como disponible
+      // Por ejemplo, cambiando una clase CSS o un estado local
+      setFechaProtegida(false);
+    } else {
+      setFechaProtegida(true);
+    }
+  }, [status]);
 
   // Auxiliary component for icons and text
   const IconWrapper = ({ icon: Icon, text, color = 'text-gray-700' }) => (

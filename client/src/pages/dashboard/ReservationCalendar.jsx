@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Calendar, momentLocalizer } from 'react-big-calendar';
 import moment from 'moment';
 import 'react-big-calendar/lib/css/react-big-calendar.css';
@@ -9,6 +9,7 @@ const localizer = momentLocalizer(moment);
 
 const ReservationCalendar = ({ reservations }) => {
   const [selectedEvent, setSelectedEvent] = useState(null);
+  const [unavailableDates, setUnavailableDates] = useState([]);
 
   const events = reservations.map(reservation => ({
     title: `Reserva #${reservation.id}`,
@@ -32,6 +33,14 @@ const ReservationCalendar = ({ reservations }) => {
   const handleSelectEvent = (event) => {
     setSelectedEvent(event.resource);
   };
+
+  useEffect(() => {
+    // Actualizar las fechas disponibles basado en las reservaciones actuales
+    const newUnavailableDates = reservations
+      .filter(r => r.estado === 'confirmada')
+      .map(r => new Date(r.fecha_reserva));
+    setUnavailableDates(newUnavailableDates);
+  }, [reservations]);
 
   return (
     <div className="bg-white rounded-lg shadow-lg p-4 sm:p-6">

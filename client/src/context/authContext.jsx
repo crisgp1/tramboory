@@ -1,8 +1,17 @@
 import { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { jwtDecode } from 'jwt-decode';
 import axiosInstance from '../components/axiosConfig';
+import { toast } from 'react-toastify';
 
 const AuthContext = createContext(null);
+
+export const useAuth = () => {
+  const context = useContext(AuthContext);
+  if (!context) {
+    throw new Error('useAuth debe ser usado dentro de un AuthProvider');
+  }
+  return context;
+};
 
 export const AuthProvider = ({ children }) => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -10,79 +19,82 @@ export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  const fetchUserData = useCallback(async (userId) => {
-    try {
-      const response = await axiosInstance.get(`/api/usuarios/${userId}`);
-      setUser(response.data);
-    } catch (error) {
-      console.error('Error fetching user data:', error);
-    }
-  }, []);
-
   const checkAuth = useCallback(async () => {
     const token = localStorage.getItem('token');
-    if (token) {
-      try {
-        const decoded = jwtDecode(token);
-        if (decoded && decoded.exp > Date.now() / 1000) {
-          setIsAuthenticated(true);
-          setUserType(decoded.userType);
-          
-          // Establecer la información básica del usuario desde el token
-          setUser({
-            id: decoded.id,
-            nombre: decoded.nombre,
-            email: decoded.email,
-            tipo_usuario: decoded.userType
-          });
-
-          // Obtener información completa del usuario
-          await fetchUserData(decoded.id);
-          return true;
-        }
-      } catch (error) {
-        console.error('Error al decodificar el token:', error);
-      }
+    if (!token) {
+      setIsAuthenticated(false);
+      setUserType(null);
+      setUser(null);
+      setLoading(false);
+      return false;
     }
-    setIsAuthenticated(false);
-    setUserType(null);
-    setUser(null);
-    return false;
-  }, [fetchUserData]);
 
-  useEffect(() => {
-    checkAuth();
-    setLoading(false);
-  }, [checkAuth]);
-
-  const login = useCallback(async (token, userData) => {
     try {
-      localStorage.setItem('token', token);
-      axiosInstance.defaults.headers.common['Authorization'] = `Bearer ${token}`;
-      
       const decoded = jwtDecode(token);
-      setIsAuthenticated(true);
-      setUserType(decoded.userType);
-      
-      // Establecer datos del usuario desde la respuesta del login
-      if (userData) {
-        setUser(userData);
-      } else {
-        // Si no hay datos del usuario en la respuesta, obtenerlos del token
+      if (decoded.exp * 1000 > Date.now()) {
+        setIsAuthenticated(true);
+        setUserType(decoded.userType);
         setUser({
           id: decoded.id,
           nombre: decoded.nombre,
           email: decoded.email,
           tipo_usuario: decoded.userType
         });
-        // Y luego obtener la información completa
-        await fetchUserData(decoded.id);
+
+        axiosInstance.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+
+        try {
+          const response = await axiosInstance.get('/api/auth/me');
+          setUser(response.data);
+        } catch (error) {
+          console.error('Error al obtener datos del usuario:', error);
+        }
+
+        setLoading(false);
+        return true;
+      } else {
+        throw new Error('Token expirado');
       }
     } catch (error) {
-      console.error('Error en login:', error);
-      throw error;
+      console.error('Error al verificar autenticación:', error);
+      localStorage.removeItem('token');
+      delete axiosInstance.defaults.headers.common['Authorization'];
+      setIsAuthenticated(false);
+      setUserType(null);
+      setUser(null);
+      setLoading(false);
+      return false;
     }
-  }, [fetchUserData]);
+  }, []);
+
+  const login = useCallback(async (token, userData) => {
+    localStorage.setItem('token', token);
+    axiosInstance.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+    
+    const decoded = jwtDecode(token);
+    setIsAuthenticated(true);
+    setUserType(decoded.userType);
+    
+    if (userData) {
+      setUser(userData);
+    } else {
+      setUser({
+        id: decoded.id,
+        nombre: decoded.nombre,
+        email: decoded.email,
+        tipo_usuario: decoded.userType
+      });
+      
+      try {
+        const response = await axiosInstance.get('/api/auth/me');
+        setUser(response.data);
+      } catch (error) {
+        console.error('Error al obtener datos del usuario:', error);
+      }
+    }
+
+    window.dispatchEvent(new Event('auth-change'));
+  }, []);
 
   const logout = useCallback(async () => {
     try {
@@ -95,8 +107,25 @@ export const AuthProvider = ({ children }) => {
       setIsAuthenticated(false);
       setUserType(null);
       setUser(null);
+      window.dispatchEvent(new Event('auth-change'));
     }
   }, []);
+
+  useEffect(() => {
+    checkAuth();
+
+    const handleStorageChange = (e) => {
+      if (e.key === 'token') {
+        checkAuth();
+      }
+    };
+
+    window.addEventListener('storage', handleStorageChange);
+    
+    return () => {
+      window.removeEventListener('storage', handleStorageChange);
+    };
+  }, [checkAuth]);
 
   const value = {
     isAuthenticated,
@@ -110,15 +139,7 @@ export const AuthProvider = ({ children }) => {
 
   return (
     <AuthContext.Provider value={value}>
-      {!loading && children}
+      {children}
     </AuthContext.Provider>
   );
-};
-
-export const useAuth = () => {
-  const context = useContext(AuthContext);
-  if (!context) {
-    throw new Error('useAuth debe ser usado dentro de un AuthProvider');
-  }
-  return context;
 };

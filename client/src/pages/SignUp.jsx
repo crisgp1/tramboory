@@ -1,4 +1,4 @@
-import  { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { motion } from 'framer-motion';
@@ -52,141 +52,124 @@ export default function Signup() {
   };
 
   const getPasswordStrength = () => {
-    const strength = [
-      password.length >= 8,
-      /[A-Z]/.test(password),
-      /[a-z]/.test(password),
-      /[0-9]/.test(password),
-      /[!@#$%^&*]/.test(password)
-    ].filter(Boolean).length;
-
+    let strength = 0;
+    if (password.length >= 8) strength++;
+    if (/[A-Z]/.test(password)) strength++;
+    if (/[a-z]/.test(password)) strength++;
+    if (/[0-9]/.test(password)) strength++;
+    if (/[!@#$%^&*]/.test(password)) strength++;
     return strength;
   };
 
-  const strengthColors = ['bg-red-500', 'bg-orange-500', 'bg-yellow-500', 'bg-lime-500', 'bg-green-500'];
+  const strengthColors = ['bg-red-400', 'bg-orange-400', 'bg-yellow-400', 'bg-lime-400', 'bg-green-400'];
+
+  const passwordCriteria = [
+    { label: 'Al menos 8 caracteres', regex: /.{8,}/ },
+    { label: 'Una letra mayúscula', regex: /[A-Z]/ },
+    { label: 'Una letra minúscula', regex: /[a-z]/ },
+    { label: 'Un número', regex: /[0-9]/ },
+    { label: 'Un caracter especial (!@#$%^&*)', regex: /[!@#$%^&*]/ },
+  ];
 
   return (
     <motion.div 
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
-      className="min-h-screen bg-gradient-to-br from-blue-100 to-purple-100 flex items-center justify-center p-4"
+      className="min-h-screen bg-gradient-to-br from-indigo-100 to-purple-100 flex items-center justify-center p-4 sm:p-6 md:p-8"
     >
       <ToastContainer position="top-right" autoClose={3000} hideProgressBar={false} newestOnTop closeOnClick rtl={false} pauseOnFocusLoss draggable pauseOnHover />
-      <div className="bg-white rounded-2xl shadow-xl p-8 w-full max-w-md">
-        <h2 className="text-3xl font-bold mb-6 text-center text-indigo-700">Crear una Cuenta</h2>
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-          <div>
-            <label htmlFor="nombre" className="block text-sm font-medium text-gray-700 mb-1">Nombre Completo</label>
-            <div className="relative">
-              <FiUser className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
-              <input
-                {...register('nombre')}
-                type="text"
-                className="pl-10 w-full p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                placeholder="Tu nombre completo"
-              />
-            </div>
-            {errors.nombre && <p className="mt-1 text-xs text-red-500">{errors.nombre.message}</p>}
+      <div className="bg-white rounded-2xl shadow-2xl p-6 sm:p-8 md:p-10 w-full max-w-5xl">
+        <h2 className="text-3xl sm:text-4xl font-bold mb-8 text-center text-indigo-800">Crear Cuenta</h2>
+        <form onSubmit={handleSubmit(onSubmit)} className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <InputField
+            icon={<FiUser className="text-indigo-500" />}
+            label="Nombre Completo"
+            name="nombre"
+            type="text"
+            placeholder="Tu nombre completo"
+            register={register}
+            error={errors.nombre}
+          />
+
+          <InputField
+            icon={<FiMail className="text-indigo-500" />}
+            label="Correo Electrónico"
+            name="email"
+            type="email"
+            placeholder="tu@email.com"
+            register={register}
+            error={errors.email}
+          />
+
+          <InputField
+            icon={<FiPhone className="text-indigo-500" />}
+            label="Teléfono"
+            name="telefono"
+            type="tel"
+            placeholder="Tu número de teléfono"
+            register={register}
+          />
+
+          <InputField
+            icon={<FiMapPin className="text-indigo-500" />}
+            label="Dirección"
+            name="direccion"
+            type="text"
+            placeholder="Tu dirección"
+            register={register}
+          />
+
+          <div className="col-span-full">
+            <PasswordField
+              label="Contraseña"
+              name="password"
+              register={register}
+              error={errors.password}
+              showPassword={showPassword}
+              setShowPassword={setShowPassword}
+            />
           </div>
 
-          <div>
-            <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">Correo Electrónico</label>
-            <div className="relative">
-              <FiMail className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
-              <input
-                {...register('email')}
-                type="email"
-                className="pl-10 w-full p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                placeholder="tu@email.com"
-              />
-            </div>
-            {errors.email && <p className="mt-1 text-xs text-red-500">{errors.email.message}</p>}
-          </div>
-
-          <div>
-            <label htmlFor="telefono" className="block text-sm font-medium text-gray-700 mb-1">Teléfono</label>
-            <div className="relative">
-              <FiPhone className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
-              <input
-                {...register('telefono')}
-                type="tel"
-                className="pl-10 w-full p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                placeholder="Tu número de teléfono"
-              />
-            </div>
-          </div>
-
-          <div>
-            <label htmlFor="direccion" className="block text-sm font-medium text-gray-700 mb-1">Dirección</label>
-            <div className="relative">
-              <FiMapPin className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
-              <input
-                {...register('direccion')}
-                type="text"
-                className="pl-10 w-full p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                placeholder="Tu dirección"
-              />
-            </div>
-          </div>
-
-          <div>
-            <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-1">Contraseña</label>
-            <div className="relative">
-              <FiLock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
-              <input
-                {...register('password')}
-                type={showPassword ? 'text' : 'password'}
-                className="pl-10 w-full p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                placeholder="Tu contraseña"
-              />
-              <button
-                type="button"
-                onClick={() => setShowPassword(!showPassword)}
-                className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400"
-              >
-                {showPassword ? <FiEyeOff /> : <FiEye />}
-              </button>
-            </div>
-            {errors.password && <p className="mt-1 text-xs text-red-500">{errors.password.message}</p>}
-            <div className="mt-2 flex space-x-1">
-              {[0, 1, 2, 3, 4].map((index) => (
-                <div
-                  key={index}
-                  className={`h-1 w-1/5 rounded-full ${
-                    index < getPasswordStrength() ? strengthColors[getPasswordStrength() - 1] : 'bg-gray-200'
-                  }`}
-                ></div>
+          <div className="col-span-full p-4 bg-indigo-50 rounded-lg text-sm text-indigo-700 leading-relaxed">
+            <h4 className="font-semibold mb-2">Requisitos de la contraseña:</h4>
+            <ul className="space-y-1">
+              {passwordCriteria.map((criterion, index) => (
+                <li key={index} className="flex items-center">
+                  <span className={`w-5 h-5 mr-2 rounded-full ${criterion.regex.test(password) ? 'bg-green-500' : 'bg-gray-300'}`}></span>
+                  {criterion.label}
+                </li>
               ))}
-            </div>
+            </ul>
           </div>
 
-          <div>
-            <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-700 mb-1">Confirmar Contraseña</label>
-            <div className="relative">
-              <FiLock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
-              <input
-                {...register('confirmPassword')}
-                type={showConfirmPassword ? 'text' : 'password'}
-                className="pl-10 w-full p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                placeholder="Confirma tu contraseña"
-              />
-              <button
-                type="button"
-                onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400"
-              >
-                {showConfirmPassword ? <FiEyeOff /> : <FiEye />}
-              </button>
-            </div>
-            {errors.confirmPassword && <p className="mt-1 text-xs text-red-500">{errors.confirmPassword.message}</p>}
+          <div className="col-span-full mt-2 flex space-x-1">
+            {[0, 1, 2, 3, 4].map((index) => (
+              <div
+                key={index}
+                className={`h-2 flex-grow rounded-full ${
+                  index < getPasswordStrength() ? strengthColors[getPasswordStrength() - 1] : 'bg-gray-200'
+                } transition-all duration-300`}
+              ></div>
+            ))}
+          </div>
+
+          <div className="col-span-full">
+            <PasswordField
+              label="Confirmar Contraseña"
+              name="confirmPassword"
+              register={register}
+              error={errors.confirmPassword}
+              showPassword={showConfirmPassword}
+              setShowPassword={setShowConfirmPassword}
+            />
           </div>
 
           <motion.button
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
+            whileHover={{ scale: 1.02 }}
+            whileTap={{ scale: 0.98 }}
             type="submit"
-            className={`w-full bg-indigo-600 text-white p-3 rounded-md font-semibold hover:bg-indigo-700 transition duration-300 ${
+            className={`col-span-full w-full bg-indigo-600 text-white p-3 rounded-lg font-semibold text-lg hover:bg-indigo-700 transition duration-300 ${
               loading ? 'opacity-50 cursor-not-allowed' : ''
             }`}
             disabled={loading}
@@ -194,9 +177,9 @@ export default function Signup() {
             {loading ? 'Registrando...' : 'Registrarse'}
           </motion.button>
         </form>
-        <p className="mt-4 text-center text-sm text-gray-600">
+        <p className="mt-8 text-center text-sm text-gray-600">
           ¿Ya tienes cuenta?{' '}
-          <Link to="/signin" className="font-medium text-indigo-600 hover:text-indigo-500">
+          <Link to="/signin" className="font-medium text-indigo-600 hover:text-indigo-700 transition duration-300">
             Inicia Sesión
           </Link>
         </p>
@@ -204,3 +187,46 @@ export default function Signup() {
     </motion.div>
   );
 }
+
+const InputField = ({ icon, label, name, type, placeholder, register, error }) => (
+  <div className="flex flex-col space-y-1">
+    <label htmlFor={name} className="text-sm font-medium text-gray-700">{label}</label>
+    <div className="relative">
+      <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+        {icon}
+      </div>
+      <input
+        {...register(name)}
+        type={type}
+        className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition duration-300"
+        placeholder={placeholder}
+      />
+    </div>
+    {error && <p className="mt-1 text-xs text-red-500">{error.message}</p>}
+  </div>
+);
+
+const PasswordField = ({ label, name, register, error, showPassword, setShowPassword }) => (
+  <div className="flex flex-col space-y-1">
+    <label htmlFor={name} className="text-sm font-medium text-gray-700">{label}</label>
+    <div className="relative">
+      <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+        <FiLock className="text-indigo-500" />
+      </div>
+      <input
+        {...register(name)}
+        type={showPassword ? 'text' : 'password'}
+        className="w-full pl-10 pr-10 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition duration-300"
+        placeholder="Tu contraseña"
+      />
+      <button
+        type="button"
+        onClick={() => setShowPassword(!showPassword)}
+        className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-600 transition duration-300"
+      >
+        {showPassword ? <FiEyeOff size={18} /> : <FiEye size={18} />}
+      </button>
+    </div>
+    {error && <p className="mt-1 text-xs text-red-500">{error.message}</p>}
+  </div>
+);
