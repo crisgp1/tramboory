@@ -21,8 +21,9 @@ export default {
 
       fontFamily: {
        funhouse : ['"Funhouse"', 'cursive'],
-        'sans': ['"Vazirmatn"', 'sans-serif'],
+        'sans': ['"travelia"', 'sans-serif'],
       },
+      
     },
   },
   plugins: [],
