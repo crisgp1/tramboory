@@ -1,0 +1,110 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+/* Estilos personalizados para react-datepicker */
+
+
+:root {
+    --header-height: 80px; /* Altura del header */
+  }
+
+  body {
+    padding-top: var(--header-height); /* Empujar el contenido debajo del header */
+  }
+  
+  .main-content {
+    min-height: calc(100vh - var(--header-height));
+    width: 100%;
+    position: relative;
+  }
+
+  /* Agregar a tu CSS */
+.mobile-menu-container {
+    max-height: calc(100vh - var(--header-height));
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+.custom-datepicker {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    border: none;
+    border-radius: 0.5rem;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+}
+
+.custom-datepicker .react-datepicker__header {
+    background-color: #f7fafc;
+    border-bottom: 1px solid #e2e8f0;
+    border-top-left-radius: 0.5rem;
+    border-top-right-radius: 0.5rem;
+    padding-top: 0.5rem;
+}
+
+.custom-datepicker .react-datepicker__current-month {
+    font-size: 1rem;
+    font-weight: 600;
+    color: #4a5568;
+}
+
+.custom-datepicker .react-datepicker__navigation {
+    top: 1rem;
+}
+
+.custom-datepicker .react-datepicker__navigation--previous {
+    left: 1rem;
+}
+
+.custom-datepicker .react-datepicker__navigation--next {
+    right: 1rem;
+}
+
+.custom-datepicker .react-datepicker__navigation-icon::before {
+    border-color: #a0aec0;
+    border-style: solid;
+    border-width: 2px 2px 0 0;
+    content: '';
+    display: block;
+    height: 8px;
+    width: 8px;
+    transform: rotate(-135deg);
+}
+
+.custom-datepicker .react-datepicker__navigation--next .react-datepicker__navigation-icon::before {
+    transform: rotate(45deg);
+}
+
+.custom-datepicker .react-datepicker__day-name,
+.custom-datepicker .react-datepicker__day {
+    width: 2rem;
+    line-height: 2rem;
+    font-size: 0.875rem;
+    color: #2d3748;
+}
+
+.custom-datepicker .react-datepicker__day--selected,
+.custom-datepicker .react-datepicker__day--keyboard-selected {
+    background-color: #6b46c1;
+    color: #fff;
+    border-radius: 9999px;
+}
+
+.custom-datepicker .react-datepicker__day--selected:hover,
+.custom-datepicker .react-datepicker__day--keyboard-selected:hover {
+    background-color: #7e57c2;
+}
+
+@media print {
+    body * {
+        visibility: hidden;
+    }
+    #monthly-report, #monthly-report * {
+        visibility: visible;
+    }
+    #monthly-report {
+        position: absolute;
+        left: 0;
+        top: 0;
+        width: 100%;
+    }
+}
+
