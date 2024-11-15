@@ -44,7 +44,7 @@ export const AuthProvider = ({ children }) => {
         axiosInstance.defaults.headers.common['Authorization'] = `Bearer ${token}`;
 
         try {
-          const response = await axiosInstance.get('/api/auth/me');
+          const response = await axiosInstance.get('/api/usuarios/me');
           setUser(response.data);
         } catch (error) {
           console.error('Error al obtener datos del usuario:', error);
@@ -86,7 +86,7 @@ export const AuthProvider = ({ children }) => {
       });
       
       try {
-        const response = await axiosInstance.get('/api/auth/me');
+        const response = await axiosInstance.get('/api/usuarios/me');
         setUser(response.data);
       } catch (error) {
         console.error('Error al obtener datos del usuario:', error);

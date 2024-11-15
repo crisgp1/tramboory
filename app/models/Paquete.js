@@ -15,10 +15,6 @@ const Paquete = sequelize.define('Paquete', {
     type: DataTypes.TEXT,
     allowNull: true
   },
-  precio: {
-    type: DataTypes.DECIMAL(10, 2),
-    allowNull: false
-  },
   precio_lunes_jueves: {
     type: DataTypes.DECIMAL(10, 2),
     allowNull: false,

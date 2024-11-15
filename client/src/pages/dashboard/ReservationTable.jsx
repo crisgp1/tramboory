@@ -101,6 +101,11 @@ const ReservationTable = ({
     return value || fallback;
   };
 
+  const renderMampara = (mampara) => {
+    if (!mampara) return 'No especificada';
+    return `${mampara.piezas} pieza(s) - $${mampara.precio}`;
+  };
+
   const FilterPanel = () => (
     <div className="bg-white p-4 border-b border-gray-200">
       <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-4">
@@ -319,7 +324,7 @@ const ReservationTable = ({
                   {renderWithFallback(reservation.tematicaReserva?.nombre)}
                 </td>
                 <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-500">
-                  {renderWithFallback(reservation.mampara?.nombre)}
+                  {renderMampara(reservation.mampara)}
                 </td>
                 <td className="px-4 py-3 whitespace-nowrap text-sm">
                   {renderStatus(reservation.estado)}

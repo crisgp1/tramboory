@@ -43,7 +43,11 @@ const ItemModal = ({
     tematicas,
     mamparas,
     payments,
-    reservations
+    reservations,
+    blockedDates: reservations
+      .filter(r => r.estado === 'confirmada')
+      .map(r => new Date(r.fecha_reserva)),
+    existingReservations: reservations
   }
 
   const renderForm = () => {
@@ -58,29 +62,9 @@ const ItemModal = ({
         )
 
       case 'reservations':
-        console.log(
-          'Abriendo formulario de reserva con los siguientes props:',
-          {
-            editingItem,
-            users,
-            packages,
-            foodOptions,
-            extras,
-            tematicas,
-            mamparas
-          }
-        )
-        return (
-          <ReservationForm
-            {...commonProps}
-            users={users}
-            packages={packages}
-            foodOptions={foodOptions}
-            extras={extras}
-            tematicas={tematicas}
-            mamparas={mamparas || []}
-          />
-        )
+        console.log('Abriendo formulario de reserva con los siguientes props:', commonProps)
+        return <ReservationForm {...commonProps} />
+
       case 'finances':
         return (
           <FinanceForm
@@ -98,7 +82,7 @@ const ItemModal = ({
         return <OpcionAlimentoForm {...commonProps} />
       case 'tematicas':
         return <TematicaForm {...commonProps} />
-      case 'mamparas': // Agregar este caso
+      case 'mamparas':
         return <MamparaForm {...commonProps} />
       case 'payments':
         return <PaymentForm {...commonProps} payment={editingItem} />

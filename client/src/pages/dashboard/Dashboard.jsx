@@ -65,6 +65,7 @@ const Dashboard = () => {
   const [selectedPayment, setSelectedPayment] = useState(null)
   const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false)
   const [paymentModalMode, setPaymentModalMode] = useState('view'); // 'view', 'edit', 'add'
+  const [unavailableDates, setUnavailableDates] = useState([]); 
 
   const navigate = useNavigate()
 
@@ -271,16 +272,63 @@ const Dashboard = () => {
       )
     );
   
-    // Si el estado es "cancelado" o "pendiente", actualizar las fechas disponibles
+    // If the status is "cancelled" or "pending", update available dates
     if (newStatus === 'cancelada' || newStatus === 'pendiente') {
       const updatedReservation = reservations.find(r => r.id === reservationId);
       if (updatedReservation) {
-        setUnavailableDates(prevDates => 
-          prevDates.filter(date => date.getTime() !== new Date(updatedReservation.fecha_reserva).getTime())
-        );
+        // Only update unavailable dates if we found the reservation
+        const reservationDate = new Date(updatedReservation.fecha_reserva);
+        
+        setUnavailableDates(prevDates => {
+          // Remove the date if it exists
+          const newDates = prevDates.filter(date => 
+            date.getTime() !== reservationDate.getTime()
+          );
+          
+          // Recalculate unavailable dates based on remaining active reservations
+          const activeDates = reservations
+            .filter(r => 
+              r.id !== reservationId && 
+              (r.estado === 'confirmada' || r.estado === 'pendiente')
+            )
+            .map(r => new Date(r.fecha_reserva));
+            
+          // Combine unique dates
+          return [...new Set([...newDates, ...activeDates])];
+        });
+      }
+    } else if (newStatus === 'confirmada') {
+      // If confirming a reservation, add the date to unavailable dates
+      const updatedReservation = reservations.find(r => r.id === reservationId);
+      if (updatedReservation) {
+        const reservationDate = new Date(updatedReservation.fecha_reserva);
+        setUnavailableDates(prevDates => {
+          if (!prevDates.some(date => date.getTime() === reservationDate.getTime())) {
+            return [...prevDates, reservationDate];
+          }
+          return prevDates;
+        });
       }
     }
   }, [reservations]);
+
+  useEffect(() => {
+    const initializeUnavailableDates = () => {
+      const dates = reservations
+        .filter(reservation => 
+          reservation.estado === 'confirmada' || 
+          reservation.estado === 'pendiente'
+        )
+        .map(reservation => new Date(reservation.fecha_reserva));
+      
+      setUnavailableDates([...new Set(dates)]);
+    };
+  
+    if (reservations.length > 0) {
+      initializeUnavailableDates();
+    }
+  }, [reservations]);
+  
   
 
   // Functions for sending email and contacting user (implement as needed)
@@ -615,6 +663,7 @@ const Dashboard = () => {
         <ReservationCalendar
           reservations={reservations}
           onSelectReservation={handleSelectReservation}
+          unavailableDates={unavailableDates}
         />
         <UserSummary users={users} />
         <ReservationSummary

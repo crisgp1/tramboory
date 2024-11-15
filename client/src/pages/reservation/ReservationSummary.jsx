@@ -11,6 +11,7 @@ import {
   FiInfo
 } from 'react-icons/fi';
 import SummaryItem from './SummaryItem';
+import { formatCurrency } from './reservationform/styles';
 
 const ReservationSummary = ({
   control,
@@ -21,14 +22,6 @@ const ReservationSummary = ({
   extras
 }) => {
   const watchedFields = useWatch({ control });
-
-  // Funciones de formateo
-  const formatCurrency = (amount) => {
-    return new Intl.NumberFormat('es-MX', {
-      style: 'currency',
-      currency: 'MXN'
-    }).format(amount);
-  };
 
   const formatDate = (date) => {
     if (!date) return 'No seleccionada';
@@ -54,20 +47,16 @@ const ReservationSummary = ({
     const reservationDate = new Date(watchedFields.fecha_reserva);
     const dayOfWeek = reservationDate.getDay();
 
-    // Si es de lunes a jueves (1-4)
-    if (dayOfWeek >= 1 && dayOfWeek <= 4) {
-      return parseFloat(selectedPackage.precio_lunes_jueves) || 0;
-    } 
-    // Si es viernes a domingo (5, 6, 0)
-    else {
-      return parseFloat(selectedPackage.precio_viernes_domingo) || 0;
-    }
+    return dayOfWeek >= 1 && dayOfWeek <= 4
+      ? parseFloat(selectedPackage.precio_lunes_jueves) || 0
+      : parseFloat(selectedPackage.precio_viernes_domingo) || 0;
   };
 
   // Cálculo del precio de los extras
   const calculateExtrasPrice = () => {
-    const selectedExtras = watchedFields.extras || [];
-    return selectedExtras.reduce((total, extra) => {
+    if (!watchedFields.extras) return 0;
+    
+    return watchedFields.extras.reduce((total, extra) => {
       const extraInfo = extras.find(e => e.id === extra.id);
       if (extraInfo) {
         return total + (parseFloat(extraInfo.precio) || 0) * (parseInt(extra.cantidad) || 1);
@@ -78,16 +67,18 @@ const ReservationSummary = ({
 
   // Descripción de extras seleccionados
   const getExtrasDescription = () => {
-    const selectedExtras = watchedFields.extras || [];
-    if (selectedExtras.length === 0) return 'No seleccionados';
+    if (!watchedFields.extras || watchedFields.extras.length === 0) {
+      return 'No seleccionados';
+    }
 
-    return selectedExtras
-      .filter(extra => extra.id && extra.cantidad)
+    return watchedFields.extras
       .map(extra => {
         const extraInfo = extras.find(e => e.id === extra.id);
-        const extraPrice = (parseFloat(extraInfo?.precio) || 0) * (parseInt(extra.cantidad) || 1);
-        return `${extraInfo?.nombre} (x${extra.cantidad}) - ${formatCurrency(extraPrice)}`;
+        if (!extraInfo) return null;
+        const extraPrice = (parseFloat(extraInfo.precio) || 0) * (parseInt(extra.cantidad) || 1);
+        return `${extraInfo.nombre} (x${extra.cantidad}) - ${formatCurrency(extraPrice)}`;
       })
+      .filter(Boolean)
       .join('\n');
   };
 
@@ -155,8 +146,8 @@ const ReservationSummary = ({
             label="Hora"
             value={watchedFields.hora_inicio
               ? watchedFields.hora_inicio === 'mañana'
-                ? 'Matutino'
-                : 'Vespertino'
+                ? 'Matutino (9:00 - 14:00)'
+                : 'Vespertino (15:00 - 20:00)'
               : 'No seleccionada'}
           />
         </div>
@@ -193,7 +184,7 @@ const ReservationSummary = ({
             <SummaryItem
               icon={<FiImage className="text-green-600" />}
               label="Mampara"
-              value={`${selectedMampara.piezas} piezas - ${formatCurrency(selectedMampara.precio)}`}
+              value={`${selectedMampara.nombre} - ${selectedMampara.piezas} piezas - ${formatCurrency(selectedMampara.precio)}`}
             />
           )}
         </div>

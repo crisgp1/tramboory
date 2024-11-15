@@ -13,9 +13,8 @@ const PackageTable = ({ packages, handleEditItem, handleDeleteItem }) => {
         <thead>
           <tr className="bg-gray-100">
             <th className="px-4 py-2 text-left">Nombre</th>
-            <th className="px-4 py-2 text-left">Precio Base</th>
-            <th className="px-4 py-2 text-left">Precio L-J</th>
-            <th className="px-4 py-2 text-left">Precio V-D</th>
+            <th className="px-4 py-2 text-left">Precio Lunes-Jueves</th>
+            <th className="px-4 py-2 text-left">Precio Viernes-Domingo</th>
             <th className="px-4 py-2 text-left">Acciones</th>
           </tr>
         </thead>
@@ -23,7 +22,6 @@ const PackageTable = ({ packages, handleEditItem, handleDeleteItem }) => {
           {activePackages.map((pkg) => (
             <tr key={pkg.id} className="border-b border-gray-200 hover:bg-gray-50">
               <td className="px-4 py-2">{pkg.nombre}</td>
-              <td className="px-4 py-2">{formatNumber(pkg.precio)}</td>
               <td className="px-4 py-2">{formatNumber(pkg.precio_lunes_jueves)}</td>
               <td className="px-4 py-2">{formatNumber(pkg.precio_viernes_domingo)}</td>
               <td className="px-4 py-2">

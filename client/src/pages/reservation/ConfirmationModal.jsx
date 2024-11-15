@@ -10,15 +10,17 @@ import {
   FiAlertCircle,
   FiList,
   FiCheck,
-  FiX
+  FiX,
+  FiGift
 } from 'react-icons/fi';
 import SummaryItem from './SummaryItem';
 
 const ConfirmationModal = ({
   reservationData,
-  packages,
-  foodOptions,
-  tematicas,
+  packages = [],
+  foodOptions = [],
+  tematicas = [],
+  extras = [],
   onCancel,
   onConfirm,
 }) => {
@@ -65,6 +67,74 @@ const ConfirmationModal = ({
     </div>
   );
 
+  const selectedFoodOption = foodOptions?.find(f => f?.id === reservationData?.id_opcion_alimento);
+  const selectedPackage = packages?.find(pkg => pkg?.id === reservationData?.id_paquete);
+  const mamparaPrice = parseFloat(reservationData?.mampara_precio) || 0;
+
+  // Calculate extras total
+  const calculateExtrasTotal = () => {
+    if (!reservationData?.extras?.length) return 0;
+    
+    return reservationData.extras.reduce((total, extra) => {
+      const precio = parseFloat(extra.precio) || 0;
+      const cantidad = parseInt(extra.cantidad) || 0;
+      return total + (precio * cantidad);
+    }, 0);
+  };
+
+  const renderFoodOptionDetails = () => {
+    if (!selectedFoodOption) return null;
+
+    return (
+      <div className="space-y-2">
+        <div className="flex justify-between items-center p-2 bg-gray-50 rounded-lg">
+          <span className="text-gray-700">Menú para Adultos</span>
+          <span className="font-medium">
+            {selectedFoodOption.menu_adulto || selectedFoodOption.nombre || 'No especificado'}
+          </span>
+        </div>
+        <div className="flex justify-between items-center p-2 bg-gray-50 rounded-lg">
+          <span className="text-gray-700">Menú para Niños</span>
+          <span className="font-medium">
+            {selectedFoodOption.menu_nino || selectedFoodOption.nombre || 'No especificado'}
+          </span>
+        </div>
+        <div className="flex justify-between items-center p-2 bg-indigo-50 rounded-lg">
+          <span className="text-gray-700">Total Alimentos</span>
+          <span className="font-medium">
+            {formatCurrency(parseFloat(selectedFoodOption.precio_extra) || 0)}
+          </span>
+        </div>
+      </div>
+    );
+  };
+
+  // Calculate total
+  const calculateTotal = () => {
+    let total = 0;
+    
+    // Add package price
+    total += parseFloat(reservationData?.packagePrice) || 0;
+    
+    // Add food option price
+    if (selectedFoodOption) {
+      total += parseFloat(selectedFoodOption.precio_extra) || 0;
+    }
+    
+    // Add mampara price
+    total += mamparaPrice;
+    
+    // Add tuesday fee
+    total += parseFloat(reservationData?.tuesdayFee) || 0;
+    
+    // Add extras
+    total += calculateExtrasTotal();
+    
+    return total;
+  };
+
+  if (!reservationData) return null;
+
   return (
     <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full flex justify-center items-center z-50 p-4">
       <div
@@ -92,14 +162,13 @@ const ConfirmationModal = ({
               <SummaryItem
                 icon={<FiPackage className="text-indigo-600" />}
                 label="Paquete Seleccionado"
-                value={packages.find((pkg) => pkg.id === reservationData.id_paquete)?.nombre}
+                value={selectedPackage?.nombre || 'No seleccionado'}
                 className="font-medium"
               />
-              <SummaryItem
-                icon={<FiDollarSign className="text-indigo-600" />}
-                label="Precio del Paquete"
-                value={`${formatCurrency(reservationData.packagePrice)} (Tarifa ${getDayType(reservationData.fecha_reserva)})`}
-              />
+              <div className="flex justify-between items-center p-2 bg-white rounded-lg">
+                <span className="text-gray-700">Tarifa {getDayType(reservationData.fecha_reserva)}</span>
+                <span className="font-medium text-indigo-600">{formatCurrency(parseFloat(reservationData.packagePrice) || 0)}</span>
+              </div>
             </div>
           </Section>
 
@@ -121,19 +190,54 @@ const ConfirmationModal = ({
 
           {/* Servicios Seleccionados */}
           <Section title="Servicios Seleccionados" icon={FiList}>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <SummaryItem
-                icon={<FiDollarSign className="text-indigo-600" />}
-                label="Opción de Alimento"
-                value={foodOptions.find((f) => f.id === reservationData.id_opcion_alimento)?.nombre}
-              />
+            <div className="space-y-4">
+              {selectedFoodOption && (
+                <div className="space-y-2">
+                  <h4 className="text-sm font-medium text-gray-700">Opciones de Alimento</h4>
+                  {renderFoodOptionDetails()}
+                </div>
+              )}
               <SummaryItem
                 icon={<FiImage className="text-indigo-600" />}
                 label="Temática"
-                value={tematicas.find((t) => t.id === reservationData.id_tematica)?.nombre}
+                value={tematicas?.find((t) => t?.id === reservationData?.id_tematica)?.nombre || 'No seleccionada'}
               />
+              {mamparaPrice > 0 && (
+                <div className="flex justify-between items-center p-2 bg-gray-50 rounded-lg">
+                  <span className="text-gray-700">Mampara</span>
+                  <span className="font-medium">{formatCurrency(mamparaPrice)}</span>
+                </div>
+              )}
             </div>
           </Section>
+
+          {/* Extras Seleccionados */}
+          {reservationData?.extras?.length > 0 && (
+            <Section title="Extras Seleccionados" icon={FiGift}>
+              <div className="space-y-2">
+                {reservationData.extras.map((extra) => {
+                  const extraTotal = (parseFloat(extra.precio) || 0) * (parseInt(extra.cantidad) || 0);
+                  
+                  return (
+                    <div key={extra.id} className="flex justify-between items-center p-2 bg-gray-50 rounded-lg">
+                      <span className="text-sm font-medium text-gray-700">
+                        {extra.nombre || 'Extra sin nombre'}
+                      </span>
+                      <div className="flex items-center gap-2">
+                        <span className="text-sm text-gray-600">
+                          Cantidad: {extra.cantidad || 0} - {formatCurrency(extraTotal)}
+                        </span>
+                      </div>
+                    </div>
+                  );
+                })}
+                <div className="flex justify-between items-center p-2 bg-indigo-50 rounded-lg">
+                  <span className="text-gray-700">Total Extras</span>
+                  <span className="font-medium">{formatCurrency(calculateExtrasTotal())}</span>
+                </div>
+              </div>
+            </Section>
+          )}
 
           {/* Información del Festejado */}
           <Section title="Información del Festejado" icon={FiUser}>
@@ -141,13 +245,53 @@ const ConfirmationModal = ({
               <SummaryItem
                 icon={<FiUser className="text-indigo-600" />}
                 label="Nombre"
-                value={reservationData.nombre_festejado}
+                value={reservationData.nombre_festejado || 'No especificado'}
               />
               <SummaryItem
                 icon={<FiUser className="text-indigo-600" />}
                 label="Edad"
-                value={`${reservationData.edad_festejado} años`}
+                value={reservationData.edad_festejado ? `${reservationData.edad_festejado} años` : 'No especificada'}
               />
+            </div>
+          </Section>
+
+          {/* Desglose de Costos */}
+          <Section title="Desglose de Costos" icon={FiDollarSign}>
+            <div className="space-y-3">
+              <div className="flex justify-between items-center p-2 bg-gray-50 rounded-lg">
+                <span className="text-gray-700">Tarifa {getDayType(reservationData.fecha_reserva)}</span>
+                <span className="font-medium">{formatCurrency(parseFloat(reservationData.packagePrice) || 0)}</span>
+              </div>
+              
+              {selectedFoodOption && (
+                <div className="flex justify-between items-center p-2 bg-gray-50 rounded-lg">
+                  <span className="text-gray-700">Total Alimentos</span>
+                  <span className="font-medium">{formatCurrency(parseFloat(selectedFoodOption.precio_extra) || 0)}</span>
+                </div>
+              )}
+
+              {mamparaPrice > 0 && (
+                <div className="flex justify-between items-center p-2 bg-gray-50 rounded-lg">
+                  <span className="text-gray-700">Mampara</span>
+                  <span className="font-medium">{formatCurrency(mamparaPrice)}</span>
+                </div>
+              )}
+
+              {reservationData.tuesdayFee > 0 && (
+                <div className="flex justify-between items-center p-2 bg-gray-50 rounded-lg">
+                  <span className="text-gray-700">Cargo por Martes</span>
+                  <span className="font-medium">{formatCurrency(parseFloat(reservationData.tuesdayFee) || 0)}</span>
+                </div>
+              )}
+
+              {reservationData?.extras?.length > 0 && (
+                <div className="flex justify-between items-center p-2 bg-gray-50 rounded-lg">
+                  <span className="text-gray-700">Total Extras</span>
+                  <span className="font-medium">
+                    {formatCurrency(calculateExtrasTotal())}
+                  </span>
+                </div>
+              )}
             </div>
           </Section>
 
@@ -156,7 +300,7 @@ const ConfirmationModal = ({
             <div className="flex justify-between items-center">
               <span className="text-lg font-medium text-gray-700">Total a Pagar:</span>
               <span className="text-2xl font-bold text-indigo-600">
-                {formatCurrency(reservationData.total)}
+                {formatCurrency(calculateTotal())}
               </span>
             </div>
           </div>

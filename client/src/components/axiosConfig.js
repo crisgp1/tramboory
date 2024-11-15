@@ -2,23 +2,34 @@ import axios from 'axios';
 import { toast } from 'react-toastify';
 
 const axiosInstance = axios.create({
-  baseURL: 'http://localhost:3000', // Ensure this matches your backend server
+  baseURL: 'http://localhost:3000',
+  timeout: 10000, // Add timeout
+  headers: {
+    'Content-Type': 'application/json',
+    'Cache-Control': 'no-cache',
+    'Pragma': 'no-cache',
+    'Expires': '0'
+  }
 });
-
-// Disable caching
-axiosInstance.defaults.headers['Cache-Control'] = 'no-cache';
-axiosInstance.defaults.headers['Pragma'] = 'no-cache';
-axiosInstance.defaults.headers['Expires'] = '0';
 
 // Request Interceptor
 axiosInstance.interceptors.request.use(
   (config) => {
     const token = localStorage.getItem('token');
-    console.log('Request Interceptor - Token:', token);
     if (token) {
       config.headers['Authorization'] = `Bearer ${token}`;
     }
-    console.log('Request Interceptor - Config:', config);
+
+    // Log request details in development
+    if (process.env.NODE_ENV === 'development') {
+      console.log('Request:', {
+        url: config.url,
+        method: config.method,
+        data: config.data,
+        headers: config.headers
+      });
+    }
+
     return config;
   },
   (error) => {
@@ -30,22 +41,64 @@ axiosInstance.interceptors.request.use(
 // Response Interceptor
 axiosInstance.interceptors.response.use(
   (response) => {
-    console.log('Response Interceptor - Response:', response);
+    // Log response in development
+    if (process.env.NODE_ENV === 'development') {
+      console.log('Response:', {
+        status: response.status,
+        data: response.data,
+        headers: response.headers
+      });
+    }
     return response;
   },
   (error) => {
-    console.error('Response Interceptor Error:', error);
-    if (error.response && error.response.status === 401) {
-      const token = localStorage.getItem('token');
+    console.error('Response Error:', error);
 
-      if (token) {
-        // Session may have expired
-        localStorage.removeItem('token');
-        toast.error('Tu sesión ha expirado. Por favor, inicia sesión nuevamente.');
-        window.location.href = '/signin';
-      }
-      // If no token exists, do not redirect
+    // Handle network errors
+    if (!error.response) {
+      toast.error('Error de conexión. Por favor, verifica tu conexión a internet.');
+      return Promise.reject(error);
     }
+
+    // Handle different error status codes
+    switch (error.response.status) {
+      case 400:
+        toast.error(error.response.data.message || 'Solicitud inválida');
+        break;
+      case 401:
+        const token = localStorage.getItem('token');
+        if (token) {
+          localStorage.removeItem('token');
+          toast.error('Tu sesión ha expirado. Por favor, inicia sesión nuevamente.');
+          window.location.href = '/signin';
+        }
+        break;
+      case 403:
+        toast.error('No tienes permiso para realizar esta acción');
+        break;
+      case 404:
+        toast.error('Recurso no encontrado');
+        break;
+      case 409:
+        toast.error('El horario seleccionado ya no está disponible');
+        break;
+      case 422:
+        const validationErrors = error.response.data.errors;
+        if (validationErrors) {
+          Object.values(validationErrors).forEach(error => {
+            toast.error(error);
+          });
+        } else {
+          toast.error('Error de validación en los datos');
+        }
+        break;
+      case 500:
+        toast.error('Error del servidor. Por favor, intenta más tarde');
+        break;
+      default:
+        toast.error('Ocurrió un error inesperado');
+    }
+
     return Promise.reject(error);
   }
 );

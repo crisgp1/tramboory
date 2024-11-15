@@ -1,4 +1,3 @@
-// controllers/UsuarioController.js
 const { Op } = require('sequelize')
 const Usuario = require('../models/Usuario')
 const  bcrypt = require('bcrypt')
@@ -52,7 +51,6 @@ exports.getUsuarioById = async (req, res) => {
   }
 }
 
-
 exports.createUsuario = async (req, res) => {
   try {
     const { nombre, email, tipo_usuario, clave } = req.body;
@@ -71,7 +69,6 @@ exports.createUsuario = async (req, res) => {
     res.status(500).json({ error: 'Error al crear el usuario' });
   }
 }
-
 
 exports.updateUsuario = async (req, res) => {
   try {
@@ -106,19 +103,12 @@ exports.deleteUsuario = async (req, res) => {
 
 exports.getAuthenticatedUser = async (req, res) => {
   try {
-    const usuario = await Usuario.findOne({
-      where: {
-        id: req.userId,
-        activo: true  // Solo usuarios activos
-      }
-    })
-    if (usuario) {
-      res.json(usuario)
-    } else {
-      res.status(404).json({ error: 'Usuario no encontrado' })
+    if (!req.user) {
+      return res.status(404).json({ error: 'Usuario no encontrado' });
     }
+    res.json(req.user);
   } catch (error) {
-    console.error('Error al obtener el usuario autenticado:', error)
-    res.status(500).json({ error: 'Error al obtener el usuario autenticado' })
+    console.error('Error al obtener el usuario autenticado:', error);
+    res.status(500).json({ error: 'Error al obtener el usuario autenticado' });
   }
 }

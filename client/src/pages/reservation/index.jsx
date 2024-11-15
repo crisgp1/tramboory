@@ -1,4 +1,3 @@
-// Reservation.js
 import { useState, useEffect, useRef } from 'react'
 import { useForm } from 'react-hook-form'
 import { ToastContainer, toast } from 'react-toastify'
@@ -18,6 +17,22 @@ import ContractModal from './ContractModal';
 
 gsap.registerPlugin(ScrollTrigger)
 
+const TIME_SLOTS = {
+  MORNING: {
+    start: '11:00:00',
+    end: '16:00:00'
+  },
+  AFTERNOON: {
+    start: '17:00:00',
+    end: '22:00:00'
+  }
+};
+
+const isActiveReservation = (reserva) => {
+  return reserva.activo && 
+         (reserva.estado === 'pendiente' || reserva.estado === 'confirmada');
+};
+
 const Reservation = () => {
   const {
     control,
@@ -25,15 +40,17 @@ const Reservation = () => {
     handleSubmit,
     register,
     formState: { errors },
-    watch
+    watch,
+    reset
   } = useForm({
     defaultValues: {
       extras: [],
-      tuesdayFee: 0
+      tuesdayFee: 0,
+      hora_inicio: null,
+      hora_fin: null,
+      packagePrice: 0
     },
-    mode: 'onChange', // Cambiado a onChange para mejor manejo de validaciones
-    reValidateMode: 'onChange', // Asegura revalidación en cambios
-    shouldUnregister: false
+    mode: 'onChange'
   })
 
   const navigate = useNavigate()
@@ -51,29 +68,32 @@ const Reservation = () => {
   const [unavailableDates, setUnavailableDates] = useState([])
   const [hasReservations, setHasReservations] = useState(false)
   const [userReservations, setUserReservations] = useState([])
-  const [isTuesdayModalOpen, setIsTuesdayModalOpen] = useState(false); 
-  const [existingReservations, setExistingReservations] = useState([]);
-  const [showContractModal, setShowContractModal] = useState(false);
-const [contractAccepted, setContractAccepted] = useState(false);
+  const [isTuesdayModalOpen, setIsTuesdayModalOpen] = useState(false)
+  const [existingReservations, setExistingReservations] = useState([])
+  const [showContractModal, setShowContractModal] = useState(false)
+  const [contractAccepted, setContractAccepted] = useState(false)
 
   const formRef = useRef(null)
   const summaryRef = useRef(null)
 
-
-  const handleFieldChange = (fieldName, value, shouldValidate = true) => {
+  const handleFieldChange = (fieldName, value) => {
     setValue(fieldName, value, {
-      shouldValidate,
-      shouldDirty: true,
-      shouldTouch: true
+      shouldValidate: false,
+      shouldDirty: true
     })
   }
 
   useEffect(() => {
     const token = localStorage.getItem('token')
     if (!token) {
-      toast.error(
-        'No se ha iniciado sesión. Redirigiendo al inicio de sesión...'
-      )
+      toast.error('No se ha iniciado sesión. Redirigiendo al inicio de sesión...', {
+        position: "top-right",
+        autoClose: 2000,
+        hideProgressBar: false,
+        closeOnClick: true,
+        pauseOnHover: true,
+        draggable: true
+      })
       setTimeout(() => navigate('/signin'), 2000)
       return
     }
@@ -115,12 +135,16 @@ const [contractAccepted, setContractAccepted] = useState(false);
 
   const fetchUserData = async () => {
     try {
-      const response = await axiosInstance.get('/api/auth/me', getAuthHeader())
+      const response = await axiosInstance.get('/api/usuarios/me', getAuthHeader())
       setUserData(response.data)
+      const reservationsResponse = await axiosInstance.get('/api/reservas/user', getAuthHeader())
+      const userReservs = reservationsResponse.data
+      setUserReservations(userReservs)
+      setHasReservations(userReservs.length > 0)
     } catch (error) {
       console.error('Error al obtener datos del usuario:', error)
       toast.error('Error al cargar los datos del usuario')
-      if (error.response && error.response.status === 401) {
+      if (error.response?.status === 401) {
         navigate('/signin')
       }
     }
@@ -148,10 +172,7 @@ const [contractAccepted, setContractAccepted] = useState(false);
 
   const fetchFoodOptions = async () => {
     try {
-      const response = await axiosInstance.get(
-        '/api/opciones-alimentos',
-        getAuthHeader()
-      )
+      const response = await axiosInstance.get('/api/opciones-alimentos', getAuthHeader())
       setFoodOptions(response.data)
     } catch (error) {
       console.error('Error al obtener las opciones de alimentos:', error)
@@ -161,10 +182,7 @@ const [contractAccepted, setContractAccepted] = useState(false);
 
   const fetchTematicas = async () => {
     try {
-      const response = await axiosInstance.get(
-        '/api/tematicas',
-        getAuthHeader()
-      )
+      const response = await axiosInstance.get('/api/tematicas', getAuthHeader())
       setTematicas(response.data)
     } catch (error) {
       console.error('Error al obtener las temáticas:', error)
@@ -181,75 +199,62 @@ const [contractAccepted, setContractAccepted] = useState(false);
       toast.error('Error al cargar los extras')
     }
   }
-// Constantes para estados de reserva
-const RESERVATION_STATES = {
-  PENDING: 'pendiente',
-  CONFIRMED: 'confirmada', 
-  CANCELLED: 'cancelada'
-};
 
-// Función helper para verificar si una reserva está activa
-const isActiveReservation = (reservation) => {
-  return reservation.estado === RESERVATION_STATES.CONFIRMED || 
-         reservation.estado === RESERVATION_STATES.PENDING;
-};
-
-const fetchUnavailableDates = async () => {
-  try {
-    const response = await axiosInstance.get('/api/reservas', getAuthHeader());
-    setExistingReservations(response.data);
-
-    // Filtramos solo reservas activas (pendientes o confirmadas)
-    const activeReservations = response.data.filter(isActiveReservation);
-
-    const fullyBookedDates = activeReservations.reduce((acc, reserva) => {
-      const dateStr = reserva.fecha_reserva.split('T')[0];
-      const reservationsForDate = activeReservations.filter(
-        r => r.fecha_reserva.split('T')[0] === dateStr
-      );
-
-      // Verificamos horarios ocupados por reservas activas
-      const morningBooked = reservationsForDate.some(
-        r => r.hora_inicio === 'mañana' && isActiveReservation(r)
-      );
-      const afternoonBooked = reservationsForDate.some(
-        r => r.hora_inicio === 'tarde' && isActiveReservation(r)
-      );
-
-      // Si ambos horarios están ocupados, la fecha no está disponible
-      if (morningBooked && afternoonBooked) {
-        acc.push(new Date(dateStr));
-      }
+  const fetchUnavailableDates = async () => {
+    try {
+      const response = await axiosInstance.get('/api/reservas', getAuthHeader())
       
-      return acc;
-    }, []);
+      // Filtrar solo reservas activas y con estado pendiente o confirmada
+      const activeReservations = response.data.filter(isActiveReservation);
+      setExistingReservations(activeReservations);
 
-    setUnavailableDates(fullyBookedDates);
-    
-  } catch (error) {
-    console.error('Error al obtener las fechas no disponibles:', error);
-    toast.error('Error al cargar las fechas no disponibles');
+      // Agrupar reservas por fecha
+      const reservationsByDate = activeReservations.reduce((acc, reserva) => {
+        const dateStr = reserva.fecha_reserva.split('T')[0];
+        if (!acc[dateStr]) {
+          acc[dateStr] = {
+            morning: false,
+            afternoon: false
+          };
+        }
+        
+        // Verificar el horario de la reserva
+        if (reserva.hora_inicio === TIME_SLOTS.MORNING.start) {
+          acc[dateStr].morning = true;
+        }
+        if (reserva.hora_inicio === TIME_SLOTS.AFTERNOON.start) {
+          acc[dateStr].afternoon = true;
+        }
+        
+        return acc;
+      }, {});
+
+      // Encontrar fechas completamente ocupadas (ambos horarios reservados)
+      const fullyBookedDates = Object.entries(reservationsByDate)
+        .filter(([_, slots]) => slots.morning && slots.afternoon)
+        .map(([dateStr]) => new Date(dateStr));
+
+      setUnavailableDates(fullyBookedDates);
+      
+    } catch (error) {
+      console.error('Error al obtener las fechas no disponibles:', error)
+      toast.error('Error al cargar las fechas no disponibles')
+    }
   }
-};
-
 
   const calculatePackagePrice = (selectedPackage, fecha) => {
-    if (!selectedPackage || !fecha) return 0;
+    if (!selectedPackage || !fecha) return 0
     
-    const reservationDate = new Date(fecha);
-    const dayOfWeek = reservationDate.getDay();
+    const reservationDate = new Date(fecha)
+    const dayOfWeek = reservationDate.getDay()
   
-    // Si es de lunes a jueves (1-4)
     if (dayOfWeek >= 1 && dayOfWeek <= 4) {
-      return parseFloat(selectedPackage.precio_lunes_jueves) || 0;
-    } 
-    // Si es viernes a domingo (5, 6, 0)
-    else {
-      return parseFloat(selectedPackage.precio_viernes_domingo) || 0;
+      return parseFloat(selectedPackage.precio_lunes_jueves) || 0
+    } else {
+      return parseFloat(selectedPackage.precio_viernes_domingo) || 0
     }
-  };
+  }
 
-  
   const onSubmit = async data => {
     try {
       const selectedPackage = packages.find(
@@ -266,34 +271,28 @@ const fetchUnavailableDates = async () => {
       )
       const selectedExtras = data.extras || []
 
-      // Calcular el precio del paquete según el día
-      let packagePrice = calculatePackagePrice(selectedPackage, data.fecha_reserva);
-      let total = packagePrice;
+      let packagePrice = calculatePackagePrice(selectedPackage, data.fecha_reserva)
+      let total = packagePrice
 
-      // Agregar precio de opción de alimento
       if (selectedFoodOption) {
-        total += parseFloat(selectedFoodOption.precio_extra) || 0;
+        total += parseFloat(selectedFoodOption.precio_extra) || 0
       }
 
-      // Agregar cargo por martes si aplica
-      total += parseFloat(data.tuesdayFee) || 0;
+      total += parseFloat(data.tuesdayFee) || 0
 
-      // Agregar precio de mampara si se seleccionó
       if (selectedMampara) {
-        total += parseFloat(selectedMampara.precio) || 0;
+        total += parseFloat(selectedMampara.precio) || 0
       }
 
-      // Calcular total de extras
       selectedExtras.forEach(extra => {
-        const extraInfo = extrasData.find(e => e.id.toString() === extra.id.toString());
+        const extraInfo = extrasData.find(e => e.id.toString() === extra.id.toString())
         if (extraInfo) {
-          total += (parseFloat(extraInfo.precio) || 0) * (parseInt(extra.cantidad) || 1);
+          total += (parseFloat(extraInfo.precio) || 0) * (parseInt(extra.cantidad) || 1)
         }
-      });
+      })
 
-      const formattedTotal = total.toFixed(2);
+      const formattedTotal = total.toFixed(2)
 
-      // Actualizar los datos de la reserva con el precio calculado
       setReservationData({
         ...data,
         id_usuario: userData?.id,
@@ -305,49 +304,49 @@ const fetchUnavailableDates = async () => {
         opcion_alimento_nombre: selectedFoodOption?.nombre,
         tematica_nombre: selectedTematica?.nombre,
         mampara_nombre: selectedMampara?.nombre,
-        fecha_reserva: data.fecha_reserva.toISOString()
-      });
+        fecha_reserva: data.fecha_reserva.toISOString(),
+        hora_inicio: data.hora_inicio.hora_inicio,
+        hora_fin: data.hora_inicio.hora_fin
+      })
 
-      setIsConfirmationModalOpen(true);
+      setIsConfirmationModalOpen(true)
     } catch (error) {
-      console.error('Error en onSubmit:', error);
-      toast.error('Ocurrió un error al procesar la reserva. Por favor, intenta de nuevo.');
+      console.error('Error en onSubmit:', error)
+      toast.error('Ocurrió un error al procesar la reserva. Por favor, intenta de nuevo.')
     }
   }
 
-
   const saveReservation = async () => {
     try {
-      const { id, ...reservationDataWithoutId } = reservationData;
+      const { id, ...reservationDataWithoutId } = reservationData
       const response = await axiosInstance.post(
         '/api/reservas',
         reservationDataWithoutId,
         getAuthHeader()
-      );
+      )
+      
       if (response.status === 201) {
-        const savedReservation = response.data;
-        setReservationData(prevData => ({ ...prevData, ...savedReservation }));
-        toast.success('Reserva creada exitosamente');
-        // En lugar de mostrar directamente el PaymentModal, mostrar primero el ContractModal
-        setShowContractModal(true);
+        const savedReservation = response.data
+        setReservationData(prevData => ({ ...prevData, ...savedReservation }))
+        toast.success('Reserva creada exitosamente')
+        setShowContractModal(true)
+        // Actualizar las fechas no disponibles después de crear una nueva reserva
+        fetchUnavailableDates()
       } else {
-        throw new Error('Error al crear la reserva');
+        throw new Error('Error al crear la reserva')
       }
     } catch (error) {
       console.error('Error al guardar la reserva:', error)
-      if (error.response) { 
-        console.error('Respuesta del servidor:', error.response.data)
+      if (error.response) {
         toast.error(
           `Error ${error.response.status}: ${
             error.response.data.message || error.response.data
           }`
         )
       } else {
-        toast.error(
-          'Error al guardar la reserva. Por favor, intenta nuevamente.'
-        )
+        toast.error('Error al guardar la reserva. Por favor, intenta nuevamente.')
       }
-      if (error.response && error.response.status === 401) {
+      if (error.response?.status === 401) {
         navigate('/signin')
       }
     }
@@ -367,26 +366,41 @@ const fetchUnavailableDates = async () => {
         toast.success('Reserva y pago completados con éxito')
         setIsPaymentModalOpen(false)
         setIsReservationModalOpen(true)
+        reset()
+        // Actualizar las fechas no disponibles después de confirmar el pago
+        fetchUnavailableDates()
       }
     } catch (error) {
       console.error('Error al procesar el pago:', error)
       toast.error('Error al procesar el pago. Por favor, intenta nuevamente.')
-      if (error.response && error.response.status === 401) {
+      if (error.response?.status === 401) {
         navigate('/signin')
       }
     }
   }
 
   const handleContractAccept = () => {
-    setContractAccepted(true);
-    setShowContractModal(false);
-    toast.success('Contrato aceptado exitosamente');
-    setIsPaymentModalOpen(true);
-  };
+    setContractAccepted(true)
+    setShowContractModal(false)
+    toast.success('Contrato aceptado exitosamente')
+    setIsPaymentModalOpen(true)
+  }
 
   return (
     <div className='min-h-screen bg-gradient-to-br from-purple-100 to-indigo-200 py-12 px-4 sm:px-6 lg:px-8'>
-      <ToastContainer />
+      <ToastContainer
+        position="top-right"
+        autoClose={5000}
+        hideProgressBar={false}
+        newestOnTop={false}
+        closeOnClick
+        rtl={false}
+        pauseOnFocusLoss
+        draggable
+        pauseOnHover
+        theme="light"
+        limit={3}
+      />
       <div className='max-w-7xl mx-auto'>
         {hasReservations && (
           <div className='mb-8'>
@@ -406,7 +420,6 @@ const fetchUnavailableDates = async () => {
         </h1>
 
         <div className='grid grid-cols-1 lg:grid-cols-2 gap-12'>
-          {/* Formulario de Reserva */}
           <div ref={formRef} className='bg-white rounded-lg shadow-xl p-8'>
             <h2 className='text-2xl font-semibold mb-6 text-indigo-700'>
               Detalles de la Reserva
@@ -426,11 +439,11 @@ const fetchUnavailableDates = async () => {
               unavailableDates={unavailableDates}
               existingReservations={existingReservations}
               isTuesdayModalOpen={isTuesdayModalOpen}     
-              setIsTuesdayModalOpen={setIsTuesdayModalOpen} 
+              setIsTuesdayModalOpen={setIsTuesdayModalOpen}
+              timeSlots={TIME_SLOTS}
             />
           </div>
 
-          {/* Resumen de Reserva */}
           <div ref={summaryRef}>
             <ReservationSummary
               control={control}
@@ -444,7 +457,6 @@ const fetchUnavailableDates = async () => {
         </div>
       </div>
 
-      {/* Modales */}
       {isConfirmationModalOpen && (
         <ConfirmationModal
           reservationData={reservationData}
@@ -459,43 +471,42 @@ const fetchUnavailableDates = async () => {
         />
       )}
 
-{showContractModal && (
-  <ContractModal
-    isOpen={showContractModal}
-    onClose={() => setShowContractModal(false)}
-    onAccept={handleContractAccept}
-  />
-)}
+      {showContractModal && (
+        <ContractModal
+          isOpen={showContractModal}
+          onClose={() => setShowContractModal(false)}
+          onAccept={handleContractAccept}
+        />
+      )}
 
-{contractAccepted && isPaymentModalOpen && (
-  <PaymentModal
-    reservationData={reservationData}
-    setReservationData={setReservationData}
-    onCancel={() => setIsPaymentModalOpen(false)}
-    onConfirm={handlePaymentConfirm}
-  />
-)}
+      {contractAccepted && isPaymentModalOpen && (
+        <PaymentModal
+          reservationData={reservationData}
+          setReservationData={setReservationData}
+          onCancel={() => setIsPaymentModalOpen(false)}
+          onConfirm={handlePaymentConfirm}
+        />
+      )}
 
       {isReservationModalOpen && (
         <ReservationModal
           reservationData={reservationData}
           packages={packages}
-          extrasData={extrasData} // Agrega esta línea
+          extrasData={extrasData}
           onClose={() => setIsReservationModalOpen(false)}
         />
       )}
 
-{isTuesdayModalOpen && (
-  <TuesdayModal
-    onClose={() => {
-      setIsTuesdayModalOpen(false);
-      setValue('fecha_reserva', null); // Opcional: Reinicia la fecha si el usuario cancela
-      setValue('tuesdayFee', 0);
-    }}
-    onConfirm={() => setIsTuesdayModalOpen(false)}
-  />
-)}
-
+      {isTuesdayModalOpen && (
+        <TuesdayModal
+          onClose={() => {
+            setIsTuesdayModalOpen(false)
+            setValue('fecha_reserva', null)
+            setValue('tuesdayFee', 0)
+          }}
+          onConfirm={() => setIsTuesdayModalOpen(false)}
+        />
+      )}
     </div>
   )
 }

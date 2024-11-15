@@ -15,6 +15,16 @@ const OpcionAlimento = sequelize.define('OpcionAlimento', {
         type: DataTypes.TEXT,
         allowNull: true
     },
+    precio_adulto: {
+        type: DataTypes.DECIMAL(10, 2),
+        allowNull: false,
+        defaultValue: 0.00
+    },
+    precio_nino: {
+        type: DataTypes.DECIMAL(10, 2),
+        allowNull: false,
+        defaultValue: 0.00
+    },
     precio_extra: {
         type: DataTypes.DECIMAL(10, 2),
         allowNull: false

@@ -13,6 +13,7 @@ const Mampara = require('./Mampara');
 const Tematica = require('./Tematica');
 const Extra = require('./Extra');
 const Categoria = require('./Categoria');
+const ReservaExtra = require('./ReservaExtra');
 
 // Asociaciones
 Usuario.hasMany(Reserva, { foreignKey: 'id_usuario', as: 'reservas' });
@@ -38,17 +39,19 @@ Reserva.belongsTo(Tematica, { foreignKey: 'id_tematica', as: 'tematicaReserva' }
 Tematica.hasMany(Mampara, { foreignKey: 'id_tematica', as: 'mamparas' });
 Mampara.belongsTo(Tematica, { foreignKey: 'id_tematica', as: 'tematica' });
 
+// Relación entre Reserva y Extra usando ReservaExtras como tabla intermedia
 Reserva.belongsToMany(Extra, {
-  through: 'ReservaExtras',
+  through: ReservaExtra,
   foreignKey: 'id_reserva',
   otherKey: 'id_extra',
-  as: 'extras',
+  as: 'extras'
 });
+
 Extra.belongsToMany(Reserva, {
-  through: 'ReservaExtras',
+  through: ReservaExtra,
   foreignKey: 'id_extra',
   otherKey: 'id_reserva',
-  as: 'reservas',
+  as: 'reservas'
 });
 
 module.exports = {
@@ -64,4 +67,5 @@ module.exports = {
   Tematica,
   Extra,
   Categoria,
+  ReservaExtra
 };

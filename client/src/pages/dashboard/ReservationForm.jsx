@@ -1,18 +1,20 @@
-import { useState, useEffect, useCallback } from 'react';
-import { useForm, Controller, useWatch, useFieldArray } from 'react-hook-form';
-import {
-  FiUser,
-  FiPackage,
-  FiCalendar,
-  FiClock,
-  FiDollarSign,
-  FiMessageSquare,
-  FiPlus,
-  FiMinus,
-} from 'react-icons/fi';
-import CurrencyInput from '../../components/CurrencyInput';
-import Select from 'react-select';
-import { Switch } from '@headlessui/react';
+import React, { useCallback, useEffect, useState, useRef, useMemo } from 'react';
+import { useForm, useWatch } from 'react-hook-form';
+import { isWeekend, isTuesday } from 'date-fns';
+import axiosInstance from '../../components/axiosConfig';
+import { FiX } from 'react-icons/fi';
+
+// Importar los componentes del formulario
+import PackageSection from './reservationform/PackageSection';
+import FoodOptionsSection from './reservationform/FoodOptionsSection';
+import DateTimeSection from './reservationform/DateTimeSection';
+import ThemeSection from './reservationform/ThemeSection';
+import MamparaSection from './reservationform/MamparaSection';
+import ExtrasSection from './reservationform/ExtrasSection';
+import CelebrantSection from './reservationform/CelebrantSection';
+import CommentsSection from './reservationform/CommentsSection';
+
+const TUESDAY_SURCHARGE = 1500; // Cargo adicional para martes
 
 const ReservationForm = ({
   editingItem,
@@ -24,715 +26,460 @@ const ReservationForm = ({
   mamparas = [],
   onSave,
   activeTab,
+  blockedDates = [],
+  existingReservations = [],
+  onClose,
 }) => {
+  const [manualTotal, setManualTotal] = useState(false);
+  const [total, setTotal] = useState('0.00');
+  const [calculationLogs, setCalculationLogs] = useState([]);
+  const formRef = useRef(null);
+
   const {
     register,
-    handleSubmit,
     control,
+    handleSubmit,
     setValue,
-    watch,
     reset,
     getValues,
     formState: { errors },
   } = useForm({
-    defaultValues: editingItem || {},
+    defaultValues: {
+      id_usuario: '',
+      id_paquete: '',
+      id_opcion_alimento: null,
+      id_tematica: null,
+      id_mampara: null,
+      extras: [],
+      fecha_reserva: null,
+      hora_inicio: null,
+      nombre_festejado: '',
+      edad_festejado: '',
+      comentarios: '',
+      total: '0.00',
+    },
   });
 
-  const { fields: extraFields, append, remove, update } = useFieldArray({
-    control,
-    name: 'extras',
-  });
-
-  const [manualTotal, setManualTotal] = useState(false);
-  const [filteredMamparas, setFilteredMamparas] = useState([]);
-
-  const selectedTematica = watch('id_tematica');
+  // Usar useWatch para observar cambios en los campos relevantes
   const watchedFields = useWatch({
     control,
-    name: [
-      'id_paquete',
-      'id_opcion_alimento',
-      'id_mampara',
-      'extras',
-      'id_tematica',
-    ],
+    name: ['id_paquete', 'id_opcion_alimento', 'id_mampara', 'extras', 'fecha_reserva', 'id_tematica'],
   });
 
+  const addLog = useCallback((message, data = null) => {
+    console.log(`[ReservationForm] ${message}`, data);
+    setCalculationLogs(prev => [...prev, { message, data, timestamp: new Date() }]);
+  }, []);
+
+  // Calcular total
   const calculateTotal = useCallback(() => {
-    let total = 0;
-    try {
-      // Paquete base
-      const paqueteId = getValues('id_paquete');
-      if (paqueteId) {
-        const paquete = packages.find(
-          (p) => Number(p.id) === Number(paqueteId)
-        );
-        if (paquete?.precio) {
-          total += parseFloat(paquete.precio);
+    let newTotal = 0;
+    addLog('Iniciando cálculo del total');
+
+    // Paquete base
+    const paqueteId = getValues('id_paquete');
+    const fecha = getValues('fecha_reserva');
+    
+    if (paqueteId && fecha) {
+      const paquete = packages.find(p => Number(p.id) === Number(paqueteId));
+      if (paquete) {
+        // Determinar precio según el día
+        const precio = isWeekend(fecha) 
+          ? parseFloat(paquete.precio_viernes_domingo)
+          : parseFloat(paquete.precio_lunes_jueves);
+        
+        newTotal += precio;
+        addLog(`Precio del paquete (${isWeekend(fecha) ? 'fin de semana' : 'entre semana'}):`, precio);
+
+        // Agregar cargo adicional si es martes
+        if (isTuesday(fecha)) {
+          newTotal += TUESDAY_SURCHARGE;
+          addLog('Cargo adicional por martes:', TUESDAY_SURCHARGE);
         }
       }
-
-      // Opción de alimento
-      const alimentoValue = getValues('id_opcion_alimento');
-      if (alimentoValue?.data?.precio_extra) {
-        total += parseFloat(alimentoValue.data.precio_extra);
-      }
-
-      // Mampara
-      const mamparaValue = getValues('id_mampara');
-      if (mamparaValue?.data?.precio) {
-        total += parseFloat(mamparaValue.data.precio);
-      }
-
-      // Extras
-      const selectedExtras = getValues('extras') || [];
-      selectedExtras.forEach((extra) => {
-        const extraInfo = extras.find((e) => Number(e.id) === Number(extra.id));
-        if (extraInfo?.precio && extra.cantidad) {
-          const extraTotal =
-            parseFloat(extraInfo.precio) * parseInt(extra.cantidad);
-          if (!isNaN(extraTotal)) {
-            total += extraTotal;
-          }
-        }
-      });
-
-      return parseFloat(total).toFixed(2);
-    } catch (error) {
-      console.error('Error calculando total:', error);
-      return '0.00';
     }
-  }, [getValues, packages, extras]);
 
-  const handleExtraChange = useCallback(
-    (extra, checked, cantidad = 1) => {
-      const currentExtras = getValues('extras') || [];
-      let newExtras;
+    // Opción de alimento
+    const alimentoValue = getValues('id_opcion_alimento');
+    if (alimentoValue?.data?.precio_extra) {
+      const precioAlimento = parseFloat(alimentoValue.data.precio_extra);
+      newTotal += precioAlimento;
+      addLog('Precio extra por alimento:', precioAlimento);
+    }
 
-      if (checked) {
-        const existingExtraIndex = currentExtras.findIndex(
-          (e) => Number(e.id) === Number(extra.id)
-        );
-        if (existingExtraIndex >= 0) {
-          newExtras = currentExtras.map((e, i) =>
-            i === existingExtraIndex
-              ? { ...e, cantidad: Number(cantidad) }
-              : e
-          );
-        } else {
-          newExtras = [
-            ...currentExtras,
-            { id: Number(extra.id), cantidad: Number(cantidad) },
-          ];
+    // Mampara
+    const mamparaValue = getValues('id_mampara');
+    if (mamparaValue?.data?.precio) {
+      const precioMampara = parseFloat(mamparaValue.data.precio);
+      newTotal += precioMampara;
+      addLog('Precio de mampara:', precioMampara);
+    }
+
+    // Extras
+    const selectedExtras = getValues('extras') || [];
+    let extrasTotal = 0;
+    selectedExtras.forEach(extra => {
+      const extraInfo = extras.find(e => Number(e.id) === Number(extra.id));
+      if (extraInfo?.precio && extra.cantidad) {
+        const extraPrecio = parseFloat(extraInfo.precio) * parseInt(extra.cantidad);
+        if (!isNaN(extraPrecio)) {
+          extrasTotal += extraPrecio;
+          addLog(`Extra ${extraInfo.nombre} (${extra.cantidad}x):`, extraPrecio);
         }
-      } else {
-        newExtras = currentExtras.filter(
-          (e) => Number(e.id) !== Number(extra.id)
-        );
       }
+    });
+    newTotal += extrasTotal;
+    addLog('Total de extras:', extrasTotal);
 
-      setValue('extras', newExtras, { shouldDirty: true });
+    addLog('Total final calculado:', newTotal);
+    return parseFloat(newTotal).toFixed(2);
+  }, [getValues, packages, extras, addLog]);
 
-      if (!manualTotal) {
-        const newTotal = calculateTotal();
-        setValue('total', newTotal, { shouldValidate: true });
-      }
-    },
-    [getValues, setValue, manualTotal, calculateTotal]
-  );
-
-  const onSubmit = useCallback(
-    (data) => {
-      console.log('Datos recibidos en onSubmit:', data);
-      const formattedData = {
-        ...data,
-        id_usuario: Number(data.id_usuario),
-        id_paquete: Number(data.id_paquete),
-        id_opcion_alimento: data.id_opcion_alimento?.value
-          ? Number(data.id_opcion_alimento.value)
-          : null,
-        id_tematica: data.id_tematica?.value
-          ? Number(data.id_tematica.value)
-          : data.id_tematica || null,
-        id_mampara:
-          data.id_mampara?.value &&
-          filteredMamparas.some((m) => m.id === data.id_mampara.value)
-            ? Number(data.id_mampara.value)
-            : null,
-        total: parseFloat(data.total),
-        edad_festejado: Number(data.edad_festejado),
-        extras:
-          data.extras?.map((extra) => ({
-            ...extra,
-            id: Number(extra.id),
-            cantidad: Number(extra.cantidad),
-          })) || [],
-        estado: editingItem ? editingItem.estado : 'pendiente',
-      };
-
-      if (Object.keys(errors).length > 0) {
-        console.error('Errores de validación:', errors);
-        return;
-      }
-
-      console.log('Datos formateados a enviar:', formattedData);
-      onSave(formattedData);
-    },
-    [filteredMamparas, errors, editingItem, onSave]
-  );
-
+  // Inicializar datos de edición
   useEffect(() => {
     if (editingItem) {
-      console.log('Editando item:', editingItem);
-
-      const selectedFoodOption = foodOptions.find(
-        (option) => option.id === editingItem.id_opcion_alimento
-      );
-      console.log('Opción de alimento seleccionada:', selectedFoodOption);
-
-      const selectedTematica = tematicas.find(
-        (t) => t.id === editingItem.id_tematica
-      );
-      console.log('Temática seleccionada:', selectedTematica);
-
-      const selectedMampara = mamparas.find(
-        (m) => m.id === editingItem.id_mampara
-      );
-      console.log('Mampara seleccionada:', selectedMampara);
-
+      addLog('Inicializando datos de edición:', editingItem);
       const formattedData = {
         ...editingItem,
-        id_opcion_alimento: selectedFoodOption
-          ? {
-              value: selectedFoodOption.id,
-              label: `${selectedFoodOption.nombre} - Adulto: ${selectedFoodOption.platillo_adulto}, Niño: ${selectedFoodOption.platillo_nino} - $${selectedFoodOption.precio_extra}`,
-              data: selectedFoodOption,
-            }
-          : null,
-        id_tematica: selectedTematica
-          ? {
-              value: selectedTematica.id,
-              label: selectedTematica.nombre,
-              data: selectedTematica,
-            }
-          : null,
-        id_mampara: selectedMampara
-          ? {
-              value: selectedMampara.id,
-              label: `${selectedMampara.piezas} pieza(s) - $${selectedMampara.precio}`,
-              data: selectedMampara,
-            }
-          : null,
+        id_usuario: editingItem.id_usuario,
+        id_paquete: editingItem.id_paquete,
+        id_opcion_alimento: editingItem.opcionAlimento ? {
+          value: editingItem.opcionAlimento.id,
+          label: `${editingItem.opcionAlimento.nombre} - Adulto: ${editingItem.opcionAlimento.platillo_adulto}, Niño: ${editingItem.opcionAlimento.platillo_nino} - $${editingItem.opcionAlimento.precio_extra}`,
+          data: editingItem.opcionAlimento,
+        } : null,
+        id_tematica: editingItem.tematicaReserva ? {
+          value: editingItem.tematicaReserva.id,
+          label: editingItem.tematicaReserva.nombre,
+          data: editingItem.tematicaReserva,
+        } : null,
+        id_mampara: editingItem.mampara ? {
+          value: editingItem.mampara.id,
+          label: `${editingItem.mampara.piezas} pieza(s) - $${editingItem.mampara.precio}`,
+          data: editingItem.mampara,
+        } : null,
+        extras: editingItem.extras?.map(extra => ({
+          id: extra.id,
+          cantidad: extra.ReservaExtra?.cantidad || 1,
+        })) || [],
+        fecha_reserva: editingItem.fecha_reserva ? new Date(editingItem.fecha_reserva) : null,
+        hora_inicio: editingItem.hora_inicio ? {
+          value: editingItem.hora_inicio,
+          hora_inicio: editingItem.hora_inicio,
+        } : null,
         total: editingItem.total || '0.00',
       };
 
       reset(formattedData);
-
-      // Cargar extras en el field array
-      if (Array.isArray(editingItem.extras)) {
-        // Limpiar los extras actuales
-        extraFields.forEach((field, index) => {
-          remove(index);
-        });
-        // Agregar los extras del elemento en edición
-        editingItem.extras.forEach((extra) => {
-          append({
-            id: Number(extra.id),
-            cantidad: Number(extra.cantidad),
-          });
-        });
-      }
+      setTotal(formattedData.total);
+      addLog('Datos de edición formateados:', formattedData);
     }
-  }, [
-    editingItem,
-    reset,
-    foodOptions,
-    tematicas,
-    mamparas,
-    append,
-    remove,
-    extraFields,
-  ]);
+  }, [editingItem, reset, addLog]);
 
-  useEffect(() => {
-    console.log('Cambió la temática seleccionada:', selectedTematica);
-
-    let selectedTematicaId;
-    if (typeof selectedTematica === 'object' && selectedTematica !== null) {
-      selectedTematicaId = selectedTematica.value || selectedTematica.id;
-    } else {
-      selectedTematicaId = selectedTematica;
-    }
-
-    console.log('ID de temática seleccionada:', selectedTematicaId);
-
-    if (selectedTematicaId) {
-      const filtered = mamparas.filter(
-        (m) =>
-          Number(m.id_tematica) === Number(selectedTematicaId) && m.activo
-      );
-
-      console.log('Mamparas filtradas:', filtered);
-      setFilteredMamparas(filtered);
-
-      const currentMampara = getValues('id_mampara');
-      console.log('Mampara actual:', currentMampara);
-
-      if (
-        currentMampara &&
-        !filtered.some((m) => m.id === currentMampara.value)
-      ) {
-        console.log('Reseteando mampara porque ya no es válida');
-        setValue('id_mampara', null);
-      }
-    } else {
-      console.log('No hay temática seleccionada, limpiando mamparas');
-      setFilteredMamparas([]);
-      setValue('id_mampara', null);
-    }
-  }, [selectedTematica, mamparas, getValues, setValue]);
-
+  // Actualizar total cuando cambian los campos relevantes
   useEffect(() => {
     if (!manualTotal) {
+      addLog('Actualizando total automáticamente');
       const newTotal = calculateTotal();
-      console.log('Nuevo total calculado:', newTotal);
-      setValue('total', newTotal, { shouldValidate: true });
+      setTotal(newTotal);
+      setValue('total', newTotal);
     } else {
-      console.log('El total se está ingresando manualmente, no se recalcula');
+      addLog('Total en modo manual');
     }
-  }, [watchedFields, manualTotal, setValue, calculateTotal]);
+  }, [watchedFields, manualTotal, calculateTotal, setValue, addLog]);
+
+  // Filtrar mamparas basado en la temática seleccionada
+  const filteredMamparas = useMemo(() => {
+    const selectedTheme = watchedFields[5]; // id_tematica está en el índice 5
+    return selectedTheme
+      ? mamparas.filter(
+          (m) =>
+            Number(m.id_tematica) === Number(selectedTheme.value) && m.activo
+        )
+      : [];
+  }, [watchedFields, mamparas]);
+
+  const onSubmit = useCallback(
+    async (data) => {
+      try {
+        addLog('Preparando datos para guardar:', data);
+        const formattedData = {
+          ...data,
+          id_usuario: Number(data.id_usuario),
+          id_paquete: Number(data.id_paquete),
+          id_opcion_alimento: data.id_opcion_alimento?.value
+            ? Number(data.id_opcion_alimento.value)
+            : null,
+          id_tematica: data.id_tematica?.value
+            ? Number(data.id_tematica.value)
+            : null,
+          id_mampara: data.id_mampara?.value
+            ? Number(data.id_mampara.value)
+            : null,
+          total: parseFloat(data.total),
+          edad_festejado: Number(data.edad_festejado),
+          extras: data.extras?.map((extra) => ({
+            id: Number(extra.id),
+            cantidad: Number(extra.cantidad),
+          })) || [],
+          estado: editingItem ? editingItem.estado : 'pendiente',
+          hora_inicio: data.hora_inicio?.hora_inicio || data.hora_inicio,
+        };
+
+        addLog('Datos formateados para guardar:', formattedData);
+
+        // Guardar la reserva
+        const savedReservation = await onSave(formattedData);
+        addLog('Reserva guardada:', savedReservation);
+
+        if (savedReservation?.id) {
+          // Crear entrada en finanzas
+          const financeData = {
+            id_reserva: savedReservation.id,
+            tipo: 'ingreso',
+            monto: formattedData.total,
+            fecha: new Date(),
+            descripcion: `Ingreso por reserva #${savedReservation.id}`,
+            categoria: 'Reserva',
+          };
+
+          await axiosInstance.post('/api/finanzas', financeData);
+          addLog('Entrada de finanzas creada:', financeData);
+
+          // Crear entrada en pagos
+          const paymentData = {
+            id_reserva: savedReservation.id,
+            monto: formattedData.total,
+            fecha_pago: new Date(),
+            metodo_pago: 'pendiente',
+            estado: 'pendiente',
+          };
+
+          await axiosInstance.post('/api/pagos', paymentData);
+          addLog('Entrada de pagos creada:', paymentData);
+        }
+      } catch (error) {
+        console.error('Error al guardar la reserva:', error);
+        addLog('Error al guardar la reserva:', error);
+      }
+    },
+    [onSave, editingItem, addLog]
+  );
+
+  // Sección de Usuario
+  const UserSection = () => (
+    <div className="bg-white p-4 rounded-lg shadow-sm border border-gray-200">
+      <label className="block text-sm font-medium text-gray-700 mb-2">
+        Usuario
+      </label>
+      <div className="relative">
+        <select
+          {...register('id_usuario', {
+            required: 'Este campo es requerido',
+          })}
+          className="w-full px-3 py-2 text-sm text-gray-700 bg-white border rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+          onChange={(e) => {
+            register('id_usuario').onChange(e);
+            addLog('Usuario seleccionado:', e.target.value);
+          }}
+        >
+          <option value="">Seleccionar usuario</option>
+          {users.map((user) => (
+            <option key={user.id} value={user.id}>
+              {user.nombre}
+            </option>
+          ))}
+        </select>
+        {errors.id_usuario && (
+          <p className="mt-1 text-xs text-red-500">
+            {errors.id_usuario.message}
+          </p>
+        )}
+      </div>
+    </div>
+  );
 
   return (
-    <form
-      id={activeTab + 'Form'}
-      onSubmit={handleSubmit(onSubmit)}
-      className='space-y-8'
-    >
-      <div className='grid grid-cols-1 md:grid-cols-2 gap-6'>
-        {/* Usuario */}
-        <div>
-          <label className='block text-sm font-medium text-gray-700 mb-1'>
-            Usuario
-          </label>
-          <div className='relative'>
-            <FiUser className='absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400' />
-            <select
-              {...register('id_usuario', {
-                required: 'Este campo es requerido',
-              })}
-              className='w-full pl-10 pr-3 py-2 text-gray-700 bg-white border rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500'
-            >
-              <option value=''>Seleccionar usuario</option>
-              {users.map((user) => (
-                <option key={user.id} value={user.id}>
-                  {user.nombre}
-                </option>
-              ))}
-            </select>
-          </div>
-          {errors.id_usuario && (
-            <p className='mt-1 text-xs text-red-500'>
-              {errors.id_usuario.message}
-            </p>
-          )}
-        </div>
-        {/* Paquete */}
-        <div>
-          <label className='block text-sm font-medium text-gray-700 mb-1'>
-            Paquete
-          </label>
-          <div className='relative'>
-            <FiPackage className='absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400' />
-            <select
-              {...register('id_paquete', {
-                required: 'Este campo es requerido',
-              })}
-              className='w-full pl-10 pr-3 py-2 text-gray-700 bg-white border rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500'
-            >
-              <option value=''>Seleccionar paquete</option>
-              {packages.map((pkg) => (
-                <option key={pkg.id} value={pkg.id}>
-                  {pkg.nombre}
-                </option>
-              ))}
-            </select>
-          </div>
-          {errors.id_paquete && (
-            <p className='mt-1 text-xs text-red-500'>
-              {errors.id_paquete.message}
-            </p>
-          )}
-        </div>
-        {/* Fecha de Reserva */}
-        <div>
-          <label className='block text-sm font-medium text-gray-700 mb-1'>
-            Fecha de Reserva
-          </label>
-          <div className='relative'>
-            <FiCalendar className='absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400' />
-            <input
-              type='date'
-              {...register('fecha_reserva', {
-                required: 'Este campo es requerido',
-              })}
-              className='w-full pl-10 pr-3 py-2 text-gray-700 bg-white border rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500'
-            />
-          </div>
-          {errors.fecha_reserva && (
-            <p className='mt-1 text-xs text-red-500'>
-              {errors.fecha_reserva.message}
-            </p>
-          )}
-        </div>
-        {/* Hora de Inicio */}
-        <div>
-          <label className='block text-sm font-medium text-gray-700 mb-1'>
-            Hora de Inicio
-          </label>
-          <div className='relative'>
-            <FiClock className='absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400' />
-            <select
-              {...register('hora_inicio', {
-                required: 'Este campo es requerido',
-              })}
-              className='w-full pl-10 pr-3 py-2 text-gray-700 bg-white border rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500'
-            >
-              <option value=''>Seleccionar hora</option>
-              <option value='mañana'>Mañana</option>
-              <option value='tarde'>Tarde</option>
-            </select>
-          </div>
-          {errors.hora_inicio && (
-            <p className='mt-1 text-xs text-red-500'>
-              {errors.hora_inicio.message}
-            </p>
-          )}
-        </div>
-        {/* Opción de Alimento */}
-        <div>
-          <label className='block text-sm font-medium text-gray-700 mb-1'>
-            Opción de Alimento
-          </label>
-          <Controller
-            name='id_opcion_alimento'
-            control={control}
-            render={({ field }) => (
-              <Select
-                {...field}
-                options={foodOptions.map((option) => ({
-                  value: option.id,
-                  label: `${option.nombre} - Adulto: ${option.platillo_adulto}, Niño: ${option.platillo_nino} - $${option.precio_extra}`,
-                  data: option,
-                }))}
-                onChange={(selectedOption) => {
-                  field.onChange(selectedOption);
-                  if (!manualTotal) {
-                    const newTotal = calculateTotal();
-                    setValue('total', newTotal);
-                  }
-                }}
-                placeholder='Seleccionar opción de alimento'
-                className='react-select-container'
-                classNamePrefix='react-select'
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+      <div className="bg-white rounded-lg shadow-xl w-full max-w-4xl relative">
+        <button
+          onClick={onClose}
+          className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 focus:outline-none"
+        >
+          <FiX className="w-6 h-6" />
+        </button>
+
+        <div className="p-6">
+          <h2 className="text-2xl font-semibold text-gray-800 mb-6">
+            {editingItem ? 'Editar Reservación' : 'Nueva Reservación'}
+          </h2>
+
+          <form
+            ref={formRef}
+            id={activeTab + 'Form'}
+            onSubmit={handleSubmit(onSubmit)}
+            className="space-y-6 max-h-[calc(100vh-16rem)] overflow-y-auto px-2"
+          >
+            <UserSection />
+
+            <div className="bg-white p-4 rounded-lg shadow-sm border border-gray-200">
+              <PackageSection 
+                control={control}
+                packages={packages}
+                errors={errors}
+                setValue={setValue}
               />
-            )}
-          />
-          {errors.id_opcion_alimento && (
-            <p className='mt-1 text-xs text-red-500'>
-              {errors.id_opcion_alimento.message}
-            </p>
-          )}
-        </div>
-        {/* Temática */}
-        <div>
-          <label className='block text-sm font-medium text-gray-700 mb-1'>
-            Temática
-          </label>
-          <Controller
-            name='id_tematica'
-            control={control}
-            render={({ field }) => (
-              <Select
-                {...field}
-                options={tematicas.map((t) => ({
-                  value: t.id,
-                  label: t.nombre,
-                  data: t,
-                }))}
-                onChange={(selectedOption) => {
-                  field.onChange(selectedOption);
-                  setValue('id_mampara', null);
-                }}
-                placeholder='Seleccionar temática'
-                className='react-select-container'
-                classNamePrefix='react-select'
+            </div>
+
+            <div className="bg-white p-4 rounded-lg shadow-sm border border-gray-200">
+              <FoodOptionsSection
+                control={control}
+                errors={errors}
+                foodOptions={foodOptions}
+                setValue={setValue}
               />
-            )}
-          />
-          {errors.id_tematica && (
-            <p className='mt-1 text-xs text-red-500'>
-              {errors.id_tematica.message}
-            </p>
-          )}
-        </div>
-        {/* Mampara */}
-        {selectedTematica && filteredMamparas.length > 0 && (
-          <div>
-            <label className='block text-sm font-medium text-gray-700 mb-1'>
-              Mampara
-            </label>
-            <Controller
-              name='id_mampara'
-              control={control}
-              render={({ field }) => (
-                <Select
-                  {...field}
-                  options={filteredMamparas.map((m) => ({
-                    value: m.id,
-                    label: `${m.piezas} pieza(s) - $${m.precio}`,
-                    data: m,
-                  }))}
-                  onChange={(selectedOption) => {
-                    field.onChange(selectedOption);
-                    if (!manualTotal) {
-                      const newTotal = calculateTotal();
-                      setValue('total', newTotal);
+            </div>
+
+            <div className="bg-white p-4 rounded-lg shadow-sm border border-gray-200">
+              <DateTimeSection
+                control={control}
+                errors={errors}
+                setValue={setValue}
+                unavailableDates={blockedDates}
+                existingReservations={existingReservations}
+                packages={packages}
+              />
+            </div>
+
+            <div className="bg-white p-4 rounded-lg shadow-sm border border-gray-200">
+              <ThemeSection
+                control={control}
+                errors={errors}
+                tematicas={tematicas}
+                setValue={setValue}
+              />
+            </div>
+
+            <div className="bg-white p-4 rounded-lg shadow-sm border border-gray-200">
+              <MamparaSection
+                control={control}
+                errors={errors}
+                filteredMamparas={filteredMamparas}
+                setValue={setValue}
+              />
+            </div>
+
+            <div className="bg-white p-4 rounded-lg shadow-sm border border-gray-200">
+              <ExtrasSection
+                extras={extras}
+                control={control}
+                setValue={setValue}
+              />
+            </div>
+
+            <div className="bg-white p-4 rounded-lg shadow-sm border border-gray-200">
+              <CelebrantSection
+                control={control}
+                errors={errors}
+              />
+            </div>
+
+            <div className="bg-white p-4 rounded-lg shadow-sm border border-gray-200">
+              <CommentsSection
+                control={control}
+              />
+            </div>
+
+            {/* Total Section */}
+            <div className="bg-white p-4 rounded-lg shadow-sm border border-gray-200">
+              <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                <label className="text-lg font-medium text-gray-700">
+                  Total
+                </label>
+                <div className="flex items-center gap-2">
+                  <input
+                    type="checkbox"
+                    checked={manualTotal}
+                    onChange={(e) => {
+                      setManualTotal(e.target.checked);
+                      if (!e.target.checked) {
+                        const newTotal = calculateTotal();
+                        setTotal(newTotal);
+                        setValue('total', newTotal);
+                        addLog('Total actualizado automáticamente:', newTotal);
+                      } else {
+                        addLog('Modo manual activado');
+                      }
+                    }}
+                    className="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded"
+                  />
+                  <span className="text-sm text-gray-500">Editar manualmente</span>
+                </div>
+              </div>
+              <div className="mt-2 flex gap-4">
+                <input
+                  type="text"
+                  value={total}
+                  onChange={(e) => {
+                    if (manualTotal) {
+                      const value = e.target.value.replace(/[^0-9.]/g, '');
+                      setTotal(value);
+                      setValue('total', value);
+                      addLog('Total actualizado manualmente:', value);
                     }
                   }}
-                  placeholder='Seleccionar mampara'
-                  className='react-select-container'
-                  classNamePrefix='react-select'
-                  isClearable
+                  readOnly={!manualTotal}
+                  className="flex-1 px-3 py-2 text-lg font-medium text-gray-700 bg-white border rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
                 />
-              )}
-            />
-          </div>
-        )}
-        {/* Nombre del Festejado */}
-        <div>
-          <label className='block text-sm font-medium text-gray-700 mb-1'>
-            Nombre del Festejado
-          </label>
-          <div className='relative'>
-            <FiUser className='absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400' />
-            <input
-              {...register('nombre_festejado', {
-                required: 'Este campo es requerido',
-              })}
-              type='text'
-              className='w-full pl-10 pr-3 py-2 text-gray-700 bg-white border rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500'
-              placeholder='Nombre del festejado'
-            />
-          </div>
-          {errors.nombre_festejado && (
-            <p className='mt-1 text-xs text-red-500'>
-              {errors.nombre_festejado.message}
-            </p>
-          )}
-        </div>
-
-        {/* Edad del Festejado */}
-        <div>
-          <label className='block text-sm font-medium text-gray-700 mb-1'>
-            Edad del Festejado
-          </label>
-          <input
-            {...register('edad_festejado', {
-              required: 'Este campo es requerido',
-              min: {
-                value: 1,
-                message: 'La edad debe ser mayor a 0',
-              },
-              max: {
-                value: 100,
-                message: 'La edad debe ser menor a 100',
-              },
-            })}
-            type='number'
-            className='w-full px-3 py-2 text-gray-700 bg-white border rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500'
-            placeholder='Edad del festejado'
-          />
-          {errors.edad_festejado && (
-            <p className='mt-1 text-xs text-red-500'>
-              {errors.edad_festejado.message}
-            </p>
-          )}
-        </div>
-
-        {/* Total */}
-        <div>
-          <label className='block text-sm font-medium text-gray-700 mb-1'>
-            Total
-          </label>
-          <Controller
-            name='total'
-            control={control}
-            defaultValue=''
-            render={({ field }) => (
-              <CurrencyInput
-                {...field}
-                className='w-full pl-10 pr-3 py-2 text-gray-700 bg-white border rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500'
-                readOnly={!manualTotal}
-                icon={FiDollarSign}
-              />
-            )}
-          />
-          <label className='flex items-center mt-2'>
-            <input
-              type='checkbox'
-              checked={manualTotal}
-              onChange={(e) => {
-                setManualTotal(e.target.checked);
-                if (!e.target.checked) {
-                  const newTotal = calculateTotal();
-                  setValue('total', newTotal, { shouldValidate: true });
-                }
-              }}
-              className='form-checkbox h-5 w-5 text-indigo-600'
-            />
-            <span className='ml-2 text-sm text-gray-700'>
-              Ingresar total manualmente
-            </span>
-          </label>
-        </div>
-
-        {/* Extras */}
-        <div className='col-span-2'>
-          <label className='block text-sm font-medium text-gray-700 mb-1'>
-            Extras
-          </label>
-          <div className='space-y-4'>
-            {extras.map((extra) => {
-              const fieldIndex = extraFields.findIndex(
-                (e) => Number(e.id) === Number(extra.id)
-              );
-              const isChecked = fieldIndex !== -1;
-              const extraCantidad =
-                isChecked && extraFields[fieldIndex]?.cantidad
-                  ? extraFields[fieldIndex].cantidad
-                  : 1;
-
-              return (
-                <div
-                  key={extra.id}
-                  className='flex items-center justify-between bg-gray-50 p-4 rounded-lg shadow-sm'
+                <button
+                  type="button"
+                  onClick={() => {
+                    const newTotal = calculateTotal();
+                    setTotal(newTotal);
+                    setValue('total', newTotal);
+                    addLog('Total recalculado:', newTotal);
+                  }}
+                  className="px-4 py-2 bg-indigo-600 text-white font-medium rounded-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
                 >
-                  <div className='flex items-center'>
-                    <Switch
-                      checked={isChecked}
-                      onChange={(checked) => {
-                        if (checked) {
-                          append({
-                            id: Number(extra.id),
-                            cantidad: Number(extraCantidad),
-                          });
-                        } else {
-                          remove(fieldIndex);
-                        }
-                        if (!manualTotal) {
-                          const newTotal = calculateTotal();
-                          setValue('total', newTotal, { shouldValidate: true });
-                        }
-                      }}
-                      className={`${
-                        isChecked ? 'bg-indigo-600' : 'bg-gray-200'
-                      } relative inline-flex items-center h-6 rounded-full w-11 transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500`}
-                    >
-                      <span className='sr-only'>Habilitar/Deshabilitar</span>
-                      <span
-                        className={`${
-                          isChecked ? 'translate-x-6' : 'translate-x-1'
-                        } inline-block w-4 h-4 transform bg-white rounded-full transition-transform`}
-                      />
-                    </Switch>
-                    <span className='ml-3 text-sm font-medium text-gray-900'>
-                      {extra.nombre} - ${extra.precio}
-                    </span>
-                  </div>
-                  {isChecked && (
-                    <div className='flex items-center space-x-2'>
-                      <button
-                        type='button'
-                        onClick={() => {
-                          const newCantidad = Math.max(1, extraCantidad - 1);
-                          update(fieldIndex, {
-                            id: Number(extra.id),
-                            cantidad: newCantidad,
-                          });
-                          if (!manualTotal) {
-                            const newTotal = calculateTotal();
-                            setValue('total', newTotal, {
-                              shouldValidate: true,
-                            });
-                          }
-                        }}
-                        className='text-gray-500 hover:text-gray-600 focus:outline-none'
-                      >
-                        <FiMinus />
-                      </button>
-                      <input
-                        type='number'
-                        value={extraCantidad}
-                        onChange={(e) => {
-                          const newCantidad = parseInt(e.target.value) || 1;
-                          update(fieldIndex, {
-                            id: Number(extra.id),
-                            cantidad: newCantidad,
-                          });
-                          if (!manualTotal) {
-                            const newTotal = calculateTotal();
-                            setValue('total', newTotal, {
-                              shouldValidate: true,
-                            });
-                          }
-                        }}
-                        className='w-16 text-center border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500'
-                        min='1'
-                      />
-                      <button
-                        type='button'
-                        onClick={() => {
-                          const newCantidad = extraCantidad + 1;
-                          update(fieldIndex, {
-                            id: Number(extra.id),
-                            cantidad: newCantidad,
-                          });
-                          if (!manualTotal) {
-                            const newTotal = calculateTotal();
-                            setValue('total', newTotal, {
-                              shouldValidate: true,
-                            });
-                          }
-                        }}
-                        className='text-gray-500 hover:text-gray-600 focus:outline-none'
-                      >
-                        <FiPlus />
-                      </button>
-                    </div>
-                  )}
-                </div>
-              );
-            })}
-          </div>
-        </div>
+                  Calcular
+                </button>
+              </div>
 
-        {/* Comentarios Adicionales */}
-        <div className='col-span-2'>
-          <label className='block text-sm font-medium text-gray-700 mb-1'>
-            Comentarios Adicionales
-          </label>
-          <div className='relative'>
-            <FiMessageSquare className='absolute left-3 top-3 text-gray-400' />
-            <textarea
-              {...register('comentarios')}
-              className='w-full pl-10 pr-3 py-2 text-gray-700 bg-white border rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500'
-              rows='3'
-              placeholder='Comentarios adicionales'
-            ></textarea>
+              {/* Logs de cálculo */}
+              <div className="mt-4 p-4 bg-gray-50 rounded-lg border border-gray-200 max-h-40 overflow-y-auto">
+                <h4 className="text-sm font-medium text-gray-700 mb-2">Logs de cálculo:</h4>
+                {calculationLogs.slice(-5).map((log, index) => (
+                  <div key={index} className="text-xs text-gray-600 mb-1">
+                    {new Date(log.timestamp).toLocaleTimeString()}: {log.message}
+                    {log.data !== null && (
+                      <span className="text-indigo-600"> {JSON.stringify(log.data)}</span>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </div>
+          </form>
+
+          {/* Botones de acción */}
+          <div className="mt-6 flex justify-end gap-4">
+            <button
+              type="button"
+              onClick={onClose}
+              className="px-4 py-2 text-gray-700 bg-gray-100 rounded-md hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-gray-500"
+            >
+              Cancelar
+            </button>
+            <button
+              type="submit"
+              form={activeTab + 'Form'}
+              className="px-4 py-2 bg-indigo-600 text-white font-medium rounded-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
+            >
+              {editingItem ? 'Actualizar' : 'Crear'} Reservación
+            </button>
           </div>
         </div>
       </div>
-    </form>
+    </div>
   );
 };
 

@@ -3,222 +3,256 @@ import { jwtDecode } from 'jwt-decode';
 import { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { toast, ToastContainer } from 'react-toastify';
+import { ShieldCheck, Shield, Check, X, ArrowRight, Lock } from 'lucide-react';
 import 'react-toastify/dist/ReactToastify.css';
 
 const ProtectedRoute = ({ redirectPath = '/signin', allowedRoles = [], children }) => {
   const [isAllowed, setIsAllowed] = useState(false);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
-  const [showResult, setShowResult] = useState(false);
+  const [currentStep, setCurrentStep] = useState(0);
+  const [showFinalAnimation, setShowFinalAnimation] = useState(false);
   const hasNotified = useRef(false);
+
+  const verificationSteps = [
+    { id: 0, text: "Verificando acceso", status: "pending" },
+    { id: 1, text: "Validando permisos", status: "pending" },
+    { id: 2, text: "Comprobando roles", status: "pending" }
+  ];
+
+  const [steps, setSteps] = useState(verificationSteps);
 
   useEffect(() => {
     const verifyToken = async () => {
-      const token = localStorage.getItem('token');
-      if (token) {
-        try {
-          const decoded = jwtDecode(token);
-          if (decoded && decoded.exp > Date.now() / 1000) {
-            setIsAuthenticated(true);
-            setIsAllowed(allowedRoles.includes(decoded.userType || decoded.role));
-          } else {
-            localStorage.removeItem('token');
-            setIsAuthenticated(false);
-            setIsAllowed(false);
-          }
-        } catch (error) {
-          console.error('Error decoding token:', error);
-          localStorage.removeItem('token');
+      try {
+        // Paso 1: Verificar acceso
+        setCurrentStep(0);
+        const token = localStorage.getItem('token');
+        await new Promise(resolve => setTimeout(resolve, 400));
+        setSteps(prev => prev.map(step => 
+          step.id === 0 ? { ...step, status: token ? "success" : "error" } : step
+        ));
+
+        if (!token) {
           setIsAuthenticated(false);
           setIsAllowed(false);
+          throw new Error('No token found');
         }
-      } else {
-        setIsAuthenticated(false);
-        setIsAllowed(false);
+
+        // Paso 2: Validar token
+        setCurrentStep(1);
+        const decoded = jwtDecode(token);
+        await new Promise(resolve => setTimeout(resolve, 400));
+
+        if (decoded && decoded.exp > Date.now() / 1000) {
+          setIsAuthenticated(true);
+          setSteps(prev => prev.map(step => 
+            step.id === 1 ? { ...step, status: "success" } : step
+          ));
+        } else {
+          localStorage.removeItem('token');
+          setIsAuthenticated(false);
+          setSteps(prev => prev.map(step => 
+            step.id === 1 ? { ...step, status: "error" } : step
+          ));
+          throw new Error('Invalid token');
+        }
+
+        // Paso 3: Verificar permisos
+        setCurrentStep(2);
+        await new Promise(resolve => setTimeout(resolve, 400));
+        
+        const hasPermission = allowedRoles.includes(decoded.userType || decoded.role);
+        setIsAllowed(hasPermission);
+        setSteps(prev => prev.map(step => 
+          step.id === 2 ? { ...step, status: hasPermission ? "success" : "error" } : step
+        ));
+
+        await new Promise(resolve => setTimeout(resolve, 400));
+        setShowFinalAnimation(true);
+        
+      } catch (error) {
+        console.error('Authentication error:', error);
+      } finally {
+        await new Promise(resolve => setTimeout(resolve, 500));
+        setIsLoading(false);
       }
-      await new Promise((resolve) => setTimeout(resolve, 1000));
-      setShowResult(true);
-      await new Promise((resolve) => setTimeout(resolve, 300));
-      setIsLoading(false);
     };
+
     verifyToken();
   }, [allowedRoles]);
 
   useEffect(() => {
     if (!isLoading && !isAllowed && !hasNotified.current) {
       const message = isAuthenticated
-        ? 'No tienes permiso para acceder a esta página.'
-        : 'Debes iniciar sesión para acceder a esta página.';
+        ? 'No tienes permisos suficientes'
+        : 'Por favor inicia sesión';
       
-      setTimeout(() => {
-        toast.error(message, {
-          position: "top-right",
-          autoClose: 4000,
-          hideProgressBar: false,
-          closeOnClick: true,
-          pauseOnHover: true,
-          draggable: true,
-        });
-      }, 0);
+      toast.error(message, {
+        position: "top-center",
+        autoClose: 3000,
+        hideProgressBar: false,
+        closeOnClick: true,
+        pauseOnHover: true,
+        draggable: true,
+        className: "!bg-white/10 backdrop-blur-lg border border-white/20"
+      });
       
       hasNotified.current = true;
     }
   }, [isLoading, isAllowed, isAuthenticated]);
 
-  const containerVariants = {
-    initial: { opacity: 0 },
-    animate: { opacity: 1, transition: { duration: 0.5 } },
-    exit: { opacity: 0, transition: { duration: 0.3 } }
+  const StepIndicator = ({ step, index }) => {
+    return (
+      <motion.div
+        initial={{ opacity: 0, x: -20 }}
+        animate={{ opacity: 1, x: 0 }}
+        transition={{ duration: 0.3, delay: index * 0.1 }}
+        className="flex items-center gap-3"
+      >
+        <div className="relative flex items-center">
+          <motion.div
+            className={`w-8 h-8 rounded-full flex items-center justify-center transition-colors duration-300
+              ${currentStep === index ? 'bg-blue-500/20' : 
+                step.status === "success" ? 'bg-green-500/20' : 
+                step.status === "error" ? 'bg-red-500/20' : 
+                'bg-white/10'}`}
+          >
+            <AnimatePresence mode="wait">
+              {step.status === "success" ? (
+                <motion.div
+                  key="success"
+                  initial={{ scale: 0 }}
+                  animate={{ scale: 1 }}
+                  exit={{ scale: 0 }}
+                >
+                  <Check className="w-4 h-4 text-green-500" />
+                </motion.div>
+              ) : step.status === "error" ? (
+                <motion.div
+                  key="error"
+                  initial={{ scale: 0 }}
+                  animate={{ scale: 1 }}
+                  exit={{ scale: 0 }}
+                >
+                  <X className="w-4 h-4 text-red-500" />
+                </motion.div>
+              ) : currentStep === index ? (
+                <motion.div
+                  key="loading"
+                  className="w-4 h-4 border-2 border-blue-500 rounded-full border-r-transparent"
+                  animate={{ rotate: 360 }}
+                  transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+                />
+              ) : (
+                <motion.div
+                  key="waiting"
+                  className="w-2 h-2 bg-white/30 rounded-full"
+                />
+              )}
+            </AnimatePresence>
+          </motion.div>
+        </div>
+        <span className={`text-sm transition-colors duration-300
+          ${currentStep === index ? 'text-white' : 
+            step.status === "success" ? 'text-green-500' : 
+            step.status === "error" ? 'text-red-500' : 
+            'text-white/50'}`}>
+          {step.text}
+        </span>
+      </motion.div>
+    );
   };
 
-  const circleVariants = {
-    initial: { scale: 0, opacity: 0 },
-    animate: {
-      scale: 1,
-      opacity: 1,
-      transition: { duration: 0.5, ease: "easeOut" }
-    }
-  };
-
-  const spinnerVariants = {
-    animate: {
-      rotate: 360,
-      transition: { duration: 1.2, repeat: Infinity, ease: "linear" }
-    }
-  };
-
-  const iconVariants = {
-    hidden: { pathLength: 0, opacity: 0 },
-    visible: {
-      pathLength: 1,
-      opacity: 1,
-      transition: {
-        pathLength: { duration: 0.5, ease: "easeInOut" },
-        opacity: { duration: 0.2 }
-      }
-    }
-  };
-
-  const textVariants = {
-    hidden: { opacity: 0, y: 20 },
-    visible: {
-      opacity: 1,
-      y: 0,
-      transition: { duration: 0.4, ease: "easeOut" }
-    }
-  };
+  const FinalAnimation = () => (
+    <motion.div 
+      className="relative"
+      initial={{ scale: 0.8, opacity: 0 }}
+      animate={{ scale: 1, opacity: 1 }}
+      transition={{ duration: 0.5, type: "spring" }}
+    >
+      <motion.div
+        className={`absolute inset-0 rounded-full ${
+          isAllowed ? 'bg-green-500/20' : 'bg-red-500/20'
+        } blur-xl`}
+        animate={{
+          scale: [1, 1.2, 1],
+          opacity: [0.5, 0.8, 0.5]
+        }}
+        transition={{
+          duration: 2,
+          repeat: Infinity,
+          ease: "easeInOut"
+        }}
+      />
+      
+      <motion.div
+        className="relative w-24 h-24 flex items-center justify-center"
+        whileHover={{ scale: 1.05 }}
+      >
+        {isAllowed ? (
+          <motion.div
+            initial={{ scale: 0 }}
+            animate={{ scale: 1 }}
+            transition={{ 
+              type: "spring",
+              damping: 10,
+              stiffness: 100,
+              delay: 0.2
+            }}
+          >
+            <ShieldCheck className="w-16 h-16 text-green-500" />
+          </motion.div>
+        ) : (
+          <motion.div
+            initial={{ scale: 0 }}
+            animate={{ scale: 1 }}
+            transition={{ 
+              type: "spring",
+              damping: 10,
+              stiffness: 100,
+              delay: 0.2
+            }}
+          >
+            <Lock className="w-16 h-16 text-red-500" />
+          </motion.div>
+        )}
+      </motion.div>
+    </motion.div>
+  );
 
   if (isLoading) {
     return (
-      <motion.div
-        variants={containerVariants}
-        initial="initial"
-        animate="animate"
-        exit="exit"
-        className="fixed inset-0 flex flex-col items-center justify-center bg-gradient-to-br from-blue-600 via-purple-600 to-pink-500"
-      >
-        <div className="relative w-32 h-32">
-          <AnimatePresence mode="wait">
-            {!showResult ? (
+      <div className="fixed inset-0 flex items-center justify-center bg-gradient-to-br from-gray-900 to-black">
+        <div className="relative z-10 flex flex-col items-center gap-12 max-w-md mx-auto p-8">
+          {/* Estado de verificación */}
+          {!showFinalAnimation ? (
+            <>
+              <div className="space-y-4 w-full">
+                {steps.map((step, index) => (
+                  <StepIndicator key={step.id} step={step} index={index} />
+                ))}
+              </div>
+
               <motion.div
-                key="spinner"
-                variants={circleVariants}
-                initial="initial"
-                animate="animate"
-                className="relative w-full h-full"
+                className="w-full h-1 bg-white/5 rounded-full overflow-hidden"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
               >
                 <motion.div
-                  variants={spinnerVariants}
-                  animate="animate"
-                  className="absolute inset-0 border-4 border-white border-t-transparent rounded-full"
-                  style={{ filter: "drop-shadow(0 0 8px rgba(255,255,255,0.3))" }}
-                />
-                <motion.div
-                  className="absolute inset-0 border-4 border-white opacity-20 rounded-full"
+                  className="h-full bg-blue-500"
+                  initial={{ width: "0%" }}
+                  animate={{ width: `${(currentStep / (steps.length - 1)) * 100}%` }}
+                  transition={{ duration: 0.3 }}
                 />
               </motion.div>
-            ) : (
-              <motion.div
-                key="result"
-                className="w-full h-full flex items-center justify-center"
-                initial="hidden"
-                animate="visible"
-              >
-                {isAllowed ? (
-                  <motion.svg
-                    viewBox="0 0 24 24"
-                    className="w-24 h-24 text-green-400"
-                    initial={{ scale: 0.5, opacity: 0 }}
-                    animate={{ scale: 1, opacity: 1 }}
-                    transition={{ duration: 0.5, ease: "backOut" }}
-                  >
-                    <motion.path
-                      d="M3,12 L9,18 L21,6"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="3"
-                      strokeLinecap="round"
-                      variants={iconVariants}
-                    />
-                  </motion.svg>
-                ) : (
-                  <motion.svg
-                    viewBox="0 0 24 24"
-                    className="w-24 h-24 text-red-400"
-                    initial={{ scale: 0.5, opacity: 0, rotate: -45 }}
-                    animate={{ scale: 1, opacity: 1, rotate: 0 }}
-                    transition={{ duration: 0.5, ease: "backOut" }}
-                  >
-                    <motion.path
-                      d="M18 6L6 18M6 6l12 12"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="3"
-                      strokeLinecap="round"
-                      variants={iconVariants}
-                    />
-                  </motion.svg>
-                )}
-              </motion.div>
-            )}
-          </AnimatePresence>
+            </>
+          ) : (
+            <FinalAnimation />
+          )}
         </div>
-
-        <motion.div
-          variants={textVariants}
-          initial="hidden"
-          animate="visible"
-          className="mt-8 text-center"
-        >
-          <h2 className="text-3xl font-bold text-white mb-2">
-            {showResult
-              ? isAllowed
-                ? 'Acceso Permitido'
-                : 'Acceso Denegado'
-              : 'Verificando Acceso'}
-          </h2>
-          <p className="text-white/80 text-lg">
-            {showResult
-              ? isAllowed
-                ? 'Redirigiendo...'
-                : 'Por favor, inicia sesión'
-              : 'Comprobando credenciales...'}
-          </p>
-        </motion.div>
-
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.5 }}
-          className="absolute bottom-8 left-0 right-0"
-        >
-          <ToastContainer 
-            position="bottom-center"
-            theme="dark"
-            toastClassName="backdrop-blur-sm bg-white/10"
-          />
-        </motion.div>
-      </motion.div>
+        <ToastContainer />
+      </div>
     );
   }
 
@@ -238,7 +272,7 @@ const ProtectedRoute = ({ redirectPath = '/signin', allowedRoles = [], children 
 
   return isAuthenticated ? (
     <>
-      <Navigate to='/reservations' replace />
+      <Navigate to="/reservations" replace />
       <ToastContainer />
     </>
   ) : (
@@ -249,4 +283,4 @@ const ProtectedRoute = ({ redirectPath = '/signin', allowedRoles = [], children 
   );
 };
 
-export default ProtectedRoute;
+export default ProtectedRoute;  

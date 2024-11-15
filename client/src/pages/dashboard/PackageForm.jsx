@@ -41,49 +41,34 @@ const PackageForm = ({ editingItem, onSave, activeTab }) => {
             </div>
 
             <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Precio Base</label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Precio Lunes a Jueves</label>
                 <div className="relative">
                     <FiDollarSign className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
                     <input
-                        name="precio"
+                        name="precio_lunes_jueves"
                         type="number"
                         step="0.01"
-                        defaultValue={editingItem?.precio || ''}
+                        defaultValue={editingItem?.precio_lunes_jueves || ''}
                         className="w-full pl-10 pr-3 py-2 text-gray-700 bg-white border rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                        placeholder="Precio base del paquete"
+                        placeholder="Precio de lunes a jueves"
                     />
                 </div>
             </div>
 
             <div>
-  <label className="block text-sm font-medium text-gray-700 mb-1">Precio Lunes a Jueves</label>
-  <div className="relative">
-    <FiDollarSign className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
-    <input
-      name="precio_lunes_jueves"
-      type="number"
-      step="0.01"
-      defaultValue={editingItem?.precio_lunes_jueves || ''}
-      className="w-full pl-10 pr-3 py-2 text-gray-700 bg-white border rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-      placeholder="Precio de lunes a jueves"
-    />
-  </div>
-</div>
-
-<div>
-  <label className="block text-sm font-medium text-gray-700 mb-1">Precio Viernes a Domingo</label>
-  <div className="relative">
-    <FiDollarSign className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
-    <input
-      name="precio_viernes_domingo"
-      type="number"
-      step="0.01"
-      defaultValue={editingItem?.precio_viernes_domingo || ''}
-      className="w-full pl-10 pr-3 py-2 text-gray-700 bg-white border rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-      placeholder="Precio de viernes a domingo"
-    />
-  </div>
-</div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Precio Viernes a Domingo</label>
+                <div className="relative">
+                    <FiDollarSign className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+                    <input
+                        name="precio_viernes_domingo"
+                        type="number"
+                        step="0.01"
+                        defaultValue={editingItem?.precio_viernes_domingo || ''}
+                        className="w-full pl-10 pr-3 py-2 text-gray-700 bg-white border rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        placeholder="Precio de viernes a domingo"
+                    />
+                </div>
+            </div>
 
             <div className="col-span-1 md:col-span-2">
                 <label className="block text-sm font-medium text-gray-700 mb-1">Estado del Paquete</label>
@@ -99,11 +84,8 @@ const PackageForm = ({ editingItem, onSave, activeTab }) => {
                     </select>
                 </div>
             </div>
-
-        
         </form>
     );
-
 };
 
 export default PackageForm;
