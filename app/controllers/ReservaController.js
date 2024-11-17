@@ -8,24 +8,13 @@ const Extra = require('../models/Extra');
 const Finanza = require('../models/Finanza');
 const ReservaExtra = require('../models/ReservaExtra');
 
-const TIME_SLOTS = {
-  MORNING: {
-    start: '11:00:00',
-    end: '16:00:00'
-  },
-  AFTERNOON: {
-    start: '17:00:00',
-    end: '22:00:00'
-  }
-};
-
 exports.createReserva = async (req, res) => {
   try {
     console.log('Datos recibidos para crear reserva:', req.body);
     const reservaData = req.body;
 
     // Validación básica
-    const camposRequeridos = ['id_usuario', 'id_paquete', 'fecha_reserva', 'hora_inicio', 'hora_fin', 'estado', 'total', 'nombre_festejado', 'edad_festejado'];
+    const camposRequeridos = ['id_usuario', 'id_paquete', 'fecha_reserva', 'hora_inicio', 'estado', 'total', 'nombre_festejado', 'edad_festejado'];
     for (const campo of camposRequeridos) {
       if (reservaData[campo] === undefined) {
         return res.status(400).json({ error: `El campo ${campo} es requerido` });
@@ -37,28 +26,30 @@ exports.createReserva = async (req, res) => {
     if (!Number.isInteger(reservaData.id_paquete)) return res.status(400).json({ error: 'id_paquete debe ser un número entero' });
     if (reservaData.id_opcion_alimento && !Number.isInteger(reservaData.id_opcion_alimento)) return res.status(400).json({ error: 'id_opcion_alimento debe ser un número entero' });
     if (reservaData.id_tematica && !Number.isInteger(reservaData.id_tematica)) return res.status(400).json({ error: 'id_tematica debe ser un número entero' });
-    
-    // Validación de horarios
-    const validStartTimes = [TIME_SLOTS.MORNING.start, TIME_SLOTS.AFTERNOON.start];
-    const validEndTimes = [TIME_SLOTS.MORNING.end, TIME_SLOTS.AFTERNOON.end];
-    
-    if (!validStartTimes.includes(reservaData.hora_inicio)) {
-      return res.status(400).json({ error: 'hora_inicio debe ser 11:00:00 o 17:00:00' });
+
+    // Validación de fecha
+    const fechaReserva = new Date(reservaData.fecha_reserva);
+    if (isNaN(fechaReserva.getTime())) {
+      return res.status(400).json({ error: 'Fecha de reserva inválida' });
     }
+    reservaData.fecha_reserva = fechaReserva;
     
-    if (!validEndTimes.includes(reservaData.hora_fin)) {
-      return res.status(400).json({ error: 'hora_fin debe ser 16:00:00 o 22:00:00' });
+    // Validación de horario
+    if (!['mañana', 'tarde'].includes(reservaData.hora_inicio)) {
+      return res.status(400).json({ error: 'hora_inicio debe ser mañana o tarde' });
     }
 
-    // Validar que hora_inicio y hora_fin correspondan al mismo turno
-    if ((reservaData.hora_inicio === TIME_SLOTS.MORNING.start && reservaData.hora_fin !== TIME_SLOTS.MORNING.end) ||
-        (reservaData.hora_inicio === TIME_SLOTS.AFTERNOON.start && reservaData.hora_fin !== TIME_SLOTS.AFTERNOON.end)) {
-      return res.status(400).json({ error: 'Las horas de inicio y fin no corresponden al mismo turno' });
+    if (!['pendiente', 'confirmada', 'cancelada'].includes(reservaData.estado)) {
+      return res.status(400).json({ error: 'estado inválido' });
     }
-
-    if (!['pendiente', 'confirmada', 'cancelada'].includes(reservaData.estado)) return res.status(400).json({ error: 'estado inválido' });
-    if (isNaN(parseFloat(reservaData.total))) return res.status(400).json({ error: 'total debe ser un número' });
-    if (!Number.isInteger(reservaData.edad_festejado)) return res.status(400).json({ error: 'edad_festejado debe ser un número entero' });
+    
+    if (isNaN(parseFloat(reservaData.total))) {
+      return res.status(400).json({ error: 'total debe ser un número' });
+    }
+    
+    if (!Number.isInteger(reservaData.edad_festejado)) {
+      return res.status(400).json({ error: 'edad_festejado debe ser un número entero' });
+    }
 
     // Verificar disponibilidad del horario
     const existingReservation = await Reserva.findOne({
@@ -271,7 +262,7 @@ exports.getReservasByUserId = async (req, res) => {
         id_usuario: userId,
         activo: true 
       },
-      attributes: ['id', 'id_paquete', 'id_opcion_alimento', 'fecha_reserva', 'hora_inicio', 'hora_fin', 'estado', 'total', 'nombre_festejado', 'edad_festejado', 'id_tematica', 'comentarios', 'activo', 'id_mampara'],
+      attributes: ['id', 'id_paquete', 'id_opcion_alimento', 'fecha_reserva', 'hora_inicio', 'estado', 'total', 'nombre_festejado', 'edad_festejado', 'id_tematica', 'comentarios', 'activo', 'id_mampara'],
       include: [
         {
           model: Paquete,
