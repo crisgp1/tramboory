@@ -116,6 +116,8 @@ const DateTimeSection = ({
   setIsTuesdayModalOpen,
   packages
 }) => {
+  const [tuesdayModalShown, setTuesdayModalShown] = useState(false);
+
   const selectedPackage = useWatch({
     control,
     name: 'id_paquete'
@@ -142,15 +144,17 @@ const DateTimeSection = ({
             : parseFloat(pkg.precio_viernes_domingo);
         setValue('packagePrice', newPrice, { shouldValidate: false });
   
-        if (dayOfWeek === 2) {
+        if (dayOfWeek === 2 && !tuesdayModalShown) {
           setValue('tuesdayFee', 500, { shouldValidate: false });
           setIsTuesdayModalOpen(true);
-        } else {
+          setTuesdayModalShown(true);
+        } else if (dayOfWeek !== 2) {
           setValue('tuesdayFee', 0, { shouldValidate: false });
+          setTuesdayModalShown(false);
         }
       }
     }
-  }, [selectedPackage, selectedDate, packages, setValue, setIsTuesdayModalOpen]);
+  }, [selectedPackage, selectedDate, packages, setValue, setIsTuesdayModalOpen, tuesdayModalShown]);
 
   const handleDateChange = (date, onChange) => {
     if (!date) {
@@ -158,6 +162,7 @@ const DateTimeSection = ({
       setValue('hora_inicio', null);
       setValue('packagePrice', 0, { shouldValidate: false });
       setValue('tuesdayFee', 0, { shouldValidate: false });
+      setTuesdayModalShown(false);
       return;
     }
   
@@ -166,10 +171,12 @@ const DateTimeSection = ({
       validDate.setHours(0, 0, 0, 0);
       onChange(validDate);
       setValue('hora_inicio', null);
+      setTuesdayModalShown(false);
     } else {
       console.error('Fecha inválida:', date);
       onChange(null);
       setValue('hora_inicio', null);
+      setTuesdayModalShown(false);
     }
   };
   

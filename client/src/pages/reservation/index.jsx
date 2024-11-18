@@ -316,6 +316,10 @@ const Reservation = () => {
       if (selectedMampara) {
         total += parseFloat(selectedMampara.precio) || 0;
       }
+
+      if (selectedTematica) {
+        total += parseFloat(selectedTematica.precio) || 0;
+      }
   
       selectedExtras.forEach((extra) => {
         const extraInfo = extrasData.find((e) => e.id.toString() === extra.id.toString());
@@ -495,6 +499,8 @@ const Reservation = () => {
           packages={packages}
           foodOptions={foodOptions}
           tematicas={tematicas}
+          extras={extrasData}
+          mamparas={mamparas}
           onCancel={() => setIsConfirmationModalOpen(false)}
           onConfirm={() => {
             setIsConfirmationModalOpen(false);

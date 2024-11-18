@@ -21,6 +21,7 @@ const ConfirmationModal = ({
   foodOptions = [],
   tematicas = [],
   extras = [],
+  mamparas = [],
   onCancel,
   onConfirm,
 }) => {
@@ -69,7 +70,10 @@ const ConfirmationModal = ({
 
   const selectedFoodOption = foodOptions?.find(f => f?.id === reservationData?.id_opcion_alimento);
   const selectedPackage = packages?.find(pkg => pkg?.id === reservationData?.id_paquete);
-  const mamparaPrice = parseFloat(reservationData?.mampara_precio) || 0;
+  const selectedTematica = tematicas?.find(t => t?.id === reservationData?.id_tematica);
+  const selectedMampara = mamparas?.find(m => m?.id === reservationData?.id_mampara);
+  const mamparaPrice = parseFloat(selectedMampara?.precio) || 0;
+  const tematicaPrice = parseFloat(selectedTematica?.precio) || 0;
 
   // Calculate extras total
   const calculateExtrasTotal = () => {
@@ -123,6 +127,9 @@ const ConfirmationModal = ({
     
     // Add mampara price
     total += mamparaPrice;
+    
+    // Add tematica price
+    total += tematicaPrice;
     
     // Add tuesday fee
     total += parseFloat(reservationData?.tuesdayFee) || 0;
@@ -197,14 +204,17 @@ const ConfirmationModal = ({
                   {renderFoodOptionDetails()}
                 </div>
               )}
-              <SummaryItem
-                icon={<FiImage className="text-indigo-600" />}
-                label="Temática"
-                value={tematicas?.find((t) => t?.id === reservationData?.id_tematica)?.nombre || 'No seleccionada'}
-              />
-              {mamparaPrice > 0 && (
+              
+              {selectedTematica && (
                 <div className="flex justify-between items-center p-2 bg-gray-50 rounded-lg">
-                  <span className="text-gray-700">Mampara</span>
+                  <span className="text-gray-700">Temática: {selectedTematica.nombre}</span>
+                  <span className="font-medium">{formatCurrency(tematicaPrice)}</span>
+                </div>
+              )}
+
+              {selectedMampara && (
+                <div className="flex justify-between items-center p-2 bg-gray-50 rounded-lg">
+                  <span className="text-gray-700">Mampara: {selectedMampara.nombre}</span>
                   <span className="font-medium">{formatCurrency(mamparaPrice)}</span>
                 </div>
               )}
@@ -270,9 +280,16 @@ const ConfirmationModal = ({
                 </div>
               )}
 
-              {mamparaPrice > 0 && (
+              {selectedTematica && (
                 <div className="flex justify-between items-center p-2 bg-gray-50 rounded-lg">
-                  <span className="text-gray-700">Mampara</span>
+                  <span className="text-gray-700">Temática: {selectedTematica.nombre}</span>
+                  <span className="font-medium">{formatCurrency(tematicaPrice)}</span>
+                </div>
+              )}
+
+              {selectedMampara && (
+                <div className="flex justify-between items-center p-2 bg-gray-50 rounded-lg">
+                  <span className="text-gray-700">Mampara: {selectedMampara.nombre}</span>
                   <span className="font-medium">{formatCurrency(mamparaPrice)}</span>
                 </div>
               )}
