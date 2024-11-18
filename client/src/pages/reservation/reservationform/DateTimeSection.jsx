@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Controller, useWatch } from 'react-hook-form';
 import { FiCalendar, FiClock, FiAlertCircle, FiInfo } from 'react-icons/fi';
 import DatePicker, { registerLocale } from 'react-datepicker';
@@ -14,14 +14,14 @@ const TIME_SLOTS = {
   MORNING: {
     label: 'Mañana (11:00 - 16:00)',
     value: 'mañana',
-    start: '11:00:00',
-    end: '16:00:00'
+    hora_inicio: '11:00:00',
+    hora_fin: '16:00:00'
   },
   AFTERNOON: {
     label: 'Tarde (17:00 - 22:00)',
     value: 'tarde',
-    start: '17:00:00',
-    end: '22:00:00'
+    hora_inicio: '17:00:00',
+    hora_fin: '22:00:00'
   }
 };
 
@@ -32,12 +32,12 @@ const TimeSlotSelect = ({
   customStyles 
 }) => {
   const getAvailableTimeSlots = () => {
-    if (!selectedDate) return [];
+    if (!selectedDate || !(selectedDate instanceof Date)) return [];
 
     const dateStr = selectedDate.toISOString().split('T')[0];
     const reservationsForDate = existingReservations.filter(
       reservation => {
-        const reservationDate = reservation.fecha_reserva.split('T')[0];
+        const reservationDate = new Date(reservation.fecha_reserva).toISOString().split('T')[0];
         const isActiveReservation = reservation.estado === 'pendiente' || reservation.estado === 'confirmada';
         return reservationDate === dateStr && isActiveReservation;
       }
@@ -45,33 +45,30 @@ const TimeSlotSelect = ({
 
     const availableSlots = [];
 
-    // Verificar horario de mañana
-    const morningBooked = reservationsForDate.some(r => {
-      const reservationHour = r.hora_inicio;
-      return reservationHour === TIME_SLOTS.MORNING.start;
-    });
-
-    // Verificar horario de tarde
-    const afternoonBooked = reservationsForDate.some(r => {
-      const reservationHour = r.hora_inicio;
-      return reservationHour === TIME_SLOTS.AFTERNOON.start;
-    });
+    const morningBooked = reservationsForDate.some(r => r.hora_inicio === TIME_SLOTS.MORNING.hora_inicio);
+    const afternoonBooked = reservationsForDate.some(r => r.hora_inicio === TIME_SLOTS.AFTERNOON.hora_inicio);
 
     if (!morningBooked) {
       availableSlots.push({
-        label: TIME_SLOTS.MORNING.label,
-        value: TIME_SLOTS.MORNING.value,
-        start: TIME_SLOTS.MORNING.start,
-        end: TIME_SLOTS.MORNING.end
+        ...TIME_SLOTS.MORNING,
+        label: (
+          <div className="flex items-center gap-2">
+            <span>{TIME_SLOTS.MORNING.icon}</span>
+            <span>{TIME_SLOTS.MORNING.label}</span>
+          </div>
+        )
       });
     }
 
     if (!afternoonBooked) {
       availableSlots.push({
-        label: TIME_SLOTS.AFTERNOON.label,
-        value: TIME_SLOTS.AFTERNOON.value,
-        start: TIME_SLOTS.AFTERNOON.start,
-        end: TIME_SLOTS.AFTERNOON.end
+        ...TIME_SLOTS.AFTERNOON,
+        label: (
+          <div className="flex items-center gap-2">
+            <span>{TIME_SLOTS.AFTERNOON.icon}</span>
+            <span>{TIME_SLOTS.AFTERNOON.label}</span>
+          </div>
+        )
       });
     }
 
@@ -80,7 +77,7 @@ const TimeSlotSelect = ({
 
   const timeOptions = getAvailableTimeSlots();
   const selectedOption = field.value ? timeOptions.find(option => 
-    option.value === (typeof field.value === 'object' ? field.value.value : field.value)
+    option.value === field.value
   ) : null;
 
   return (
@@ -89,12 +86,7 @@ const TimeSlotSelect = ({
       value={selectedOption}
       onChange={(option) => {
         if (option) {
-          const timeSlot = option.value === 'mañana' ? TIME_SLOTS.MORNING : TIME_SLOTS.AFTERNOON;
-          field.onChange({
-            value: option.value,
-            hora_inicio: timeSlot.start,
-            hora_fin: timeSlot.end
-          });
+          field.onChange(option.value);
         } else {
           field.onChange(null);
         }
@@ -124,7 +116,6 @@ const DateTimeSection = ({
   setIsTuesdayModalOpen,
   packages
 }) => {
-  // Observar cambios en el paquete y la fecha
   const selectedPackage = useWatch({
     control,
     name: 'id_paquete'
@@ -140,9 +131,8 @@ const DateTimeSection = ({
     name: 'hora_inicio'
   });
 
-  // Actualizar precio cuando cambia el paquete o la fecha
   useEffect(() => {
-    if (selectedPackage && selectedDate) {
+    if (selectedPackage && selectedDate instanceof Date) {
       const pkg = packages.find((p) => p.id === selectedPackage);
       if (pkg) {
         const dayOfWeek = selectedDate.getDay();
@@ -151,8 +141,7 @@ const DateTimeSection = ({
             ? parseFloat(pkg.precio_lunes_jueves)
             : parseFloat(pkg.precio_viernes_domingo);
         setValue('packagePrice', newPrice, { shouldValidate: false });
-
-        // Actualizar cargo de martes si aplica
+  
         if (dayOfWeek === 2) {
           setValue('tuesdayFee', 500, { shouldValidate: false });
           setIsTuesdayModalOpen(true);
@@ -171,25 +160,33 @@ const DateTimeSection = ({
       setValue('tuesdayFee', 0, { shouldValidate: false });
       return;
     }
-
-    onChange(date);
-    setValue('hora_inicio', null);
+  
+    if (date instanceof Date && !isNaN(date.getTime())) {
+      const validDate = new Date(date);
+      validDate.setHours(0, 0, 0, 0);
+      onChange(validDate);
+      setValue('hora_inicio', null);
+    } else {
+      console.error('Fecha inválida:', date);
+      onChange(null);
+      setValue('hora_inicio', null);
+    }
   };
-
+  
   const isDateFullyBooked = (date) => {
-    if (!date) return false;
+    if (!date || !(date instanceof Date)) return false;
 
     const dateStr = date.toISOString().split('T')[0];
     const reservationsForDate = existingReservations.filter(
       reservation => {
-        const reservationDate = reservation.fecha_reserva.split('T')[0];
+        const reservationDate = new Date(reservation.fecha_reserva).toISOString().split('T')[0];
         const isActiveReservation = reservation.estado === 'pendiente' || reservation.estado === 'confirmada';
         return reservationDate === dateStr && isActiveReservation;
       }
     );
 
-    const morningBooked = reservationsForDate.some(r => r.hora_inicio === TIME_SLOTS.MORNING.start);
-    const afternoonBooked = reservationsForDate.some(r => r.hora_inicio === TIME_SLOTS.AFTERNOON.start);
+    const morningBooked = reservationsForDate.some(r => r.hora_inicio === TIME_SLOTS.MORNING.hora_inicio);
+    const afternoonBooked = reservationsForDate.some(r => r.hora_inicio === TIME_SLOTS.AFTERNOON.hora_inicio);
 
     return morningBooked && afternoonBooked;
   };
@@ -212,7 +209,6 @@ const DateTimeSection = ({
   return (
     <FormSection title="Fecha y Horario" icon={FiCalendar}>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        {/* Date Selection */}
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">
             Fecha de Reserva
@@ -221,7 +217,17 @@ const DateTimeSection = ({
             <Controller
               control={control}
               name="fecha_reserva"
-              rules={{ required: 'Fecha de reserva es requerida' }}
+              rules={{ 
+                required: 'Fecha de reserva es requerida',
+                validate: {
+                  isValidDate: (value) => {
+                    if (!(value instanceof Date) || isNaN(value.getTime())) {
+                      return 'Fecha inválida';
+                    }
+                    return true;
+                  }
+                }
+              }}
               render={({ field }) => (
                 <DatePicker
                   selected={field.value}
@@ -253,7 +259,6 @@ const DateTimeSection = ({
           </div>
         </div>
 
-        {/* Time Selection */}
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">
             Horario Disponible
@@ -276,7 +281,7 @@ const DateTimeSection = ({
                       <FiInfo className="w-4 h-4" />
                       <span>
                         Horario seleccionado: {
-                          selectedTimeSlot.value === 'mañana' 
+                          selectedTimeSlot === 'mañana' 
                             ? TIME_SLOTS.MORNING.label 
                             : TIME_SLOTS.AFTERNOON.label
                         }
@@ -295,6 +300,28 @@ const DateTimeSection = ({
           </div>
         </div>
       </div>
+
+      {/* Resumen de la selección */}
+      {selectedDate && selectedTimeSlot && (
+        <div className="mt-4 p-4 bg-indigo-50 rounded-lg border border-indigo-100">
+          <h4 className="text-sm font-medium text-indigo-900 mb-2">Resumen de la Reserva</h4>
+          <div className="space-y-2 text-sm text-indigo-700">
+            <div className="flex items-center gap-2">
+              <FiCalendar className="w-4 h-4" />
+              <span>Fecha: {selectedDate.toLocaleDateString('es-ES', { 
+                weekday: 'long', 
+                year: 'numeric', 
+                month: 'long', 
+                day: 'numeric' 
+              })}</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <FiClock className="w-4 h-4" />
+              <span>Horario: {selectedTimeSlot === 'mañana' ? TIME_SLOTS.MORNING.label : TIME_SLOTS.AFTERNOON.label}</span>
+            </div>
+          </div>
+        </div>
+      )}
     </FormSection>
   );
 };

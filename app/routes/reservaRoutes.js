@@ -11,7 +11,7 @@ router.put('/:id/status', ReservaController.updateReservaStatus);
 router.get('/:id', ReservaController.getReservaById);
 router.put('/:id', ReservaController.updateReserva);
 router.delete('/:id', ReservaController.deleteReserva);
-
+ 
 // Rutas generales al final
 router.get('/', ReservaController.getAllReservas);
 router.post('/', ReservaController.createReserva);

@@ -65,7 +65,7 @@ const DateTimeSection = ({
     );
   }, [selectedDate, isTimeSlotAvailable]);
 
-  const timeSlotOptions = useMemo(() => 
+  const timeSlotOptions = useMemo(() =>
     availableTimeSlots.map((slot) => ({
       value: slot.value,
       label: (
@@ -153,9 +153,8 @@ const DateTimeSection = ({
                   filterDate={(date) => !isDateBlocked(date)}
                   renderDayContents={(day, date) => (
                     <div
-                      className={`w-full h-full flex items-center justify-center ${
-                        isWeekend(date) ? 'font-medium text-indigo-600' : ''
-                      }`}
+                      className={`w-full h-full flex items-center justify-center ${isWeekend(date) ? 'font-medium text-indigo-600' : ''
+                        }`}
                     >
                       {day}
                     </div>

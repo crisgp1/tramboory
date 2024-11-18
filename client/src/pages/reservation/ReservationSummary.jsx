@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React from 'react';
 import { useWatch } from 'react-hook-form';
 import {
   FiPackage,
@@ -13,6 +13,21 @@ import {
 import SummaryItem from './SummaryItem';
 import { formatCurrency } from './reservationform/styles';
 
+const TIME_SLOTS = {
+  MORNING: {
+    label: 'Mañana (11:00 - 16:00)',
+    value: 'mañana',
+    start: '11:00:00',
+    end: '16:00:00'
+  },
+  AFTERNOON: {
+    label: 'Tarde (17:00 - 22:00)',
+    value: 'tarde',
+    start: '17:00:00',
+    end: '22:00:00'
+  }
+};
+
 const ReservationSummary = ({
   control,
   packages,
@@ -24,29 +39,40 @@ const ReservationSummary = ({
   const watchedFields = useWatch({ control });
 
   const formatDate = (date) => {
-    if (!date) return 'No seleccionada';
-    return new Intl.DateTimeFormat('es-MX', {
-      weekday: 'long',
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric'
-    }).format(new Date(date));
+    console.log('Fecha recibida en formatDate:', date);
+  
+    try {
+      if (!date || !(date instanceof Date) || isNaN(date.getTime())) {
+        console.warn('Fecha no seleccionada o inválida');
+        return 'No seleccionada';
+      }
+  
+      const formattedDate = new Intl.DateTimeFormat('es-MX', {
+        weekday: 'long',
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric'
+      }).format(date);
+  
+      console.log('Fecha formateada:', formattedDate);
+      return formattedDate;
+    } catch (error) {
+      console.error('Error al formatear la fecha:', error);
+      return 'Fecha inválida';
+    }
   };
-
   // Datos seleccionados
   const selectedPackage = packages.find(pkg => pkg.id === watchedFields.id_paquete);
-  const selectedFoodOption = foodOptions.find(food => food.id === watchedFields.id_opcion_alimento);
-  const selectedTematica = tematicas.find(tema => tema.id === watchedFields.id_tematica);
-  const selectedMampara = mamparas.find(mampara => mampara.id === watchedFields.id_mampara);
+const selectedFoodOption = foodOptions.find(food => food.id === watchedFields.id_opcion_alimento);
+const selectedTematica = tematicas.find(tema => tema.id === watchedFields.id_tematica);
+const selectedMampara = mamparas.find(mampara => mampara.id === watchedFields.id_mampara);
   const tuesdayFee = watchedFields.tuesdayFee || 0;
 
   // Cálculo del precio del paquete según el día
   const calculatePackagePrice = () => {
-    if (!selectedPackage || !watchedFields.fecha_reserva) return 0;
+    if (!selectedPackage || !watchedFields.fecha_reserva || !(watchedFields.fecha_reserva instanceof Date)) return 0;
 
-    const reservationDate = new Date(watchedFields.fecha_reserva);
-    const dayOfWeek = reservationDate.getDay();
-
+    const dayOfWeek = watchedFields.fecha_reserva.getDay();
     return dayOfWeek >= 1 && dayOfWeek <= 4
       ? parseFloat(selectedPackage.precio_lunes_jueves) || 0
       : parseFloat(selectedPackage.precio_viernes_domingo) || 0;
@@ -84,9 +110,8 @@ const ReservationSummary = ({
 
   // Obtener el tipo de día (L-J o V-D)
   const getDayType = () => {
-    if (!watchedFields.fecha_reserva) return '';
-    const reservationDate = new Date(watchedFields.fecha_reserva);
-    const dayOfWeek = reservationDate.getDay();
+    if (!watchedFields.fecha_reserva || !(watchedFields.fecha_reserva instanceof Date)) return '';
+    const dayOfWeek = watchedFields.fecha_reserva.getDay();
     return dayOfWeek >= 1 && dayOfWeek <= 4 ? 'L-J' : 'V-D';
   };
 
@@ -114,6 +139,14 @@ const ReservationSummary = ({
     const packagePrice = calculatePackagePrice();
     const dayType = getDayType();
     return `${selectedPackage.nombre}\n${formatCurrency(packagePrice)} (Precio ${dayType})`;
+  };
+
+  // Obtener el horario formateado
+  const getFormattedTimeSlot = () => {
+    if (!watchedFields.hora_inicio) return 'No seleccionada';
+    
+    const timeSlot = watchedFields.hora_inicio.value === 'mañana' ? TIME_SLOTS.MORNING : TIME_SLOTS.AFTERNOON;
+    return timeSlot.label;
   };
 
   return (
@@ -144,11 +177,7 @@ const ReservationSummary = ({
           <SummaryItem
             icon={<FiClock />}
             label="Hora"
-            value={watchedFields.hora_inicio
-              ? watchedFields.hora_inicio === 'mañana'
-                ? 'Matutino (9:00 - 14:00)'
-                : 'Vespertino (15:00 - 20:00)'
-              : 'No seleccionada'}
+            value={getFormattedTimeSlot()}
           />
         </div>
 

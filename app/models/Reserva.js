@@ -24,9 +24,9 @@ const Reserva = sequelize.define('Reserva', {
     allowNull: false
   },
   hora_inicio: {
-    type: DataTypes.ENUM('mañana', 'tarde'),
+    type: DataTypes.TIME,
     allowNull: false
-  },
+  },  
   hora_fin: {
     type: DataTypes.TIME,
     allowNull: false

@@ -52,9 +52,9 @@ export default function SignIn() {
           try {
             const reservationsResponse = await axiosInstance.get('/api/reservas');
             const userReservations = reservationsResponse.data.filter(
-              (reserva) => reserva.id_usuario === response.data.user.id
+              (reserva) => reserva.id_usuario === response.data.usuario.id
             );
-
+            
             if (userReservations.length > 0) {
               navigate(`/reservation-status/${userReservations[0].id}`);
             } else {

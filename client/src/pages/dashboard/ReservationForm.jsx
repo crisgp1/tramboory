@@ -14,7 +14,7 @@ import ExtrasSection from './reservationform/ExtrasSection';
 import CelebrantSection from './reservationform/CelebrantSection';
 import CommentsSection from './reservationform/CommentsSection';
 
-const TUESDAY_SURCHARGE = 1500; // Cargo adicional para martes
+const TUESDAY_SURCHARGE = 1500;
 
 const ReservationForm = ({
   editingItem,
@@ -57,6 +57,8 @@ const ReservationForm = ({
       edad_festejado: '',
       comentarios: '',
       total: '0.00',
+      estado: 'pendiente',
+      activo: true
     },
   });
 
@@ -83,7 +85,6 @@ const ReservationForm = ({
     if (paqueteId && fecha) {
       const paquete = packages.find(p => Number(p.id) === Number(paqueteId));
       if (paquete) {
-        // Determinar precio según el día
         const precio = isWeekend(fecha) 
           ? parseFloat(paquete.precio_viernes_domingo)
           : parseFloat(paquete.precio_lunes_jueves);
@@ -91,7 +92,6 @@ const ReservationForm = ({
         newTotal += precio;
         addLog(`Precio del paquete (${isWeekend(fecha) ? 'fin de semana' : 'entre semana'}):`, precio);
 
-        // Agregar cargo adicional si es martes
         if (isTuesday(fecha)) {
           newTotal += TUESDAY_SURCHARGE;
           addLog('Cargo adicional por martes:', TUESDAY_SURCHARGE);
@@ -168,6 +168,8 @@ const ReservationForm = ({
           hora_inicio: editingItem.hora_inicio,
         } : null,
         total: editingItem.total || '0.00',
+        estado: editingItem.estado || 'pendiente',
+        activo: editingItem.activo !== undefined ? editingItem.activo : true
       };
 
       reset(formattedData);
@@ -190,7 +192,7 @@ const ReservationForm = ({
 
   // Filtrar mamparas basado en la temática seleccionada
   const filteredMamparas = useMemo(() => {
-    const selectedTheme = watchedFields[5]; // id_tematica está en el índice 5
+    const selectedTheme = watchedFields[5];
     return selectedTheme
       ? mamparas.filter(
           (m) =>
@@ -222,7 +224,8 @@ const ReservationForm = ({
             id: Number(extra.id),
             cantidad: Number(extra.cantidad),
           })) || [],
-          estado: editingItem ? editingItem.estado : 'pendiente',
+          estado: data.estado,
+          activo: data.activo,
           hora_inicio: data.hora_inicio?.hora_inicio || data.hora_inicio,
         };
 
@@ -263,7 +266,7 @@ const ReservationForm = ({
         addLog('Error al guardar la reserva:', error);
       }
     },
-    [onSave, editingItem, addLog]
+    [onSave, addLog]
   );
 
   // Sección de Usuario
@@ -299,6 +302,42 @@ const ReservationForm = ({
     </div>
   );
 
+  // Nueva sección de Estado y Activo
+  const StatusSection = () => (
+    <div className="bg-white p-4 rounded-lg shadow-sm border border-gray-200">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-2">
+            Estado de la Reservación
+          </label>
+          <select
+            {...register('estado')}
+            className="w-full px-3 py-2 text-sm text-gray-700 bg-white border rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+          >
+            <option value="pendiente">Pendiente</option>
+            <option value="confirmada">Confirmada</option>
+            <option value="cancelada">Cancelada</option>
+          </select>
+        </div>
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-2">
+            Estado Activo
+          </label>
+          <div className="flex items-center">
+            <input
+              type="checkbox"
+              {...register('activo')}
+              className="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded"
+            />
+            <span className="ml-2 text-sm text-gray-600">
+              Reservación activa
+            </span>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
       <div className="bg-white rounded-lg shadow-xl w-full max-w-4xl relative">
@@ -321,6 +360,7 @@ const ReservationForm = ({
             className="space-y-6 max-h-[calc(100vh-16rem)] overflow-y-auto px-2"
           >
             <UserSection />
+            <StatusSection />
 
             <div className="bg-white p-4 rounded-lg shadow-sm border border-gray-200">
               <PackageSection 

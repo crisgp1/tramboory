@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
-import { useForm, useWatch } from 'react-hook-form';
+import { useWatch } from 'react-hook-form'; 
 import { FiCheck } from 'react-icons/fi';
 import { isTuesday } from 'date-fns';
 
@@ -15,28 +15,39 @@ import CommentsSection from './reservationform/CommentsSection';
 
 const TUESDAY_SURCHARGE = 500;
 
+const TIME_SLOTS = {
+  MORNING: {
+    label: 'Mañana (11:00 - 16:00)',
+    value: 'mañana',
+    icon: '🌅',
+    hora_inicio: '11:00:00',
+    hora_fin: '16:00:00'
+  },
+  AFTERNOON: {
+    label: 'Tarde (17:00 - 22:00)',
+    value: 'tarde',
+    icon: '🌇',
+    hora_inicio: '17:00:00',
+    hora_fin: '22:00:00'
+  }
+};
+
 const ReservationForm = ({
   onSubmit,
+  handleSubmit,
   packages,
   foodOptions,
   tematicas,
   mamparas,
   extras,
   unavailableDates,
-  existingReservations
+  existingReservations,
+  control,
+  setValue,
+  errors,
+  watch,
+  setIsTuesdayModalOpen
 }) => {
-  const [isTuesdayModalOpen, setIsTuesdayModalOpen] = useState(false);
-  const { control, setValue, handleSubmit, formState: { errors } } = useForm({
-    defaultValues: {
-      packagePrice: 0,
-      extrasTotal: 0,
-      mamparaPrice: 0,
-      tuesdayFee: 0,
-      extras: [],
-      total: 0
-    }
-  });
-
   // Memoize form values
   const formValues = useWatch({ control });
   
@@ -50,18 +61,18 @@ const ReservationForm = ({
 
   // Memoize package price calculation
   const calculatePackagePrice = useCallback((packageId, date) => {
-    if (!packageId || !date) return 0;
+    if (!packageId || !date || !(date instanceof Date)) return 0;
     
     const selectedPkg = packages.find(pkg => pkg.id === packageId);
     if (!selectedPkg) return 0;
 
-    const dayOfWeek = new Date(date).getDay();
+    const dayOfWeek = date.getDay();
     const isWeekend = dayOfWeek === 0 || dayOfWeek >= 5;
     const basePrice = isWeekend 
       ? parseFloat(selectedPkg.precio_viernes_domingo)
       : parseFloat(selectedPkg.precio_lunes_jueves);
     
-    return basePrice + (isTuesday(new Date(date)) ? TUESDAY_SURCHARGE : 0);
+    return basePrice + (isTuesday(date) ? TUESDAY_SURCHARGE : 0);
   }, [packages]);
 
   // Memoize food option price
@@ -111,19 +122,8 @@ const ReservationForm = ({
     setValue('total', total);
   }, [total, setValue]);
 
-  const handleFormSubmit = useCallback((data) => {
-    onSubmit({
-      ...data,
-      total,
-      extras: data.extras?.map(extra => ({
-        id: extra.id,
-        cantidad: extra.cantidad
-      })) || []
-    });
-  }, [total, onSubmit]);
-
   return (
-    <form onSubmit={handleSubmit(handleFormSubmit)} className="space-y-8">
+    <form onSubmit={handleSubmit(onSubmit)} className="space-y-8">
       <PackageSection 
         control={control}
         packages={packages}

@@ -7,6 +7,7 @@ const Mampara = require('../models/Mampara');
 const Extra = require('../models/Extra');
 const Finanza = require('../models/Finanza');
 const ReservaExtra = require('../models/ReservaExtra');
+const { Op } = require('sequelize');
 
 exports.createReserva = async (req, res) => {
   try {
@@ -33,10 +34,15 @@ exports.createReserva = async (req, res) => {
       return res.status(400).json({ error: 'Fecha de reserva inválida' });
     }
     reservaData.fecha_reserva = fechaReserva;
-    
-    // Validación de horario
-    if (!['mañana', 'tarde'].includes(reservaData.hora_inicio)) {
-      return res.status(400).json({ error: 'hora_inicio debe ser mañana o tarde' });
+
+    // Manejo de horarios
+    // Si hora_inicio viene como string en formato HH:MM:SS, lo usamos directamente
+    if (typeof reservaData.hora_inicio === 'string' && /^\d{2}:\d{2}:\d{2}$/.test(reservaData.hora_inicio)) {
+      // Establecer hora_fin basado en hora_inicio
+      const horaInicio = reservaData.hora_inicio.split(':')[0];
+      reservaData.hora_fin = horaInicio === '11' ? '16:00:00' : '22:00:00';
+    } else {
+      return res.status(400).json({ error: 'Formato de hora_inicio inválido. Debe ser HH:MM:SS' });
     }
 
     if (!['pendiente', 'confirmada', 'cancelada'].includes(reservaData.estado)) {
@@ -56,7 +62,9 @@ exports.createReserva = async (req, res) => {
       where: {
         fecha_reserva: reservaData.fecha_reserva,
         hora_inicio: reservaData.hora_inicio,
-        estado: ['pendiente', 'confirmada']
+        estado: {
+          [Op.in]: ['pendiente', 'confirmada']
+        }
       }
     });
 
@@ -217,7 +225,8 @@ exports.getReservaById = async (req, res) => {
 
 exports.updateReserva = async (req, res) => {
   try {
-    const [updated] = await Reserva.update(req.body, {
+    const reservaData = req.body;
+    const [updated] = await Reserva.update(reservaData, {
       where: { id: req.params.id, activo: true }
     });
     if (updated) {

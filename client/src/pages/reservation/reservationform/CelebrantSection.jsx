@@ -16,6 +16,7 @@ const CelebrantSection = ({ control, errors }) => {
             <Controller
               name="nombre_festejado"
               control={control}
+              defaultValue=""
               rules={{
                 required: 'Nombre del festejado es requerido',
                 minLength: {
@@ -53,6 +54,7 @@ const CelebrantSection = ({ control, errors }) => {
             <Controller
               name="edad_festejado"
               control={control}
+              defaultValue=""
               rules={{
                 required: 'Edad del festejado es requerida',
                 min: {
