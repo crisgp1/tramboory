@@ -3,8 +3,11 @@ import { useForm, useWatch } from 'react-hook-form';
 import { isWeekend, isTuesday, format } from 'date-fns';
 import axiosInstance from '../../components/axiosConfig';
 import { FiX } from 'react-icons/fi';
+import { toast } from 'react-hot-toast';
 
 // Importar los componentes del formulario
+import UserSection from './reservationform/UserSection';
+import StatusSection from './reservationform/StatusSection';
 import PackageSection from './reservationform/PackageSection';
 import FoodOptionsSection from './reservationform/FoodOptionsSection';
 import DateTimeSection from './reservationform/DateTimeSection';
@@ -60,6 +63,7 @@ const ReservationForm = ({
     setValue,
     reset,
     getValues,
+    watch,
     formState: { errors },
   } = useForm({
     defaultValues: {
@@ -83,7 +87,7 @@ const ReservationForm = ({
 
   const watchedFields = useWatch({
     control,
-    name: ['id_paquete', 'id_opcion_alimento', 'id_mampara', 'extras', 'fecha_reserva', 'id_tematica'],
+    name: ['id_paquete', 'id_opcion_alimento', 'id_mampara', 'extras', 'fecha_reserva', 'id_tematica', 'tuesdayFee'],
   });
 
   const sanitizeLogData = (data) => {
@@ -110,6 +114,7 @@ const ReservationForm = ({
 
     const paqueteId = getValues('id_paquete');
     const fecha = getValues('fecha_reserva');
+    const tuesdayFee = getValues('tuesdayFee') || 0;
     
     if (paqueteId && fecha) {
       const paquete = packages.find(p => Number(p.id) === Number(paqueteId));
@@ -122,12 +127,8 @@ const ReservationForm = ({
         addLog(`Precio del paquete (${isWeekend(fecha) ? 'fin de semana' : 'entre semana'})`, precio);
 
         if (isTuesday(fecha)) {
-          newTotal += TUESDAY_SURCHARGE;
-          setValue('tuesdayFee', TUESDAY_SURCHARGE);
-          setShowTuesdayModal(true);
-          addLog('Cargo adicional por martes', TUESDAY_SURCHARGE);
-        } else {
-          setValue('tuesdayFee', 0);
+          newTotal += tuesdayFee;
+          addLog('Cargo adicional por martes', tuesdayFee);
         }
       }
     }
@@ -184,7 +185,7 @@ const ReservationForm = ({
     addLog('Total final calculado', newTotal);
     
     return parseFloat(newTotal).toFixed(2);
-  }, [getValues, packages, foodOptions, mamparas, tematicas, extras, addLog, setValue]);
+  }, [getValues, packages, foodOptions, mamparas, tematicas, extras, addLog]);
 
   useEffect(() => {
     if (editingItem) {
@@ -315,80 +316,17 @@ const ReservationForm = ({
 
           await axiosInstance.post('/api/pagos', paymentData);
           addLog('Entrada de pagos creada');
+
+          toast.success('¡Reservación creada exitosamente!');
+          onClose();
         }
       } catch (error) {
         console.error('Error al guardar la reserva:', error);
         addLog('Error al guardar la reserva');
+        toast.error('Error al crear la reservación');
       }
     },
-    [onSave, addLog]
-  );
-
-  const UserSection = () => (
-    <div className="bg-white p-4 rounded-lg shadow-sm border border-gray-200">
-      <label className="block text-sm font-medium text-gray-700 mb-2">
-        Usuario
-      </label>
-      <div className="relative">
-        <select
-          {...register('id_usuario', {
-            required: 'Este campo es requerido',
-          })}
-          className="w-full px-3 py-2 text-sm text-gray-700 bg-white border rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
-          onChange={(e) => {
-            register('id_usuario').onChange(e);
-            addLog('Usuario seleccionado');
-          }}
-        >
-          <option value="">Seleccionar usuario</option>
-          {users.map((user) => (
-            <option key={user.id} value={user.id}>
-              {user.nombre}
-            </option>
-          ))}
-        </select>
-        {errors.id_usuario && (
-          <p className="mt-1 text-xs text-red-500">
-            {errors.id_usuario.message}
-          </p>
-        )}
-      </div>
-    </div>
-  );
-
-  const StatusSection = () => (
-    <div className="bg-white p-4 rounded-lg shadow-sm border border-gray-200">
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
-            Estado de la Reservación
-          </label>
-          <select
-            {...register('estado')}
-            className="w-full px-3 py-2 text-sm text-gray-700 bg-white border rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
-          >
-            <option value="pendiente">Pendiente</option>
-            <option value="confirmada">Confirmada</option>
-            <option value="cancelada">Cancelada</option>
-          </select>
-        </div>
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
-            Estado Activo
-          </label>
-          <div className="flex items-center">
-            <input
-              type="checkbox"
-              {...register('activo')}
-              className="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded"
-            />
-            <span className="ml-2 text-sm text-gray-600">
-              Reservación activa
-            </span>
-          </div>
-        </div>
-      </div>
-    </div>
+    [onSave, addLog, onClose]
   );
 
   return (
@@ -412,8 +350,16 @@ const ReservationForm = ({
             onSubmit={handleSubmit(onSubmit)}
             className="space-y-6 max-h-[calc(100vh-16rem)] overflow-y-auto px-2"
           >
-            <UserSection />
-            <StatusSection />
+            <UserSection 
+              register={register}
+              errors={errors}
+              users={users}
+              addLog={addLog}
+            />
+            
+            <StatusSection 
+              register={register}
+            />
 
             <div className="bg-white p-4 rounded-lg shadow-sm border border-gray-200">
               <PackageSection 

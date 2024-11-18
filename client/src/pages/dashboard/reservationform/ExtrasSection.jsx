@@ -3,7 +3,7 @@ import { Controller, useFieldArray } from 'react-hook-form';
 import { FiPlus, FiMinus, FiPackage, FiCheck, FiDollarSign, FiShoppingCart, FiInfo } from 'react-icons/fi';
 
 const ExtrasSection = ({ extras, control, setValue }) => {
-  const { fields, append, remove } = useFieldArray({
+  const { fields, append, remove, update } = useFieldArray({
     control,
     name: 'extras',
   });
@@ -13,7 +13,12 @@ const ExtrasSection = ({ extras, control, setValue }) => {
     const existingIndex = fields.findIndex((field) => field.id === extra.id);
     if (existingIndex === -1) {
       console.log('[ExtrasSection] Adding extra with quantity 1');
-      append({ id: extra.id, cantidad: 1 });
+      append({ 
+        id: extra.id, 
+        cantidad: 1,
+        nombre: extra.nombre,
+        precio: extra.precio 
+      });
     } else {
       console.log('[ExtrasSection] Removing extra');
       remove(existingIndex);
@@ -22,14 +27,29 @@ const ExtrasSection = ({ extras, control, setValue }) => {
 
   const handleQuantityChange = useCallback((index, newQuantity) => {
     console.log('[ExtrasSection] Changing quantity:', { index, newQuantity });
-    if (newQuantity < 1) {
+    const validQuantity = Math.max(1, parseInt(newQuantity) || 1);
+    
+    if (validQuantity < 1) {
       console.log('[ExtrasSection] Removing extra due to quantity < 1');
       remove(index);
     } else {
-      console.log('[ExtrasSection] Updating quantity');
-      setValue(`extras.${index}.cantidad`, newQuantity);
+      const currentField = fields[index];
+      const extraInfo = extras.find(e => e.id === currentField.id);
+      
+      if (extraInfo) {
+        console.log('[ExtrasSection] Updating quantity to:', validQuantity);
+        const updatedExtra = {
+          id: currentField.id,
+          cantidad: validQuantity,
+          nombre: extraInfo.nombre,
+          precio: extraInfo.precio
+        };
+        
+        update(index, updatedExtra);
+        setValue(`extras.${index}`, updatedExtra);
+      }
     }
-  }, [remove, setValue]);
+  }, [fields, remove, update, setValue, extras]);
 
   const selectedExtras = useMemo(() => 
     fields.map(field => ({
@@ -43,7 +63,7 @@ const ExtrasSection = ({ extras, control, setValue }) => {
     <div className="flex items-center gap-2 bg-white p-1 rounded-lg border border-gray-200 shadow-sm">
       <button
         type="button"
-        onClick={() => handleQuantityChange(index, cantidad - 1)}
+        onClick={() => handleQuantityChange(index, Math.max(1, cantidad - 1))}
         className="p-1.5 rounded-full bg-gray-100 text-gray-600 hover:bg-gray-200 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-indigo-500"
         aria-label="Disminuir cantidad"
       >
@@ -57,10 +77,17 @@ const ExtrasSection = ({ extras, control, setValue }) => {
           <input
             type="number"
             {...field}
+            value={field.value || 1}
             min="1"
             className="w-16 text-center border border-gray-300 rounded-md p-1 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
             onChange={(e) => {
               const value = parseInt(e.target.value) || 1;
+              field.onChange(value);
+              handleQuantityChange(index, value);
+            }}
+            onBlur={(e) => {
+              const value = parseInt(e.target.value) || 1;
+              field.onChange(value);
               handleQuantityChange(index, value);
             }}
             aria-label="Cantidad"

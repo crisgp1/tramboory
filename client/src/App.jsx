@@ -16,9 +16,7 @@ import Logo from './img/logo.webp'
 import withTokenValidation from './components/withTokenValidation.jsx'
 import { AuthProvider } from './context/authContext.jsx'
 import ProfileForm from './pages/reservation/ProfileForm.jsx'
-import { ToastContainer } from 'react-toastify';
-import 'react-toastify/dist/ReactToastify.css';
-
+import { Toaster } from 'react-hot-toast'
 
 // Importaciones perezosas para mejorar el rendimiento
 const Home = lazy(() => import('./pages/Home'))
@@ -208,7 +206,22 @@ function App () {
   return (
     <AuthProvider>
       <Router>
-        <ToastContainer position='top-right' autoClose={5000} />
+        <Toaster
+          position="top-right"
+          toastOptions={{
+            duration: 4000,
+            style: {
+              background: '#363636',
+              color: '#fff',
+            },
+            success: {
+              duration: 3000,
+              theme: {
+                primary: '#4aed88',
+              },
+            },
+          }}
+        />
         <Suspense fallback={<SubtleLoader />}>
           <Routes>
             {/* Rutas sin Header ni Footer */}
