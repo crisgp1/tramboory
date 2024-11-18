@@ -1,9 +1,9 @@
 import React, { useCallback, useMemo, useState } from 'react';
 import { Controller } from 'react-hook-form';
-import { FiCalendar, FiClock, FiAlertCircle, FiInfo, FiCheck } from 'react-icons/fi';
+import { FiCalendar, FiClock, FiAlertCircle, FiInfo } from 'react-icons/fi';
 import DatePicker, { registerLocale } from 'react-datepicker';
 import es from 'date-fns/locale/es';
-import { format, isWeekend } from 'date-fns';
+import { format, isWeekend, isTuesday } from 'date-fns';
 import "react-datepicker/dist/react-datepicker.css";
 import Select from 'react-select';
 
@@ -30,12 +30,14 @@ const DateTimeSection = ({
   control,
   errors,
   setValue,
-  watchedFields,
   unavailableDates = [],
   existingReservations = [],
-  packages = []
+  packages = [],
+  showTuesdayModal,
+  setShowTuesdayModal
 }) => {
   const [selectedDate, setSelectedDate] = useState(null);
+  const [hasShownTuesdayModal, setHasShownTuesdayModal] = useState(false);
 
   const isDateBlocked = useCallback((date) => {
     const dateToCheck = new Date(date.setHours(0, 0, 0, 0));
@@ -54,7 +56,7 @@ const DateTimeSection = ({
     );
 
     return !reservationsOnDate.some(
-      (reservation) => reservation.hora_inicio === timeSlot.value
+      (reservation) => reservation.hora_inicio === timeSlot.start
     );
   }, [existingReservations]);
 
@@ -74,7 +76,7 @@ const DateTimeSection = ({
           <span>{slot.label}</span>
         </div>
       ),
-      hora_inicio: slot.value,
+      hora_inicio: slot.start,
       hora_fin: slot.end,
       data: slot
     })),
@@ -115,6 +117,19 @@ const DateTimeSection = ({
     );
   }, []);
 
+  const handleDateChange = useCallback((date) => {
+    if (isTuesday(date) && !hasShownTuesdayModal) {
+      setShowTuesdayModal(true);
+      setHasShownTuesdayModal(true);
+      setValue('tuesdayFee', 1500);
+    } else {
+      setValue('tuesdayFee', 0);
+    }
+    setSelectedDate(date);
+    setValue('fecha_reserva', date);
+    setValue('hora_inicio', null);
+  }, [setValue, setShowTuesdayModal, hasShownTuesdayModal]);
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
@@ -142,11 +157,7 @@ const DateTimeSection = ({
               <div>
                 <DatePicker
                   selected={field.value}
-                  onChange={(date) => {
-                    field.onChange(date);
-                    setSelectedDate(date);
-                    setValue('hora_inicio', null);
-                  }}
+                  onChange={handleDateChange}
                   locale="es"
                   dateFormat="dd/MM/yyyy"
                   minDate={new Date()}

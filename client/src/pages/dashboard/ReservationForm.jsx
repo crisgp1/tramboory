@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useState, useRef, useMemo } from 'react';
 import { useForm, useWatch } from 'react-hook-form';
-import { isWeekend, isTuesday } from 'date-fns';
+import { isWeekend, isTuesday, format } from 'date-fns';
 import axiosInstance from '../../components/axiosConfig';
 import { FiX } from 'react-icons/fi';
 
@@ -15,6 +15,23 @@ import CelebrantSection from './reservationform/CelebrantSection';
 import CommentsSection from './reservationform/CommentsSection';
 
 const TUESDAY_SURCHARGE = 1500;
+
+const TIME_SLOTS = {
+  MORNING: {
+    label: 'Mañana (11:00 - 16:00)',
+    value: 'mañana',
+    start: '11:00:00',
+    end: '16:00:00',
+    icon: '🌅'
+  },
+  AFTERNOON: {
+    label: 'Tarde (17:00 - 22:00)',
+    value: 'tarde',
+    start: '17:00:00',
+    end: '22:00:00',
+    icon: '🌇'
+  }
+};
 
 const ReservationForm = ({
   editingItem,
@@ -33,6 +50,7 @@ const ReservationForm = ({
   const [manualTotal, setManualTotal] = useState(false);
   const [total, setTotal] = useState('0.00');
   const [calculationLogs, setCalculationLogs] = useState([]);
+  const [showTuesdayModal, setShowTuesdayModal] = useState(false);
   const formRef = useRef(null);
 
   const {
@@ -58,27 +76,38 @@ const ReservationForm = ({
       comentarios: '',
       total: '0.00',
       estado: 'pendiente',
-      activo: true
+      activo: true,
+      tuesdayFee: 0,
     },
   });
 
-  // Usar useWatch para observar cambios en los campos relevantes
   const watchedFields = useWatch({
     control,
     name: ['id_paquete', 'id_opcion_alimento', 'id_mampara', 'extras', 'fecha_reserva', 'id_tematica'],
   });
 
+  const sanitizeLogData = (data) => {
+    if (!data) return null;
+    if (typeof data === 'number' || typeof data === 'string') return data;
+    if (Array.isArray(data)) return '[Array]';
+    if (typeof data === 'object') return '[Object]';
+    return String(data);
+  };
+
   const addLog = useCallback((message, data = null) => {
-    console.log(`[ReservationForm] ${message}`, data);
-    setCalculationLogs(prev => [...prev, { message, data, timestamp: new Date() }]);
+    const sanitizedData = sanitizeLogData(data);
+    console.log(`[ReservationForm] ${message}`, sanitizedData);
+    setCalculationLogs(prev => [...prev.slice(-4), { 
+      message, 
+      data: sanitizedData,
+      timestamp: new Date().toISOString()
+    }]);
   }, []);
 
-  // Calcular total
   const calculateTotal = useCallback(() => {
     let newTotal = 0;
     addLog('Iniciando cálculo del total');
 
-    // Paquete base
     const paqueteId = getValues('id_paquete');
     const fecha = getValues('fecha_reserva');
     
@@ -90,73 +119,91 @@ const ReservationForm = ({
           : parseFloat(paquete.precio_lunes_jueves);
         
         newTotal += precio;
-        addLog(`Precio del paquete (${isWeekend(fecha) ? 'fin de semana' : 'entre semana'}):`, precio);
+        addLog(`Precio del paquete (${isWeekend(fecha) ? 'fin de semana' : 'entre semana'})`, precio);
 
         if (isTuesday(fecha)) {
           newTotal += TUESDAY_SURCHARGE;
-          addLog('Cargo adicional por martes:', TUESDAY_SURCHARGE);
+          setValue('tuesdayFee', TUESDAY_SURCHARGE);
+          setShowTuesdayModal(true);
+          addLog('Cargo adicional por martes', TUESDAY_SURCHARGE);
+        } else {
+          setValue('tuesdayFee', 0);
         }
       }
     }
 
-    // Opción de alimento
     const alimentoValue = getValues('id_opcion_alimento');
-    if (alimentoValue?.data?.precio_extra) {
-      const precioAlimento = parseFloat(alimentoValue.data.precio_extra);
-      newTotal += precioAlimento;
-      addLog('Precio extra por alimento:', precioAlimento);
+    if (alimentoValue?.value) {
+      const selectedFood = foodOptions.find(f => f.id === Number(alimentoValue.value));
+      if (selectedFood?.precio_extra) {
+        const precioAlimento = parseFloat(selectedFood.precio_extra);
+        newTotal += precioAlimento;
+        addLog('Precio extra por alimento', precioAlimento);
+      }
     }
 
-    // Mampara
     const mamparaValue = getValues('id_mampara');
-    if (mamparaValue?.data?.precio) {
-      const precioMampara = parseFloat(mamparaValue.data.precio);
-      newTotal += precioMampara;
-      addLog('Precio de mampara:', precioMampara);
+    if (mamparaValue?.value) {
+      const selectedMampara = mamparas.find(m => m.id === Number(mamparaValue.value));
+      if (selectedMampara?.precio) {
+        const precioMampara = parseFloat(selectedMampara.precio);
+        newTotal += precioMampara;
+        addLog('Precio de mampara', precioMampara);
+      }
     }
 
-    // Extras
+    const tematicaValue = getValues('id_tematica');
+    if (tematicaValue?.value) {
+      const selectedTematica = tematicas.find(t => t.id === Number(tematicaValue.value));
+      if (selectedTematica?.precio) {
+        const precioTematica = parseFloat(selectedTematica.precio);
+        newTotal += precioTematica;
+        addLog('Precio de temática', precioTematica);
+      }
+    }
+
     const selectedExtras = getValues('extras') || [];
     let extrasTotal = 0;
-    selectedExtras.forEach(extra => {
+    const uniqueExtras = Array.from(new Set(selectedExtras.map(e => e.id))).map(id => {
+      const extra = selectedExtras.find(e => e.id === id);
+      return extra;
+    });
+
+    uniqueExtras.forEach(extra => {
       const extraInfo = extras.find(e => Number(e.id) === Number(extra.id));
       if (extraInfo?.precio && extra.cantidad) {
         const extraPrecio = parseFloat(extraInfo.precio) * parseInt(extra.cantidad);
         if (!isNaN(extraPrecio)) {
           extrasTotal += extraPrecio;
-          addLog(`Extra ${extraInfo.nombre} (${extra.cantidad}x):`, extraPrecio);
+          addLog(`Extra ${extraInfo.nombre} (${extra.cantidad}x)`, extraPrecio);
         }
       }
     });
     newTotal += extrasTotal;
-    addLog('Total de extras:', extrasTotal);
-
-    addLog('Total final calculado:', newTotal);
+    addLog('Total de extras', extrasTotal);
+    addLog('Total final calculado', newTotal);
+    
     return parseFloat(newTotal).toFixed(2);
-  }, [getValues, packages, extras, addLog]);
+  }, [getValues, packages, foodOptions, mamparas, tematicas, extras, addLog, setValue]);
 
-  // Inicializar datos de edición
   useEffect(() => {
     if (editingItem) {
-      addLog('Inicializando datos de edición:', editingItem);
+      addLog('Inicializando datos de edición');
       const formattedData = {
         ...editingItem,
         id_usuario: editingItem.id_usuario,
         id_paquete: editingItem.id_paquete,
         id_opcion_alimento: editingItem.opcionAlimento ? {
           value: editingItem.opcionAlimento.id,
-          label: `${editingItem.opcionAlimento.nombre} - Adulto: ${editingItem.opcionAlimento.platillo_adulto}, Niño: ${editingItem.opcionAlimento.platillo_nino} - $${editingItem.opcionAlimento.precio_extra}`,
-          data: editingItem.opcionAlimento,
+          label: editingItem.opcionAlimento.nombre,
         } : null,
         id_tematica: editingItem.tematicaReserva ? {
           value: editingItem.tematicaReserva.id,
           label: editingItem.tematicaReserva.nombre,
-          data: editingItem.tematicaReserva,
         } : null,
         id_mampara: editingItem.mampara ? {
           value: editingItem.mampara.id,
-          label: `${editingItem.mampara.piezas} pieza(s) - $${editingItem.mampara.precio}`,
-          data: editingItem.mampara,
+          label: editingItem.mampara.nombre,
         } : null,
         extras: editingItem.extras?.map(extra => ({
           id: extra.id,
@@ -164,33 +211,30 @@ const ReservationForm = ({
         })) || [],
         fecha_reserva: editingItem.fecha_reserva ? new Date(editingItem.fecha_reserva) : null,
         hora_inicio: editingItem.hora_inicio ? {
-          value: editingItem.hora_inicio,
+          value: editingItem.hora_inicio === '11:00:00' ? 'mañana' : 'tarde',
           hora_inicio: editingItem.hora_inicio,
         } : null,
         total: editingItem.total || '0.00',
         estado: editingItem.estado || 'pendiente',
-        activo: editingItem.activo !== undefined ? editingItem.activo : true
+        activo: editingItem.activo !== undefined ? editingItem.activo : true,
+        tuesdayFee: editingItem.tuesdayFee || 0,
       };
 
       reset(formattedData);
       setTotal(formattedData.total);
-      addLog('Datos de edición formateados:', formattedData);
+      addLog('Datos de edición cargados');
     }
   }, [editingItem, reset, addLog]);
 
-  // Actualizar total cuando cambian los campos relevantes
   useEffect(() => {
     if (!manualTotal) {
       addLog('Actualizando total automáticamente');
       const newTotal = calculateTotal();
       setTotal(newTotal);
       setValue('total', newTotal);
-    } else {
-      addLog('Total en modo manual');
     }
   }, [watchedFields, manualTotal, calculateTotal, setValue, addLog]);
 
-  // Filtrar mamparas basado en la temática seleccionada
   const filteredMamparas = useMemo(() => {
     const selectedTheme = watchedFields[5];
     return selectedTheme
@@ -201,75 +245,85 @@ const ReservationForm = ({
       : [];
   }, [watchedFields, mamparas]);
 
+  const cleanFormData = (data) => {
+    const fecha = data.fecha_reserva instanceof Date ? format(data.fecha_reserva, 'yyyy-MM-dd') : null;
+    
+    let horaInicio = null;
+    if (data.hora_inicio?.value === 'mañana') {
+      horaInicio = TIME_SLOTS.MORNING.start;
+    } else if (data.hora_inicio?.value === 'tarde') {
+      horaInicio = TIME_SLOTS.AFTERNOON.start;
+    }
+    
+    const uniqueExtras = Array.from(new Set(data.extras?.map(e => e.id))).map(id => {
+      const extra = data.extras.find(e => e.id === id);
+      return {
+        id: Number(id),
+        cantidad: Number(extra.cantidad || 1)
+      };
+    });
+
+    return {
+      id_usuario: Number(data.id_usuario),
+      id_paquete: Number(data.id_paquete),
+      id_opcion_alimento: data.id_opcion_alimento?.value ? Number(data.id_opcion_alimento.value) : null,
+      id_tematica: data.id_tematica?.value ? Number(data.id_tematica.value) : null,
+      id_mampara: data.id_mampara?.value ? Number(data.id_mampara.value) : null,
+      extras: uniqueExtras,
+      fecha_reserva: fecha,
+      hora_inicio: horaInicio,
+      nombre_festejado: data.nombre_festejado,
+      edad_festejado: Number(data.edad_festejado),
+      comentarios: data.comentarios,
+      total: parseFloat(data.total),
+      estado: data.estado,
+      activo: data.activo,
+      tuesdayFee: data.tuesdayFee ? parseFloat(data.tuesdayFee) : 0
+    };
+  };
+
   const onSubmit = useCallback(
     async (data) => {
       try {
-        addLog('Preparando datos para guardar:', data);
-        const formattedData = {
-          ...data,
-          id_usuario: Number(data.id_usuario),
-          id_paquete: Number(data.id_paquete),
-          id_opcion_alimento: data.id_opcion_alimento?.value
-            ? Number(data.id_opcion_alimento.value)
-            : null,
-          id_tematica: data.id_tematica?.value
-            ? Number(data.id_tematica.value)
-            : null,
-          id_mampara: data.id_mampara?.value
-            ? Number(data.id_mampara.value)
-            : null,
-          total: parseFloat(data.total),
-          edad_festejado: Number(data.edad_festejado),
-          extras: data.extras?.map((extra) => ({
-            id: Number(extra.id),
-            cantidad: Number(extra.cantidad),
-          })) || [],
-          estado: data.estado,
-          activo: data.activo,
-          hora_inicio: data.hora_inicio?.hora_inicio || data.hora_inicio,
-        };
+        addLog('Preparando datos para guardar');
+        const cleanedData = cleanFormData(data);
+        addLog('Datos formateados para guardar');
 
-        addLog('Datos formateados para guardar:', formattedData);
-
-        // Guardar la reserva
-        const savedReservation = await onSave(formattedData);
-        addLog('Reserva guardada:', savedReservation);
+        const savedReservation = await onSave(cleanedData);
+        addLog('Reserva guardada');
 
         if (savedReservation?.id) {
-          // Crear entrada en finanzas
           const financeData = {
             id_reserva: savedReservation.id,
             tipo: 'ingreso',
-            monto: formattedData.total,
+            monto: cleanedData.total,
             fecha: new Date(),
             descripcion: `Ingreso por reserva #${savedReservation.id}`,
             categoria: 'Reserva',
           };
 
           await axiosInstance.post('/api/finanzas', financeData);
-          addLog('Entrada de finanzas creada:', financeData);
+          addLog('Entrada de finanzas creada');
 
-          // Crear entrada en pagos
           const paymentData = {
             id_reserva: savedReservation.id,
-            monto: formattedData.total,
+            monto: cleanedData.total,
             fecha_pago: new Date(),
             metodo_pago: 'pendiente',
             estado: 'pendiente',
           };
 
           await axiosInstance.post('/api/pagos', paymentData);
-          addLog('Entrada de pagos creada:', paymentData);
+          addLog('Entrada de pagos creada');
         }
       } catch (error) {
         console.error('Error al guardar la reserva:', error);
-        addLog('Error al guardar la reserva:', error);
+        addLog('Error al guardar la reserva');
       }
     },
     [onSave, addLog]
   );
 
-  // Sección de Usuario
   const UserSection = () => (
     <div className="bg-white p-4 rounded-lg shadow-sm border border-gray-200">
       <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -283,7 +337,7 @@ const ReservationForm = ({
           className="w-full px-3 py-2 text-sm text-gray-700 bg-white border rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
           onChange={(e) => {
             register('id_usuario').onChange(e);
-            addLog('Usuario seleccionado:', e.target.value);
+            addLog('Usuario seleccionado');
           }}
         >
           <option value="">Seleccionar usuario</option>
@@ -302,7 +356,6 @@ const ReservationForm = ({
     </div>
   );
 
-  // Nueva sección de Estado y Activo
   const StatusSection = () => (
     <div className="bg-white p-4 rounded-lg shadow-sm border border-gray-200">
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -388,6 +441,8 @@ const ReservationForm = ({
                 unavailableDates={blockedDates}
                 existingReservations={existingReservations}
                 packages={packages}
+                showTuesdayModal={showTuesdayModal}
+                setShowTuesdayModal={setShowTuesdayModal}
               />
             </div>
 
@@ -430,7 +485,6 @@ const ReservationForm = ({
               />
             </div>
 
-            {/* Total Section */}
             <div className="bg-white p-4 rounded-lg shadow-sm border border-gray-200">
               <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                 <label className="text-lg font-medium text-gray-700">
@@ -446,7 +500,7 @@ const ReservationForm = ({
                         const newTotal = calculateTotal();
                         setTotal(newTotal);
                         setValue('total', newTotal);
-                        addLog('Total actualizado automáticamente:', newTotal);
+                        addLog('Total actualizado automáticamente');
                       } else {
                         addLog('Modo manual activado');
                       }
@@ -465,7 +519,7 @@ const ReservationForm = ({
                       const value = e.target.value.replace(/[^0-9.]/g, '');
                       setTotal(value);
                       setValue('total', value);
-                      addLog('Total actualizado manualmente:', value);
+                      addLog('Total actualizado manualmente');
                     }
                   }}
                   readOnly={!manualTotal}
@@ -477,7 +531,7 @@ const ReservationForm = ({
                     const newTotal = calculateTotal();
                     setTotal(newTotal);
                     setValue('total', newTotal);
-                    addLog('Total recalculado:', newTotal);
+                    addLog('Total recalculado');
                   }}
                   className="px-4 py-2 bg-indigo-600 text-white font-medium rounded-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
                 >
@@ -485,14 +539,13 @@ const ReservationForm = ({
                 </button>
               </div>
 
-              {/* Logs de cálculo */}
               <div className="mt-4 p-4 bg-gray-50 rounded-lg border border-gray-200 max-h-40 overflow-y-auto">
                 <h4 className="text-sm font-medium text-gray-700 mb-2">Logs de cálculo:</h4>
-                {calculationLogs.slice(-5).map((log, index) => (
+                {calculationLogs.map((log, index) => (
                   <div key={index} className="text-xs text-gray-600 mb-1">
                     {new Date(log.timestamp).toLocaleTimeString()}: {log.message}
                     {log.data !== null && (
-                      <span className="text-indigo-600"> {JSON.stringify(log.data)}</span>
+                      <span className="text-indigo-600"> {log.data}</span>
                     )}
                   </div>
                 ))}
@@ -500,7 +553,6 @@ const ReservationForm = ({
             </div>
           </form>
 
-          {/* Botones de acción */}
           <div className="mt-6 flex justify-end gap-4">
             <button
               type="button"

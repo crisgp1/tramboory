@@ -1,23 +1,15 @@
 import React, { useCallback, useMemo } from 'react';
-import { Controller, useWatch } from 'react-hook-form';
+import { Controller } from 'react-hook-form';
 import { FiImage, FiAlertCircle, FiInfo, FiTag, FiFileText } from 'react-icons/fi';
 import Select from 'react-select';
 
 const ThemeSection = ({ control, errors, tematicas, setValue }) => {
-  // Usar useWatch en lugar de control.watch
-  const selectedTheme = useWatch({
-    control,
-    name: 'id_tematica',
-  });
-
-  const formatThemeOption = useCallback((tematica) => {
-    console.log('[ThemeSection] Formatting theme option:', tematica);
-    return {
-      value: tematica.id,
-      label: tematica.nombre,
-      data: tematica,
-    };
-  }, []);
+  const formatThemeOption = useCallback((tematica) => ({
+    value: tematica.id,
+    label: tematica.nombre,
+    descripcion: tematica.descripcion || '',
+    foto: tematica.foto || null
+  }), []);
 
   const themeOptions = useMemo(() => {
     const options = tematicas
@@ -52,16 +44,16 @@ const ThemeSection = ({ control, errors, tematicas, setValue }) => {
     })
   };
 
-  const renderThemeDetails = useCallback((tematica) => {
-    if (!tematica) return null;
-    console.log('[ThemeSection] Rendering details for theme:', tematica);
+  const renderThemeDetails = useCallback((theme) => {
+    if (!theme) return null;
+    console.log('[ThemeSection] Rendering details for theme:', theme);
 
     const details = [
-      { icon: FiTag, label: 'Nombre', value: tematica.nombre },
-      ...(tematica.descripcion ? [{ 
+      { icon: FiTag, label: 'Nombre', value: theme.label },
+      ...(theme.descripcion ? [{ 
         icon: FiFileText, 
         label: 'Descripción', 
-        value: tematica.descripcion,
+        value: theme.descripcion,
         fullWidth: true 
       }] : [])
     ];
@@ -90,7 +82,7 @@ const ThemeSection = ({ control, errors, tematicas, setValue }) => {
             </div>
           ))}
         </div>
-        {tematica.foto && (
+        {theme.foto && (
           <div className="mt-4">
             <div className="flex items-center gap-2 text-sm text-gray-600 mb-2">
               <FiImage className="text-indigo-600" />
@@ -98,8 +90,8 @@ const ThemeSection = ({ control, errors, tematicas, setValue }) => {
             </div>
             <div className="relative group">
               <img
-                src={tematica.foto}
-                alt={tematica.nombre}
+                src={theme.foto}
+                alt={theme.label}
                 className="w-full max-w-md rounded-lg shadow-sm group-hover:shadow-md transition-shadow duration-200"
               />
               <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-10 transition-opacity duration-200 rounded-lg"></div>
@@ -165,7 +157,7 @@ const ThemeSection = ({ control, errors, tematicas, setValue }) => {
       <Controller
         name="id_tematica"
         control={control}
-        render={({ field }) => renderThemeDetails(field.value?.data)}
+        render={({ field }) => renderThemeDetails(field.value)}
       />
 
       {themeOptions.length === 0 && (

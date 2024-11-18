@@ -13,7 +13,7 @@ import ExtrasSection from './reservationform/ExtrasSection';
 import CelebrantSection from './reservationform/CelebrantSection';
 import CommentsSection from './reservationform/CommentsSection';
 
-const TUESDAY_SURCHARGE = 500;
+const TUESDAY_SURCHARGE = 1500;
 
 const TIME_SLOTS = {
   MORNING: {

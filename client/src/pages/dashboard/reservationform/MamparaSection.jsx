@@ -19,8 +19,13 @@ const MamparaSection = ({ control, errors, filteredMamparas, setValue }) => {
     console.log('[MamparaSection] Formatting mampara option:', mampara);
     return {
       value: mampara.id,
-      label: `${mampara.piezas} pieza(s) - $${mampara.precio}`,
-      data: mampara,
+      label: `${mampara.piezas} pieza(s) - ${new Intl.NumberFormat('es-MX', {
+        style: 'currency',
+        currency: 'MXN'
+      }).format(parseFloat(mampara.precio) || 0)}`,
+      piezas: mampara.piezas,
+      precio: mampara.precio,
+      foto: mampara.foto,
     };
   }, []);
 
@@ -88,7 +93,15 @@ const MamparaSection = ({ control, errors, filteredMamparas, setValue }) => {
 
     const details = [
       { icon: FiLayers, label: 'Piezas', value: mampara.piezas },
-      { icon: FiDollarSign, label: 'Precio', value: `$${mampara.precio}`, highlight: true }
+      { 
+        icon: FiDollarSign, 
+        label: 'Precio', 
+        value: new Intl.NumberFormat('es-MX', {
+          style: 'currency',
+          currency: 'MXN'
+        }).format(parseFloat(mampara.precio) || 0),
+        highlight: true 
+      }
     ];
 
     return (
@@ -192,7 +205,7 @@ const MamparaSection = ({ control, errors, filteredMamparas, setValue }) => {
       <Controller
         name="id_mampara"
         control={control}
-        render={({ field }) => renderMamparaDetails(field.value?.data)}
+        render={({ field }) => renderMamparaDetails(field.value)}
       />
 
       {!isThemeSelected && (
