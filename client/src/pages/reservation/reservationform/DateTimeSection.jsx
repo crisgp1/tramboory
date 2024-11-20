@@ -145,7 +145,7 @@ const DateTimeSection = ({
         setValue('packagePrice', newPrice, { shouldValidate: false });
   
         if (dayOfWeek === 2 && !tuesdayModalShown) {
-          setValue('tuesdayFee', 500, { shouldValidate: false });
+          setValue('tuesdayFee', 1500, { shouldValidate: false });
           setIsTuesdayModalOpen(true);
           setTuesdayModalShown(true);
         } else if (dayOfWeek !== 2) {

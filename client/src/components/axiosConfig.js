@@ -2,8 +2,8 @@ import axios from 'axios';
 import { toast } from 'react-toastify';
 
 const axiosInstance = axios.create({
-  baseURL: 'http://localhost:3000',
-  timeout: 10000, // Add timeout
+  baseURL: '/',
+  timeout: 10000,
   headers: {
     'Content-Type': 'application/json',
     'Cache-Control': 'no-cache',
@@ -21,7 +21,7 @@ axiosInstance.interceptors.request.use(
     }
 
     // Log request details in development
-    if (process.env.NODE_ENV === 'development') {
+    if (import.meta.env.MODE === 'development') {
       console.log('Request:', {
         url: config.url,
         method: config.method,
@@ -42,7 +42,7 @@ axiosInstance.interceptors.request.use(
 axiosInstance.interceptors.response.use(
   (response) => {
     // Log response in development
-    if (process.env.NODE_ENV === 'development') {
+    if (import.meta.env.MODE === 'development') {
       console.log('Response:', {
         status: response.status,
         data: response.data,
