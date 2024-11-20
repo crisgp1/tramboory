@@ -78,7 +78,6 @@ const Reservation = () => {
   const [existingReservations, setExistingReservations] = useState([]);
   const [showContractModal, setShowContractModal] = useState(false);
   const [contractAccepted, setContractAccepted] = useState(false);
-  
 
   const formRef = useRef(null);
   const summaryRef = useRef(null);
@@ -112,7 +111,6 @@ const Reservation = () => {
     fetchExtras();
     fetchMamparas();
     fetchUnavailableDates();
-    
 
     gsap.fromTo(
       formRef.current,
@@ -296,7 +294,17 @@ const Reservation = () => {
       const selectedMampara = mamparas.find(
         (m) => m.id.toString() === data.id_mampara?.toString()
       );
-      const selectedExtras = data.extras || [];
+
+      // Procesar los extras seleccionados con información completa
+      const selectedExtras = (data.extras || []).map(extra => {
+        const extraInfo = extrasData.find(e => e.id === extra.id);
+        return {
+          ...extra,
+          nombre: extraInfo?.nombre,
+          precio: extraInfo?.precio,
+          descripcion: extraInfo?.descripcion
+        };
+      });
   
       console.log('Paquete seleccionado:', selectedPackage);
       console.log('Opción de alimento seleccionada:', selectedFoodOption);
@@ -322,9 +330,8 @@ const Reservation = () => {
       }
   
       selectedExtras.forEach((extra) => {
-        const extraInfo = extrasData.find((e) => e.id.toString() === extra.id.toString());
-        if (extraInfo) {
-          total += (parseFloat(extraInfo.precio) || 0) * (parseInt(extra.cantidad) || 1);
+        if (extra.precio && extra.cantidad) {
+          total += (parseFloat(extra.precio) || 0) * (parseInt(extra.cantidad) || 1);
         }
       });
   

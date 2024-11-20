@@ -61,11 +61,12 @@ const ReservationSummary = ({
       return 'Fecha inválida';
     }
   };
+
   // Datos seleccionados
   const selectedPackage = packages.find(pkg => pkg.id === watchedFields.id_paquete);
-const selectedFoodOption = foodOptions.find(food => food.id === watchedFields.id_opcion_alimento);
-const selectedTematica = tematicas.find(tema => tema.id === watchedFields.id_tematica);
-const selectedMampara = mamparas.find(mampara => mampara.id === watchedFields.id_mampara);
+  const selectedFoodOption = foodOptions.find(food => food.id === watchedFields.id_opcion_alimento);
+  const selectedTematica = tematicas.find(tema => tema.id === watchedFields.id_tematica);
+  const selectedMampara = mamparas.find(mampara => mampara.id === watchedFields.id_mampara);
   const tuesdayFee = watchedFields.tuesdayFee || 0;
 
   // Cálculo del precio del paquete según el día
@@ -80,12 +81,12 @@ const selectedMampara = mamparas.find(mampara => mampara.id === watchedFields.id
 
   // Cálculo del precio de los extras
   const calculateExtrasPrice = () => {
-    if (!watchedFields.extras) return 0;
+    if (!watchedFields.extras || !Array.isArray(watchedFields.extras)) return 0;
     
     return watchedFields.extras.reduce((total, extra) => {
       const extraInfo = extras.find(e => e.id === extra.id);
-      if (extraInfo) {
-        return total + (parseFloat(extraInfo.precio) || 0) * (parseInt(extra.cantidad) || 1);
+      if (extraInfo && extra.cantidad && extra.cantidad > 0) {
+        return total + (parseFloat(extraInfo.precio) || 0) * parseInt(extra.cantidad);
       }
       return total;
     }, 0);
@@ -93,18 +94,32 @@ const selectedMampara = mamparas.find(mampara => mampara.id === watchedFields.id
 
   // Descripción de extras seleccionados
   const getExtrasDescription = () => {
-    if (!watchedFields.extras || watchedFields.extras.length === 0) {
+    if (!watchedFields.extras || !Array.isArray(watchedFields.extras) || watchedFields.extras.length === 0) {
       return 'No seleccionados';
     }
 
-    return watchedFields.extras
+    const selectedExtrasWithInfo = watchedFields.extras
       .map(extra => {
         const extraInfo = extras.find(e => e.id === extra.id);
-        if (!extraInfo) return null;
-        const extraPrice = (parseFloat(extraInfo.precio) || 0) * (parseInt(extra.cantidad) || 1);
-        return `${extraInfo.nombre} (x${extra.cantidad}) - ${formatCurrency(extraPrice)}`;
+        if (!extraInfo || !extra.cantidad || extra.cantidad < 1) return null;
+        
+        const cantidad = parseInt(extra.cantidad);
+        const extraPrice = (parseFloat(extraInfo.precio) || 0) * cantidad;
+        
+        return {
+          nombre: extraInfo.nombre,
+          cantidad,
+          precio: extraPrice
+        };
       })
-      .filter(Boolean)
+      .filter(Boolean);
+
+    if (selectedExtrasWithInfo.length === 0) {
+      return 'No seleccionados';
+    }
+
+    return selectedExtrasWithInfo
+      .map(extra => `${extra.nombre} (x${extra.cantidad}) - ${formatCurrency(extra.precio)}`)
       .join('\n');
   };
 
@@ -213,7 +228,7 @@ const selectedMampara = mamparas.find(mampara => mampara.id === watchedFields.id
             <SummaryItem
               icon={<FiImage className="text-green-600" />}
               label="Mampara"
-              value={`${selectedMampara.nombre} - ${selectedMampara.piezas} piezas - ${formatCurrency(selectedMampara.precio)}`}
+              value={`${selectedMampara.piezas} piezas - ${formatCurrency(selectedMampara.precio)}`}
             />
           )}
         </div>

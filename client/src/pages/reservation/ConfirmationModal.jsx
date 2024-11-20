@@ -75,12 +75,20 @@ const ConfirmationModal = ({
   const mamparaPrice = parseFloat(selectedMampara?.precio) || 0;
   const tematicaPrice = parseFloat(selectedTematica?.precio) || 0;
 
+  // Get complete extra information
+  const getExtraInfo = (extraId) => {
+    return extras.find(e => e.id === extraId);
+  };
+
   // Calculate extras total
   const calculateExtrasTotal = () => {
     if (!reservationData?.extras?.length) return 0;
     
     return reservationData.extras.reduce((total, extra) => {
-      const precio = parseFloat(extra.precio) || 0;
+      const extraInfo = getExtraInfo(extra.id);
+      if (!extraInfo) return total;
+      
+      const precio = parseFloat(extraInfo.precio) || 0;
       const cantidad = parseInt(extra.cantidad) || 0;
       return total + (precio * cantidad);
     }, 0);
@@ -208,7 +216,7 @@ const ConfirmationModal = ({
               {selectedTematica && (
                 <div className="flex justify-between items-center p-2 bg-gray-50 rounded-lg">
                   <span className="text-gray-700">Temática: {selectedTematica.nombre}</span>
-                  <span className="font-medium">{formatCurrency(tematicaPrice)}</span>
+                  
                 </div>
               )}
 
@@ -226,16 +234,19 @@ const ConfirmationModal = ({
             <Section title="Extras Seleccionados" icon={FiGift}>
               <div className="space-y-2">
                 {reservationData.extras.map((extra) => {
-                  const extraTotal = (parseFloat(extra.precio) || 0) * (parseInt(extra.cantidad) || 0);
+                  const extraInfo = getExtraInfo(extra.id);
+                  if (!extraInfo) return null;
+                  
+                  const extraTotal = (parseFloat(extraInfo.precio) || 0) * (parseInt(extra.cantidad) || 0);
                   
                   return (
                     <div key={extra.id} className="flex justify-between items-center p-2 bg-gray-50 rounded-lg">
                       <span className="text-sm font-medium text-gray-700">
-                        {extra.nombre || 'Extra sin nombre'}
+                        {extraInfo.nombre}
                       </span>
                       <div className="flex items-center gap-2">
                         <span className="text-sm text-gray-600">
-                          Cantidad: {extra.cantidad || 0} - {formatCurrency(extraTotal)}
+                          {formatCurrency(parseFloat(extraInfo.precio))} x {extra.cantidad} = {formatCurrency(extraTotal)}
                         </span>
                       </div>
                     </div>
@@ -283,7 +294,7 @@ const ConfirmationModal = ({
               {selectedTematica && (
                 <div className="flex justify-between items-center p-2 bg-gray-50 rounded-lg">
                   <span className="text-gray-700">Temática: {selectedTematica.nombre}</span>
-                  <span className="font-medium">{formatCurrency(tematicaPrice)}</span>
+                  
                 </div>
               )}
 
