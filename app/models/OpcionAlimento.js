@@ -1,7 +1,7 @@
 const { DataTypes } = require('sequelize');
 const sequelize = require('../config/database');
 
-const OpcionAlimento = sequelize.define('OpcionAlimento', {
+const OpcionAlimento = sequelize.define('OpcionesAlimentos', {
     id: {
         type: DataTypes.INTEGER,
         autoIncrement: true,
@@ -18,16 +18,25 @@ const OpcionAlimento = sequelize.define('OpcionAlimento', {
     precio_adulto: {
         type: DataTypes.DECIMAL(10, 2),
         allowNull: false,
-        defaultValue: 0.00
+        defaultValue: 0.00,
+        validate: {
+            min: 0
+        }
     },
     precio_nino: {
         type: DataTypes.DECIMAL(10, 2),
         allowNull: false,
-        defaultValue: 0.00
+        defaultValue: 0.00,
+        validate: {
+            min: 0
+        }
     },
     precio_extra: {
         type: DataTypes.DECIMAL(10, 2),
-        allowNull: false
+        allowNull: false,
+        validate: {
+            min: 0
+        }
     },
     disponible: {
         type: DataTypes.BOOLEAN,
@@ -35,9 +44,15 @@ const OpcionAlimento = sequelize.define('OpcionAlimento', {
         defaultValue: true
     },
     turno: {
-        type: DataTypes.ENUM('matutino', 'vespertino', 'ambos'),
+        type: DataTypes.STRING(20),
         allowNull: false,
-        defaultValue: 'ambos'
+        defaultValue: 'ambos',
+        validate: {
+            isIn: {
+                args: [['manana', 'tarde', 'ambos']],
+                msg: 'El turno debe ser manana, tarde o ambos'
+            }
+        }
     },
     platillo_adulto: {
         type: DataTypes.STRING(100),
@@ -55,15 +70,29 @@ const OpcionAlimento = sequelize.define('OpcionAlimento', {
     precio_papas: {
         type: DataTypes.DECIMAL(10, 2),
         allowNull: false,
-        defaultValue: 19.00
+        defaultValue: 19.00,
+        validate: {
+            min: 0
+        }
     },
     activo: {
         type: DataTypes.BOOLEAN,
         allowNull: false,
         defaultValue: true
+    },
+    fecha_creacion: {
+        type: DataTypes.DATE,
+        allowNull: false,
+        defaultValue: DataTypes.NOW
+    },
+    fecha_actualizacion: {
+        type: DataTypes.DATE,
+        allowNull: false,
+        defaultValue: DataTypes.NOW
     }
 }, {
     tableName: 'opciones_alimentos',
+    schema: 'tramboory',
     timestamps: false
 });
 

@@ -10,7 +10,9 @@ import {
   FiFile,
   FiPlus,
   FiMinus,
-  FiX
+  FiX,
+  FiInfo,
+  FiSearch
 } from 'react-icons/fi'
 import { TwitterPicker } from 'react-color'
 import CurrencyInput from '../../components/CurrencyInput'
@@ -20,7 +22,7 @@ const FinanceForm = ({
   onSave,
   categories,
   onAddCategory,
-  reservations,
+  reservations = [],
   activeTab
 }) => {
   const { register, handleSubmit, control, setValue, watch } = useForm({
@@ -34,13 +36,66 @@ const FinanceForm = ({
   const [categoryColor, setCategoryColor] = useState('#FF6900')
   const [showColorPicker, setShowColorPicker] = useState(false)
 
-  const selectedCategoryId = watch('categoria')
+  const [searchTerm, setSearchTerm] = useState('')
+  const [filteredReservations, setFilteredReservations] = useState([])
+  const [showSuggestions, setShowSuggestions] = useState(false)
+  const [selectedReservation, setSelectedReservation] = useState(null)
+
+  // ----------------------------------------------------------------------
+  // Si el formulario está en edición, establecemos la reserva inicial (si la hay)
+  // ----------------------------------------------------------------------
+  useEffect(() => {
+    if (editingItem && editingItem.id_reserva) {
+      const found = reservations.find(r => r.id === editingItem.id_reserva)
+      if (found) {
+        setSelectedReservation(found)
+      }
+    }
+  }, [editingItem, reservations])
+
+  // ----------------------------------------------------------------------
+  // Al escribir en el buscador, filtramos las reservas
+  // ----------------------------------------------------------------------
+  useEffect(() => {
+    if (!searchTerm.trim()) {
+      setFilteredReservations([])
+      return
+    }
+    const term = searchTerm.toLowerCase()
+    const filtered = reservations.filter(res => {
+      const festejado = res.nombre_festejado?.toLowerCase() || ''
+      const idString = String(res.id)
+      return festejado.includes(term) || idString === term
+    })
+    setFilteredReservations(filtered)
+  }, [searchTerm, reservations])
+
+  // ----------------------------------------------------------------------
+  // Manejador de selección de reserva en la lista de sugerencias
+  // ----------------------------------------------------------------------
+  const handleSelectReservation = (res) => {
+    setSelectedReservation(res)
+    // Asignamos el id de la reserva al form
+    setValue('id_reserva', res.id)
+    // Limpiamos el buscador y cerramos las sugerencias
+    setSearchTerm('')
+    setShowSuggestions(false)
+  }
+
+  // ----------------------------------------------------------------------
+  // Manejador para quitar la reserva seleccionada
+  // ----------------------------------------------------------------------
+  const handleRemoveReservation = () => {
+    setSelectedReservation(null)
+    setValue('id_reserva', '')
+  }
 
   const onSubmit = data => {
-    console.log('Formulario enviado:', data)
+    // Enviamos los datos con la reserva seleccionada (o null si no hay)
     onSave({
       ...data,
       categoria: data.categoria,
+      // data.id_reserva ya se setea en handleSelectReservation o se limpia en handleRemoveReservation
       id_reserva: data.id_reserva || null
     })
   }
@@ -53,11 +108,6 @@ const FinanceForm = ({
     }
   }
 
-  const getCategoryColor = categoryName => {
-    const category = categories.find(cat => cat.nombre === categoryName)
-    return category && category.color ? category.color : '#CCCCCC'
-  }
-
   return (
     <form
       id={activeTab + 'Form'}
@@ -65,6 +115,7 @@ const FinanceForm = ({
       className='space-y-4'
     >
       <div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
+        {/* Tipo */}
         <div>
           <label className='block text-sm font-medium text-gray-700 mb-1'>
             Tipo
@@ -82,6 +133,7 @@ const FinanceForm = ({
           </div>
         </div>
 
+        {/* Monto */}
         <div>
           <label className='block text-sm font-medium text-gray-700 mb-1'>
             Monto
@@ -101,6 +153,7 @@ const FinanceForm = ({
           />
         </div>
 
+        {/* Fecha */}
         <div>
           <label className='block text-sm font-medium text-gray-700 mb-1'>
             Fecha
@@ -115,6 +168,7 @@ const FinanceForm = ({
           </div>
         </div>
 
+        {/* Categoría */}
         <div>
           <label className='block text-sm font-medium text-gray-700 mb-1'>
             Categoría
@@ -186,6 +240,7 @@ const FinanceForm = ({
         </div>
       )}
 
+      {/* Descripción */}
       <div className='col-span-2'>
         <label className='block text-sm font-medium text-gray-700 mb-1'>
           Descripción
@@ -201,26 +256,77 @@ const FinanceForm = ({
         </div>
       </div>
 
+      {/* ------------------------------------------------------------- */}
+      {/* Buscador de Reserva Asociada (Opcional) */}
+      {/* ------------------------------------------------------------- */}
       <div>
         <label className='block text-sm font-medium text-gray-700 mb-1'>
           Reserva Asociada (Opcional)
         </label>
-        <div className='relative'>
-          <FiPackage className='absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400' />
-          <select
-            {...register('id_reserva')}
-            className='pl-10 w-full p-2 border rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500'
-          >
-            <option value=''>Sin reserva asociada</option>
-            {reservations.map(reserva => (
-              <option key={reserva.id} value={reserva.id}>
-                {`Reserva #${reserva.id} - ${reserva.nombre_festejado}`}
-              </option>
-            ))}
-          </select>
+        <div className='flex items-center text-sm text-gray-500 mb-2'>
+          <FiInfo className='mr-1' />
+          <span>
+            Seleccione la reserva si el ingreso o gasto está relacionado con una reserva. De lo contrario, déjelo en blanco.
+          </span>
         </div>
-      </div>
 
+        {/* Si NO tenemos reserva seleccionada, mostramos el buscador */}
+        {!selectedReservation && (
+          <div className='relative'>
+            <FiSearch className='absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400' />
+            <input
+              type='text'
+              className='pl-10 w-full p-2 border rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500'
+              placeholder='Buscar reserva por ID o nombre del festejado...'
+              value={searchTerm}
+              onChange={e => {
+                setSearchTerm(e.target.value)
+                setShowSuggestions(true)
+              }}
+            />
+
+            {/* Lista de sugerencias */}
+            {showSuggestions && filteredReservations.length > 0 && (
+              <ul className='absolute z-10 mt-1 bg-white border border-gray-200 rounded-md w-full max-h-60 overflow-auto shadow-lg'>
+                {filteredReservations.map(res => (
+                  <li
+                    key={res.id}
+                    className='px-4 py-2 cursor-pointer hover:bg-gray-100'
+                    onClick={() => handleSelectReservation(res)}
+                  >
+                    {`Reserva #${res.id} - ${res.nombre_festejado}`}
+                  </li>
+                ))}
+              </ul>
+            )}
+
+            {/* Registramos un input oculto para id_reserva */}
+            <input
+              type='hidden'
+              {...register('id_reserva')}
+            />
+          </div>
+        )}
+
+        {/* Si SÍ tenemos reserva seleccionada, mostramos el "chip" con opción de quitar */}
+        {selectedReservation && (
+          <div className='flex items-center bg-gray-50 p-2 rounded-md border mt-2'>
+            <div className='flex-1 text-sm text-gray-700'>
+              <strong>Reserva #{selectedReservation.id}</strong> - {selectedReservation.nombre_festejado}
+            </div>
+            <button
+              type='button'
+              className='p-1 text-gray-500 hover:text-gray-700'
+              onClick={handleRemoveReservation}
+            >
+              <FiX className='w-4 h-4' />
+            </button>
+          </div>
+        )}
+      </div>
+      {/* ------------------------------------------------------------- */}
+
+      {/* Factura PDF */}
       <div>
         <label className='block text-sm font-medium text-gray-700 mb-1'>
           Factura PDF
@@ -236,6 +342,7 @@ const FinanceForm = ({
         </div>
       </div>
 
+      {/* Factura XML */}
       <div>
         <label className='block text-sm font-medium text-gray-700 mb-1'>
           Factura XML
@@ -251,6 +358,7 @@ const FinanceForm = ({
         </div>
       </div>
 
+      {/* Archivo de prueba */}
       {editingItem && editingItem.archivo_prueba && (
         <div>
           <label className='block text-sm font-medium text-gray-700 mb-1'>
@@ -261,7 +369,6 @@ const FinanceForm = ({
           </div>
         </div>
       )}
-
       <div>
         <label className='block text-sm font-medium text-gray-700 mb-1'>
           Archivo de Prueba (Opcional)

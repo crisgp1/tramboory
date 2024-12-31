@@ -38,7 +38,7 @@ exports.getPagos = async (req, res) => {
       include: [
         {
           model: Reserva,
-          as: 'reserva',
+          as: 'reservaPago',
           include: [
             {
               model: Usuario,

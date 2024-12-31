@@ -1,7 +1,7 @@
 const { DataTypes } = require('sequelize');
 const sequelize = require('../config/database');
 
-const Extra = sequelize.define('Extra', {
+const Extra = sequelize.define('Extras', {
     id: {
         type: DataTypes.INTEGER,
         autoIncrement: true,
@@ -12,7 +12,7 @@ const Extra = sequelize.define('Extra', {
         allowNull: false
     },
     descripcion: {
-        type: DataTypes.TEXT,
+        type: DataTypes.STRING(255),
         allowNull: true
     },
     precio: {
@@ -25,7 +25,8 @@ const Extra = sequelize.define('Extra', {
         defaultValue: true
     }
 }, {
-    tableName: 'Extras',
+    tableName: 'extras',
+    schema: 'tramboory',
     timestamps: false
 });
 

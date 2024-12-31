@@ -75,8 +75,16 @@ exports.createReserva = async (req, res) => {
     // Extraer los extras antes de crear la reserva
     const { extras, ...reservaDataSinExtras } = reservaData;
 
-    // Crear la reserva
-    const reserva = await Reserva.create(reservaDataSinExtras);
+    // Obtener el usuario actual
+    const usuario = await Usuario.findByPk(req.user.id);
+    if (!usuario) {
+      return res.status(404).json({ error: 'Usuario no encontrado' });
+    }
+
+    // Crear la reserva con el usuario en las opciones para los hooks
+    const reserva = await Reserva.create(reservaDataSinExtras, {
+      user: usuario // Pasar el usuario para los hooks de auditoría
+    });
 
     // Si hay extras, crear las relaciones en la tabla intermedia
     if (extras && Array.isArray(extras) && extras.length > 0) {
@@ -111,7 +119,8 @@ exports.createReserva = async (req, res) => {
         fecha: reservaData.fecha_reserva,
         descripcion: `Ingreso por reserva para ${reservaData.nombre_festejado}`,
         id_reserva: reserva.id,
-        categoria: 'Reservas'
+        categoria: 'Reservas',
+        id_usuario: usuario.id // Agregar el id del usuario a la finanza
       };
 
       await Finanza.create(finanzaData);
@@ -227,7 +236,8 @@ exports.updateReserva = async (req, res) => {
   try {
     const reservaData = req.body;
     const [updated] = await Reserva.update(reservaData, {
-      where: { id: req.params.id, activo: true }
+      where: { id: req.params.id, activo: true },
+      user: req.user // Pasar el usuario para los hooks de auditoría
     });
     if (updated) {
       const updatedReserva = await Reserva.findByPk(req.params.id);
@@ -244,7 +254,8 @@ exports.updateReserva = async (req, res) => {
 exports.deleteReserva = async (req, res) => {
   try {
     const result = await Reserva.update({ activo: false }, {
-      where: { id: req.params.id }
+      where: { id: req.params.id },
+      user: req.user // Pasar el usuario para los hooks de auditoría
     });
     if (result[0] === 0) {
       res.status(404).json({ error: 'Reserva no encontrada' });
@@ -323,7 +334,10 @@ exports.updateReservaStatus = async (req, res) => {
 
     const [updated] = await Reserva.update(
       { estado },
-      { where: { id } }
+      { 
+        where: { id },
+        user: req.user // Pasar el usuario para los hooks de auditoría
+      }
     );
 
     if (updated) {

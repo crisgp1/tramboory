@@ -5,30 +5,33 @@ const Input = withValidation('input');
 const Select = withValidation('select');
 
 const UserForm = ({ editingItem, generatedPassword, generateRandomPassword, onSave, activeTab }) => {
+    console.log('UserForm', editingItem);
+    
     const handleSubmit = (e) => {
         e.preventDefault();
         const formData = new FormData(e.target);
         const data = Object.fromEntries(formData.entries());
-    
+
         const errors = {};
-    
+
         if (!data.nombre) errors.nombre = 'El nombre es requerido';
         if (!data.email) errors.email = 'El email es requerido';
         if (!data.tipo_usuario) errors.tipo_usuario = 'El tipo de usuario es requerido';
         if (!editingItem && !data.clave && !generatedPassword) errors.clave = 'La contraseña es requerida para nuevos usuarios';
-    
+
+
         if (Object.keys(errors).length > 0) {
             console.log(errors);
             return;
         }
-    
+
         if (generatedPassword) {
             data.clave = generatedPassword;
         }
-    
+
         onSave(data);
     };
-    
+
 
     return (
         <form id={activeTab + 'Form'} onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-4">

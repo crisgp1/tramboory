@@ -1,8 +1,13 @@
-// PaymentForm.jsx
-
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { FiDollarSign, FiCalendar, FiCreditCard, FiMapPin, FiCheckCircle } from 'react-icons/fi';
+import { 
+  FiDollarSign, 
+  FiCalendar, 
+  FiCreditCard, 
+  FiMapPin, 
+  FiCheckCircle, 
+  FiSearch 
+} from 'react-icons/fi';
 
 // Componente para mostrar un campo de información
 const InfoField = ({ icon: Icon, label, value }) => (
@@ -36,6 +41,31 @@ export const PaymentForm = ({
     estado: payment ? payment.estado : 'pendiente',
   });
 
+  // Estado para manejar la búsqueda y las reservas filtradas
+  const [searchTerm, setSearchTerm] = useState('');
+  const [filteredReservations, setFilteredReservations] = useState(reservations);
+  const [showSuggestions, setShowSuggestions] = useState(false);
+
+  useEffect(() => {
+    // Cuando cambie el término de búsqueda, filtramos las reservas
+    if (!searchTerm.trim()) {
+      setFilteredReservations(reservations);
+    } else {
+      // Filtra por nombre del festejado o nombre del usuario
+      const filtered = reservations.filter((res) => {
+        const nombreFestejado = res.nombre_festejado?.toLowerCase() || '';
+        const nombreUsuario = res.usuario?.nombre?.toLowerCase() || '';
+        const term = searchTerm.toLowerCase();
+        return (
+          nombreFestejado.includes(term) ||
+          nombreUsuario.includes(term) ||
+          res.id.toString() === term
+        );
+      });
+      setFilteredReservations(filtered);
+    }
+  }, [searchTerm, reservations]);
+
   const getStatusColor = (status) => {
     switch (status) {
       case 'completado':
@@ -61,6 +91,14 @@ export const PaymentForm = ({
     setFormData({ ...formData, [name]: value });
   };
 
+  // Manejador para seleccionar una reserva del "autocompletado"
+  const handleSelectReservation = (res) => {
+    setFormData({ ...formData, id_reserva: res.id });
+    // Mostramos en el campo de búsqueda el nombre elegido para mayor claridad
+    setSearchTerm(res.nombre_festejado || res.usuario?.nombre || `Reserva #${res.id}`);
+    setShowSuggestions(false);
+  };
+
   const handleSubmit = (e) => {
     e.preventDefault();
     if (onSave) {
@@ -74,28 +112,49 @@ export const PaymentForm = ({
       <form onSubmit={handleSubmit} id="paymentsForm">
         <div className="space-y-6 p-6 bg-white rounded-lg">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {/* Campo de Reserva */}
-            <div className="mb-4">
+            {/* Campo de Reserva (Ahora con buscador) */}
+            <div className="mb-4 relative">
               <label className="block text-sm font-medium text-gray-700 mb-1">
                 <div className="flex items-center">
                   <FiMapPin className="mr-2 text-gray-400" />
-                  Reserva
+                  Buscar Reserva
                 </div>
               </label>
-              <select
-                name="id_reserva"
-                value={formData.id_reserva}
-                onChange={handleChange}
-                className="mt-1 p-2 bg-gray-50 rounded-md w-full"
-                required
-              >
-                <option value="">Seleccione una reserva</option>
-                {reservations.map((res) => (
-                  <option key={res.id} value={res.id}>
-                    #{res.id} - {res.nombre_festejado || res.usuario?.nombre || 'Sin nombre'}
-                  </option>
-                ))}
-              </select>
+
+              <div className="flex items-center bg-gray-50 rounded-md p-2">
+                <FiSearch className="mr-2 text-gray-400" />
+                <input
+                  type="text"
+                  placeholder="Buscar por nombre, festejado o ID..."
+                  value={searchTerm}
+                  onChange={(e) => {
+                    setSearchTerm(e.target.value);
+                    setShowSuggestions(true);
+                  }}
+                  className="bg-transparent w-full focus:outline-none"
+                />
+              </div>
+
+              {/* Lista desplegable de sugerencias */}
+              {showSuggestions && filteredReservations.length > 0 && (
+                <ul className="absolute z-10 mt-1 bg-white border border-gray-200 rounded-md w-full max-h-60 overflow-auto shadow-lg">
+                  {filteredReservations.map((res) => {
+                    const displayName =
+                      res.nombre_festejado ||
+                      res.usuario?.nombre ||
+                      `Reserva #${res.id}`;
+                    return (
+                      <li
+                        key={res.id}
+                        className="px-4 py-2 cursor-pointer hover:bg-gray-100"
+                        onClick={() => handleSelectReservation(res)}
+                      >
+                        #{res.id} - {displayName}
+                      </li>
+                    );
+                  })}
+                </ul>
+              )}
             </div>
 
             {/* Campo de Monto */}
@@ -142,14 +201,19 @@ export const PaymentForm = ({
                   Método de Pago
                 </div>
               </label>
-              <input
-                type="text"
+              <select
                 name="metodo_pago"
                 value={formData.metodo_pago}
                 onChange={handleChange}
                 className="mt-1 p-2 bg-gray-50 rounded-md w-full"
                 required
-              />
+              >
+                <option value="">Seleccionar método de pago</option>
+                <option value="efectivo">Efectivo</option>
+                <option value="transferencia">Transferencia</option>
+                <option value="tarjeta_debito" disabled>Tarjeta de débito</option>
+                <option value="tarjeta_credito" disabled>Tarjeta de crédito</option>
+              </select>
             </div>
           </div>
 
@@ -193,19 +257,16 @@ export const PaymentForm = ({
           label="Reserva"
           value={getReservationInfo(payment.id_reserva)}
         />
-
         <InfoField
           icon={FiDollarSign}
           label="Monto"
           value={`$${parseFloat(payment.monto).toFixed(2)}`}
         />
-
         <InfoField
           icon={FiCalendar}
           label="Fecha de Pago"
           value={new Date(payment.fecha_pago).toLocaleDateString()}
         />
-
         <InfoField
           icon={FiCreditCard}
           label="Método de Pago"

@@ -14,7 +14,11 @@ const TabNavigation = ({ activeTab, setActiveTab, handleAddItem }) => {
         { id: 'tematicas', label: 'Temáticas' },
         { id: 'mamparas', label: 'Mamparas' },
         { id: 'payments', label: 'Pagos' },
+        { id: 'auditoria', label: 'Historial' },
     ];
+
+    // Determinar si se debe mostrar el botón de agregar
+    const showAddButton = activeTab !== 'auditoria';
 
     return (
         <div className="flex flex-col sm:flex-row justify-between items-center mb-4 space-y-4 sm:space-y-0">
@@ -65,13 +69,15 @@ const TabNavigation = ({ activeTab, setActiveTab, handleAddItem }) => {
                     ))}
                 </div>
             </div>
-            <button
-                onClick={handleAddItem}
-                className="w-full sm:w-auto bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-4 rounded-lg transition-colors duration-200 flex items-center justify-center"
-            >
-                <FiPlus className="mr-2" />
-                Agregar
-            </button>
+            {showAddButton && (
+                <button
+                    onClick={handleAddItem}
+                    className="w-full sm:w-auto bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-4 rounded-lg transition-colors duration-200 flex items-center justify-center"
+                >
+                    <FiPlus className="mr-2" />
+                    Agregar
+                </button>
+            )}
         </div>
     );
 };

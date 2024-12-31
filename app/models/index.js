@@ -1,6 +1,6 @@
 // models/index.js
-
 const sequelize = require('../config/database');
+const { agregarHooksAuditoria } = require('../utils/modelHooks');
 
 const Paquete = require('./Paquete');
 const PaqueteAlimento = require('./PaqueteAlimento');
@@ -14,6 +14,17 @@ const Tematica = require('./Tematica');
 const Extra = require('./Extra');
 const Categoria = require('./Categoria');
 const ReservaExtra = require('./ReservaExtra');
+const Auditoria = require('./Auditoria');
+
+// Agregar hooks de auditoría a todos los modelos
+const modelos = [
+  Paquete, PaqueteAlimento, OpcionAlimento, Usuario, Reserva,
+  Finanza, Pago, Mampara, Tematica, Extra, Categoria
+];
+
+modelos.forEach(modelo => {
+  agregarHooksAuditoria(modelo);
+});
 
 // Asociaciones
 Usuario.hasMany(Reserva, { foreignKey: 'id_usuario', as: 'reservas' });
@@ -27,17 +38,26 @@ Reserva.belongsTo(OpcionAlimento, { foreignKey: 'id_opcion_alimento', as: 'opcio
 
 Reserva.belongsTo(Mampara, { foreignKey: 'id_mampara', as: 'mampara' });
 
+// Asociaciones de Finanza
+Usuario.hasMany(Finanza, { foreignKey: 'id_usuario', as: 'finanzasUsuario' });
+Finanza.belongsTo(Usuario, { foreignKey: 'id_usuario', as: 'usuario' });
+
 Reserva.hasMany(Finanza, { foreignKey: 'id_reserva', as: 'finanzas' });
 Finanza.belongsTo(Reserva, { foreignKey: 'id_reserva', as: 'reserva' });
 
-Reserva.hasMany(Pago, { foreignKey: 'id_reserva', as: 'pagos' });
-Pago.belongsTo(Reserva, { foreignKey: 'id_reserva', as: 'reserva' });
+Categoria.hasMany(Finanza, { foreignKey: 'id_categoria', as: 'finanzas' });
+Finanza.belongsTo(Categoria, { foreignKey: 'id_categoria', as: 'categoria' });
 
+// Asociaciones de Pago
+Reserva.hasMany(Pago, { foreignKey: 'id_reserva', as: 'pagos' });
+Pago.belongsTo(Reserva, { foreignKey: 'id_reserva', as: 'reservaPago' });
+
+// Asociaciones de Tematica
 Tematica.hasMany(Reserva, { foreignKey: 'id_tematica', as: 'reservasTematica' });
 Reserva.belongsTo(Tematica, { foreignKey: 'id_tematica', as: 'tematicaReserva' });
 
 Tematica.hasMany(Mampara, { foreignKey: 'id_tematica', as: 'mamparas' });
-Mampara.belongsTo(Tematica, { foreignKey: 'id_tematica', as: 'tematica' });
+Mampara.belongsTo(Tematica, { foreignKey: 'id_tematica', as: 'tematicaMampara' });
 
 // Relación entre Reserva y Extra usando ReservaExtras como tabla intermedia
 Reserva.belongsToMany(Extra, {
@@ -67,5 +87,6 @@ module.exports = {
   Tematica,
   Extra,
   Categoria,
-  ReservaExtra
+  ReservaExtra,
+  Auditoria
 };

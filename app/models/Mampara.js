@@ -2,7 +2,7 @@ const { DataTypes } = require('sequelize');
 const sequelize = require('../config/database');
 const Tematica = require('./Tematica');
 
-const Mampara = sequelize.define('Mampara', {
+const Mampara = sequelize.define('Mamparas', {
   id: {
     type: DataTypes.INTEGER,
     autoIncrement: true,
@@ -12,7 +12,7 @@ const Mampara = sequelize.define('Mampara', {
     type: DataTypes.INTEGER,
     allowNull: true,
     references: {
-      model: Tematica,
+      model: 'tematicas',
       key: 'id'
     }
   },
@@ -34,8 +34,21 @@ const Mampara = sequelize.define('Mampara', {
     defaultValue: true
   }
 }, {
-  tableName: 'Mamparas',
-  timestamps: false
+  tableName: 'mamparas',
+  schema: 'tramboory',
+  timestamps: false,
+  indexes: [
+    {
+      name: 'idx_mamparas_tematica',
+      fields: ['id_tematica']
+    }
+  ]
+});
+
+// Definir las relaciones
+Mampara.belongsTo(Tematica, {
+  foreignKey: 'id_tematica',
+  as: 'tematica'
 });
 
 module.exports = Mampara;

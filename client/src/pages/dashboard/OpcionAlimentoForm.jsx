@@ -3,20 +3,33 @@ import { FiTag, FiFileText, FiDollarSign, FiClock, FiCheckSquare } from 'react-i
 import { useForm } from 'react-hook-form';
 
 const OpcionAlimentoForm = ({ editingItem, onSave, activeTab }) => {
-    const { register, handleSubmit, watch } = useForm({
+    const { register, handleSubmit, watch, formState: { errors } } = useForm({
         defaultValues: editingItem || {
             precio_adulto: 0,
-            precio_nino: 0
+            precio_nino: 0,
+            precio_extra: 0,
+            precio_papas: 19.00,
+            disponible: true,
+            opcion_papas: false,
+            turno: 'ambos'
         }
     });
 
-    const precioAdulto = watch('precio_adulto', 0);
-    const precioNino = watch('precio_nino', 0);
+    const opcionPapas = watch('opcion_papas', false);
 
     const onSubmit = (data) => {
-        // Calcular el precio_extra como la suma de precio_adulto y precio_nino
-        data.precio_extra = Number(data.precio_adulto) + Number(data.precio_nino);
-        onSave(data);
+        const formData = {
+            ...data,
+            precio_adulto: Number(data.precio_adulto) || 0,
+            precio_nino: Number(data.precio_nino) || 0,
+            precio_extra: Number(data.precio_extra) || 0,
+            precio_papas: data.opcion_papas ? (Number(data.precio_papas) || 19.00) : 19.00,
+            disponible: Boolean(data.disponible),
+            opcion_papas: Boolean(data.opcion_papas),
+            activo: true
+        };
+        
+        onSave(formData);
     };
 
     return (
@@ -31,14 +44,15 @@ const OpcionAlimentoForm = ({ editingItem, onSave, activeTab }) => {
                         className="w-full pl-10 pr-3 py-2 text-gray-700 border rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
                         placeholder="Nombre de la opción de alimento"
                     />
+                    {errors.nombre && <span className="text-red-500 text-sm">{errors.nombre.message}</span>}
                 </div>
             </div>
 
             {/* Sección de Precios */}
             <div className="col-span-1 md:col-span-2 bg-gray-50 p-4 rounded-lg space-y-4">
-                <h3 className="text-lg font-medium text-gray-700">Precios por Persona</h3>
+                <h3 className="text-lg font-medium text-gray-700">Precios</h3>
                 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                     <div>
                         <label className="block text-sm font-medium text-gray-700 mb-1">Precio por Adulto</label>
                         <div className="relative">
@@ -46,7 +60,7 @@ const OpcionAlimentoForm = ({ editingItem, onSave, activeTab }) => {
                             <input
                                 {...register('precio_adulto', { 
                                     required: 'Este campo es requerido',
-                                    min: 0,
+                                    min: { value: 0, message: 'El precio debe ser mayor o igual a 0' },
                                     valueAsNumber: true
                                 })}
                                 type="number"
@@ -54,6 +68,7 @@ const OpcionAlimentoForm = ({ editingItem, onSave, activeTab }) => {
                                 className="w-full pl-10 pr-3 py-2 text-gray-700 border rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
                                 placeholder="Precio por adulto"
                             />
+                            {errors.precio_adulto && <span className="text-red-500 text-sm">{errors.precio_adulto.message}</span>}
                         </div>
                     </div>
 
@@ -64,7 +79,7 @@ const OpcionAlimentoForm = ({ editingItem, onSave, activeTab }) => {
                             <input
                                 {...register('precio_nino', { 
                                     required: 'Este campo es requerido',
-                                    min: 0,
+                                    min: { value: 0, message: 'El precio debe ser mayor o igual a 0' },
                                     valueAsNumber: true
                                 })}
                                 type="number"
@@ -72,16 +87,27 @@ const OpcionAlimentoForm = ({ editingItem, onSave, activeTab }) => {
                                 className="w-full pl-10 pr-3 py-2 text-gray-700 border rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
                                 placeholder="Precio por niño"
                             />
+                            {errors.precio_nino && <span className="text-red-500 text-sm">{errors.precio_nino.message}</span>}
                         </div>
                     </div>
-                </div>
 
-                <div className="bg-indigo-50 p-3 rounded-lg">
-                    <div className="flex justify-between items-center">
-                        <span className="text-sm font-medium text-indigo-700">Precio Total por Persona:</span>
-                        <span className="text-lg font-bold text-indigo-600">
-                            ${(Number(precioAdulto) + Number(precioNino)).toFixed(2)}
-                        </span>
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Precio Extra</label>
+                        <div className="relative">
+                            <FiDollarSign className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+                            <input
+                                {...register('precio_extra', { 
+                                    required: 'Este campo es requerido',
+                                    min: { value: 0, message: 'El precio debe ser mayor o igual a 0' },
+                                    valueAsNumber: true
+                                })}
+                                type="number"
+                                step="0.01"
+                                className="w-full pl-10 pr-3 py-2 text-gray-700 border rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                                placeholder="Precio extra"
+                            />
+                            {errors.precio_extra && <span className="text-red-500 text-sm">{errors.precio_extra.message}</span>}
+                        </div>
                     </div>
                 </div>
             </div>
@@ -95,9 +121,23 @@ const OpcionAlimentoForm = ({ editingItem, onSave, activeTab }) => {
                         className="w-full pl-10 pr-3 py-2 text-gray-700 bg-white border rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
                     >
                         <option value="">Seleccionar turno</option>
-                        <option value="matutino">Matutino</option>
-                        <option value="vespertino">Vespertino</option>
+                        <option value="manana">Mañana</option>
+                        <option value="tarde">Tarde</option>
                         <option value="ambos">Ambos</option>
+                    </select>
+                    {errors.turno && <span className="text-red-500 text-sm">{errors.turno.message}</span>}
+                </div>
+            </div>
+
+            <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Disponibilidad</label>
+                <div className="relative">
+                    <select
+                        {...register('disponible')}
+                        className="w-full pl-10 pr-3 py-2 text-gray-700 bg-white border rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                    >
+                        <option value="true">Disponible</option>
+                        <option value="false">No Disponible</option>
                     </select>
                 </div>
             </div>
@@ -112,6 +152,7 @@ const OpcionAlimentoForm = ({ editingItem, onSave, activeTab }) => {
                         className="w-full pl-10 pr-3 py-2 text-gray-700 border rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
                         placeholder="Platillo para adultos"
                     />
+                    {errors.platillo_adulto && <span className="text-red-500 text-sm">{errors.platillo_adulto.message}</span>}
                 </div>
             </div>
 
@@ -125,7 +166,38 @@ const OpcionAlimentoForm = ({ editingItem, onSave, activeTab }) => {
                         className="w-full pl-10 pr-3 py-2 text-gray-700 border rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
                         placeholder="Platillo para niños"
                     />
+                    {errors.platillo_nino && <span className="text-red-500 text-sm">{errors.platillo_nino.message}</span>}
                 </div>
+            </div>
+
+            <div className="col-span-1 md:col-span-2">
+                <div className="flex items-center mb-4">
+                    <input
+                        {...register('opcion_papas')}
+                        type="checkbox"
+                        className="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded"
+                    />
+                    <label className="ml-2 block text-sm text-gray-900">
+                        Incluye opción de papas
+                    </label>
+                </div>
+                {opcionPapas && (
+                    <div className="relative">
+                        <FiDollarSign className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+                        <input
+                            {...register('precio_papas', {
+                                valueAsNumber: true,
+                                min: { value: 0, message: 'El precio debe ser mayor o igual a 0' }
+                            })}
+                            type="number"
+                            step="0.01"
+                            defaultValue={19.00}
+                            className="w-full pl-10 pr-3 py-2 text-gray-700 border rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                            placeholder="Precio de las papas"
+                        />
+                        {errors.precio_papas && <span className="text-red-500 text-sm">{errors.precio_papas.message}</span>}
+                    </div>
+                )}
             </div>
 
             <div className="col-span-1 md:col-span-2">

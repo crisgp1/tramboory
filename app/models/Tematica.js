@@ -1,7 +1,7 @@
 const { DataTypes } = require('sequelize');
 const sequelize = require('../config/database');
 
-const Tematica = sequelize.define('Tematica', {
+const Tematica = sequelize.define('Tematicas', {
     id: {
         type: DataTypes.INTEGER,
         autoIncrement: true,
@@ -9,10 +9,18 @@ const Tematica = sequelize.define('Tematica', {
     },
     nombre: {
         type: DataTypes.STRING(100),
-        allowNull: false
+        allowNull: false,
+        validate: {
+            notNull: {
+                msg: 'El nombre es requerido'
+            },
+            notEmpty: {
+                msg: 'El nombre no puede estar vacío'
+            }
+        }
     },
     descripcion: {
-        type: DataTypes.TEXT,
+        type: DataTypes.STRING(255),
         allowNull: true
     },
     foto: {
@@ -25,10 +33,12 @@ const Tematica = sequelize.define('Tematica', {
         defaultValue: true
     }
 }, {
-    tableName: 'Tematicas',
+    tableName: 'tematicas',
+    schema: 'tramboory',
     timestamps: false
 });
 
-
+// Las relaciones se definen en los modelos que tienen las claves foráneas
+// Mampara y Reserva tienen la referencia a Tematica
 
 module.exports = Tematica;

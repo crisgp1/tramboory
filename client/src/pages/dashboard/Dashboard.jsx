@@ -34,8 +34,8 @@ import MamparaForm from './MamparaForm'
 import PaymentTable from './PaymentTable'
 import PaymentForm from './PaymentForm'
 import PaymentModal from './PaymentModal'
-import PaymentDetails from './PaymentDetails';
-
+import PaymentDetails from './PaymentDetails'
+import AuditHistory from './AuditHistory'
 
 const Dashboard = () => {
   const [users, setUsers] = useState([])
@@ -64,8 +64,8 @@ const Dashboard = () => {
   const [payments, setPayments] = useState([])
   const [selectedPayment, setSelectedPayment] = useState(null)
   const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false)
-  const [paymentModalMode, setPaymentModalMode] = useState('view'); // 'view', 'edit', 'add'
-  const [unavailableDates, setUnavailableDates] = useState([]); 
+  const [paymentModalMode, setPaymentModalMode] = useState('view')
+  const [unavailableDates, setUnavailableDates] = useState([])
 
   const navigate = useNavigate()
 
@@ -123,7 +123,6 @@ const Dashboard = () => {
       if (responses[9].status === 'fulfilled')
         setPayments(responses[9].value.data)
 
-      // Manejar errores individuales
       responses.forEach((response, index) => {
         if (response.status === 'rejected') {
           console.error(`Error en la solicitud ${index}:`, response.reason)
@@ -141,8 +140,6 @@ const Dashboard = () => {
   useEffect(() => {
     fetchData()
   }, [fetchData])
-
-  
 
   const filteredUsers = useMemo(() => {
     return users.filter(
@@ -196,7 +193,7 @@ const Dashboard = () => {
   const handleAddItem = useCallback(() => {
     if (activeTab === 'payments') {
       setSelectedPayment(null)
-      setPaymentModalMode('add') // Establecer el modo a 'add'
+      setPaymentModalMode('add')
       setIsPaymentModalOpen(true)
     } else {
       setEditingItem(null)
@@ -209,7 +206,7 @@ const Dashboard = () => {
       await axiosInstance.post('/api/pagos', paymentData)
       toast.success('Pago creado exitosamente')
       setIsPaymentModalOpen(false)
-      fetchData() // Actualizar los datos
+      fetchData()
     } catch (error) {
       console.error('Error al crear el pago:', error)
       toast.error('Error al crear el pago')
@@ -224,8 +221,7 @@ const Dashboard = () => {
       console.log('Editando elemento:', item)
       if (activeTab === 'payments') {
         setSelectedPayment(item)
-        // setPaymentModalMode('edit') 
-        setPaymentModalMode('add');
+        setPaymentModalMode('add')
         setIsPaymentModalOpen(true)
       } else {
         setEditingItem(item)
@@ -239,29 +235,27 @@ const Dashboard = () => {
     try {
       const response = await axiosInstance.put(`/api/pagos/${paymentId}/estado`, {
         estado: newStatus
-      });
+      })
   
       if (response.status === 200) {
-        // Actualizar el estado local
         setPayments(prevPayments => 
           prevPayments.map(payment => 
             payment.id === paymentId ? { ...payment, estado: newStatus } : payment
           )
-        );
+        )
   
-        toast.success('Estado del pago actualizado con éxito');
-        await fetchData(); // Recargar los datos
+        toast.success('Estado del pago actualizado con éxito')
+        await fetchData()
       }
     } catch (error) {
-      console.error('Error al actualizar el estado del pago:', error);
-      toast.error('Error al actualizar el estado del pago');
+      console.error('Error al actualizar el estado del pago:', error)
+      toast.error('Error al actualizar el estado del pago')
   
       if (error.response?.status === 401) {
-        navigate('/signin');
+        navigate('/signin')
       }
     }
-  }, [navigate, fetchData]);
-  
+  }, [navigate, fetchData])
 
   const handleReservationStatusChange = useCallback((reservationId, newStatus) => {
     setReservations(prevReservations =>
@@ -270,47 +264,41 @@ const Dashboard = () => {
           ? { ...reservation, estado: newStatus }
           : reservation
       )
-    );
+    )
   
-    // If the status is "cancelled" or "pending", update available dates
     if (newStatus === 'cancelada' || newStatus === 'pendiente') {
-      const updatedReservation = reservations.find(r => r.id === reservationId);
+      const updatedReservation = reservations.find(r => r.id === reservationId)
       if (updatedReservation) {
-        // Only update unavailable dates if we found the reservation
-        const reservationDate = new Date(updatedReservation.fecha_reserva);
+        const reservationDate = new Date(updatedReservation.fecha_reserva)
         
         setUnavailableDates(prevDates => {
-          // Remove the date if it exists
           const newDates = prevDates.filter(date => 
             date.getTime() !== reservationDate.getTime()
-          );
+          )
           
-          // Recalculate unavailable dates based on remaining active reservations
           const activeDates = reservations
             .filter(r => 
               r.id !== reservationId && 
               (r.estado === 'confirmada' || r.estado === 'pendiente')
             )
-            .map(r => new Date(r.fecha_reserva));
+            .map(r => new Date(r.fecha_reserva))
             
-          // Combine unique dates
-          return [...new Set([...newDates, ...activeDates])];
-        });
+          return [...new Set([...newDates, ...activeDates])]
+        })
       }
     } else if (newStatus === 'confirmada') {
-      // If confirming a reservation, add the date to unavailable dates
-      const updatedReservation = reservations.find(r => r.id === reservationId);
+      const updatedReservation = reservations.find(r => r.id === reservationId)
       if (updatedReservation) {
-        const reservationDate = new Date(updatedReservation.fecha_reserva);
+        const reservationDate = new Date(updatedReservation.fecha_reserva)
         setUnavailableDates(prevDates => {
           if (!prevDates.some(date => date.getTime() === reservationDate.getTime())) {
-            return [...prevDates, reservationDate];
+            return [...prevDates, reservationDate]
           }
-          return prevDates;
-        });
+          return prevDates
+        })
       }
     }
-  }, [reservations]);
+  }, [reservations])
 
   useEffect(() => {
     const initializeUnavailableDates = () => {
@@ -319,26 +307,21 @@ const Dashboard = () => {
           reservation.estado === 'confirmada' || 
           reservation.estado === 'pendiente'
         )
-        .map(reservation => new Date(reservation.fecha_reserva));
+        .map(reservation => new Date(reservation.fecha_reserva))
       
-      setUnavailableDates([...new Set(dates)]);
-    };
+      setUnavailableDates([...new Set(dates)])
+    }
   
     if (reservations.length > 0) {
-      initializeUnavailableDates();
+      initializeUnavailableDates()
     }
-  }, [reservations]);
-  
-  
+  }, [reservations])
 
-  // Functions for sending email and contacting user (implement as needed)
   const handleSendEmail = useCallback(reservation => {
-    // Implement email sending functionality
     toast.info(`Funcionalidad de enviar correo a ${reservation.usuario.email}`)
   }, [])
 
   const handleContactUser = useCallback(reservation => {
-    // Implement user contact functionality
     toast.info(
       `Funcionalidad de contactar al usuario ${reservation.usuario.nombre}`
     )
@@ -396,7 +379,6 @@ const Dashboard = () => {
         let endpoint
         let successMessage
 
-        // Determinar el endpoint y el mensaje de éxito basado en activeTab
         switch (activeTab) {
           case 'users':
             endpoint = '/api/usuarios'
@@ -440,18 +422,18 @@ const Dashboard = () => {
               ? 'Temática actualizada exitosamente'
               : 'Temática creada exitosamente'
             break
-          case 'mamparas': // Agrega este caso
+          case 'mamparas':
             endpoint = '/api/mamparas'
             successMessage = editingItem
               ? 'Mampara actualizada exitosamente'
               : 'Mampara creada exitosamente'
             break
-            case 'payments':
-              endpoint = '/api/pagos';
-              successMessage = item
-                ? 'Pago actualizado exitosamente'
-                : 'Pago creado exitosamente';
-              break;
+          case 'payments':
+            endpoint = '/api/pagos'
+            successMessage = editingItem
+              ? 'Pago actualizado exitosamente'
+              : 'Pago creado exitosamente'
+            break
           default:
             throw new Error('Tipo de formulario no reconocido')
         }
@@ -459,10 +441,8 @@ const Dashboard = () => {
         const cleanedData = removeCircularReferences(data)
         console.log('Datos limpios a enviar al servidor:', cleanedData)
 
-        // Serializar los datos limpios
         const serializedData = JSON.stringify(cleanedData)
 
-        // Realizar la petición al servidor
         if (editingItem) {
           await axiosInstance.put(
             `${endpoint}/${editingItem.id}`,
@@ -472,20 +452,17 @@ const Dashboard = () => {
           await axiosInstance.post(endpoint, JSON.parse(serializedData))
         }
 
-        // Mostrar mensaje de éxito y actualizar el estado
         toast.success(successMessage)
         setIsModalOpen(false)
         fetchData()
       } catch (error) {
         console.error('Error en handleSubmit:', error)
         if (error.response && error.response.status === 401) {
-          // Error de autenticación
           toast.error(
             'Tu sesión ha expirado. Por favor, inicia sesión nuevamente.'
           )
-          // Redirigir al login
           navigate('/signin')
-          return // Agregar esta línea para detener la ejecución
+          return
         } else {
           handleError(error, editingItem ? 'actualizar' : 'crear')
         }
@@ -493,7 +470,7 @@ const Dashboard = () => {
         setLoading(false)
       }
     },
-    [activeTab, editingItem, fetchData, handleError, setIsModalOpen, navigate]
+    [activeTab, editingItem, fetchData, handleError, navigate]
   )
 
   const handleDeleteItem = async (endpoint, id, successMessage) => {
@@ -512,7 +489,7 @@ const Dashboard = () => {
       try {
         await axiosInstance.delete(`${endpoint}/${id}`)
         Swal.fire('¡Desactivado!', successMessage, 'success')
-        fetchData() // Llamar a fetchData después de una eliminación exitosa
+        fetchData()
       } catch (error) {
         handleError(error, 'desactivar')
       }
@@ -589,7 +566,7 @@ const Dashboard = () => {
     try {
       const response = await axiosInstance.post('/api/categorias', {
         nombre: newCategory.nombre,
-        color: newCategory.color || '#000000' // Asegúrate de incluir el color
+        color: newCategory.color || '#000000'
       })
       setCategories(prevCategories => [...prevCategories, response.data])
       toast.success('Categoría añadida con éxito')
@@ -598,6 +575,7 @@ const Dashboard = () => {
       toast.error('Error al añadir la categoría')
     }
   }, [])
+
   const renderModalContent = useCallback(() => {
     const props = {
       editingItem,
@@ -610,7 +588,7 @@ const Dashboard = () => {
       onAddCategory: handleAddCategory,
       reservations,
       tematicas,
-      foodOptions, // Agrega esta línea
+      foodOptions,
       extras
     }
     switch (activeTab) {
@@ -646,8 +624,8 @@ const Dashboard = () => {
     categories,
     handleAddCategory,
     reservations,
-    tematicas, // Incluye tematicas en las dependencias
-    foodOptions, // Agrega foodOptions a la lista de dependencias
+    tematicas,
+    foodOptions,
     extras
   ])
 
@@ -700,14 +678,14 @@ const Dashboard = () => {
         )}
         {activeTab === 'reservations' && (
           <ReservationTable
-          reservations={reservations}
-          reservationSearch={reservationSearch}
-          setReservationSearch={setReservationSearch}
-          handleViewReservation={handleViewReservation}
-          handleEditItem={handleEditItem}
-          handleDeleteItem={handleDeleteItem}
-          selectedMonth={selectedMonth}
-        />
+            reservations={reservations}
+            reservationSearch={reservationSearch}
+            setReservationSearch={setReservationSearch}
+            handleViewReservation={handleViewReservation}
+            handleEditItem={handleEditItem}
+            handleDeleteItem={handleDeleteItem}
+            selectedMonth={selectedMonth}
+          />
         )}
         {activeTab === 'finances' && (
           <FinanceTable
@@ -727,14 +705,6 @@ const Dashboard = () => {
             generateMonthlyReport={generateMonthlyReport}
           />
         )}
-        {
-          <MonthlyReportModal
-            isOpen={isReportModalOpen}
-            onClose={() => setIsReportModalOpen(false)}
-            finances={filterDataByMonth(finances, 'fecha')}
-            categories={categories}
-          />
-        }
         {activeTab === 'packages' && (
           <PackageTable
             packages={packages}
@@ -772,7 +742,6 @@ const Dashboard = () => {
             }
           />
         )}
-
         {activeTab === 'tematicas' && (
           <TematicaTable
             tematicas={tematicas}
@@ -786,7 +755,6 @@ const Dashboard = () => {
             }
           />
         )}
-
         {activeTab === 'mamparas' && (
           <MamparaTable
             tematicas={tematicas}
@@ -801,26 +769,25 @@ const Dashboard = () => {
             }
           />
         )}
-
-{activeTab === 'payments' && (
-  <>
-   <PaymentTable
-  payments={payments}
-  reservations={reservations} // Pasar las reservas
-  onViewPayment={(payment) => {
-    setSelectedPayment(payment);
-    setPaymentModalMode('view');
-    setIsPaymentModalOpen(true);
-  }}
-  onEditPayment={(payment) => {
-    setSelectedPayment(payment);
-    setPaymentModalMode('edit');
-    setIsPaymentModalOpen(true);
-  }}
-/>
-
-  </>
-)}
+        {activeTab === 'payments' && (
+          <PaymentTable
+            payments={payments}
+            reservations={reservations}
+            onViewPayment={(payment) => {
+              setSelectedPayment(payment)
+              setPaymentModalMode('view')
+              setIsPaymentModalOpen(true)
+            }}
+            onEditPayment={(payment) => {
+              setSelectedPayment(payment)
+              setPaymentModalMode('edit')
+              setIsPaymentModalOpen(true)
+            }}
+          />
+        )}
+        {activeTab === 'auditoria' && (
+          <AuditHistory />
+        )}
       </div>
       <MonthSelector
         selectedMonth={selectedMonth}
@@ -859,12 +826,11 @@ const Dashboard = () => {
           categories={categories}
           onAddCategory={handleAddCategory}
           tematicas={tematicas}
-          foodOptions={foodOptions} // Agrega esta línea
-          extras={extras} // Agrega esta línea
+          foodOptions={foodOptions}
+          extras={extras}
           mamparas={mamparas}
         />
       )}
-
       {selectedFinance && (
         <FinanceDetailModal
           finance={selectedFinance}
@@ -872,9 +838,7 @@ const Dashboard = () => {
           onDownloadFile={handleDownloadFile}
         />
       )}
-
-
-{isPaymentModalOpen && (
+      {isPaymentModalOpen && (
         <PaymentModal
           payment={selectedPayment}
           isOpen={isPaymentModalOpen}
@@ -883,13 +847,21 @@ const Dashboard = () => {
             setIsPaymentModalOpen(false)
           }}
           onUpdateStatus={handleUpdatePaymentStatus}
-          onSavePayment={handleSavePayment} // Pasar la función para guardar
+          onSavePayment={handleSavePayment}
           reservations={reservations}
-          mode={paymentModalMode} // Pasar el modo ('add', 'edit', 'view')
+          mode={paymentModalMode}
         />
       )}
-
+      {isReportModalOpen && (
+        <MonthlyReportModal
+          isOpen={isReportModalOpen}
+          onClose={() => setIsReportModalOpen(false)}
+          finances={filterDataByMonth(finances, 'fecha')}
+          categories={categories}
+        />
+      )}
     </div>
   )
 }
+
 export default Dashboard

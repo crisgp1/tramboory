@@ -1,32 +1,51 @@
 const jwt = require('jsonwebtoken');
 const Usuario = require('../models/Usuario');
 
-module.exports = async (req, res, next) => {
-  const token = req.headers.authorization && req.headers.authorization.split(' ')[1];
+const authMiddleware = async (req, res, next) => {
+    try {
+        // Obtener el token del header o de las cookies
+        const token = req.headers.authorization?.split(' ')[1] || req.cookies.token;
 
-  console.log('Token recibido:', token);
+        if (!token) {
+            return res.status(401).json({ error: 'No hay token, autorización denegada' });
+        }
 
-  if (!token) {
-    console.log('No se proporcionó un token');
-    return res.status(401).json({ message: 'No se proporcionó un token' });
-  }
+        // Verificar token
+        console.log('Token recibido:', token);
+        const decoded = jwt.verify(token, process.env.JWT_SECRET);
+        console.log('Token decodificado:', decoded);
 
-  try {
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    console.log('Token decodificado:', decoded);
+        // Buscar el usuario y verificar que esté activo
+        const usuario = await Usuario.findOne({
+            where: {
+                id: decoded.id,
+                activo: true
+            }
+        });
 
-    // Obtener la información completa del usuario desde la base de datos
-    const usuario = await Usuario.findByPk(decoded.id);
-    
-    if (!usuario) {
-      return res.status(401).json({ message: 'Usuario no encontrado' });
+        if (!usuario) {
+            return res.status(401).json({ error: 'Usuario no encontrado o inactivo' });
+        }
+
+        // Agregar el usuario completo al request para uso posterior
+        req.user = {
+            id: usuario.id,
+            nombre: usuario.nombre,
+            email: usuario.email,
+            tipo_usuario: usuario.tipo_usuario,
+            activo: usuario.activo
+        };
+
+        next();
+    } catch (error) {
+        console.error('Error en middleware de autenticación:', error);
+        if (error.name === 'JsonWebTokenError') {
+            return res.status(401).json({ error: 'Token inválido' });
+        } else if (error.name === 'TokenExpiredError') {
+            return res.status(401).json({ error: 'Token expirado' });
+        }
+        res.status(500).json({ error: 'Error en el servidor' });
     }
-
-    // Guardar la información completa del usuario en req.user
-    req.user = usuario;
-    next();
-  } catch (error) {
-    console.log('Error al verificar el token:', error.message);
-    res.status(401).json({ message: 'Token inválido' });
-  }
 };
+
+module.exports = authMiddleware;

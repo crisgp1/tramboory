@@ -15,7 +15,12 @@ exports.signup = async (req, res) => {
 
         const hashedPassword = await bcrypt.hash(password, 10);
         const newUser = await Usuario.create({
-            nombre, email, clave: hashedPassword, telefono, direccion, tipo_usuario: 'cliente'
+            nombre, 
+            email, 
+            clave_hash: hashedPassword, 
+            telefono, 
+            direccion, 
+            tipo_usuario: 'cliente'
         });
 
         res.status(201).json({message: 'Usuario registrado exitosamente', user: newUser});
@@ -24,6 +29,7 @@ exports.signup = async (req, res) => {
         res.status(500).json({message: 'Error del servidor, por favor intenta más tarde'});
     }
 };
+
 exports.login = async (req, res) => {
     const {email, password} = req.body;
 
@@ -38,7 +44,7 @@ exports.login = async (req, res) => {
             return res.status(401).json({message: 'Correo electrónico o contraseña incorrectos'});
         }
 
-        const validPassword = await bcrypt.compare(password, usuario.clave);
+        const validPassword = await bcrypt.compare(password, usuario.clave_hash);
 
         if (!validPassword) {
             return res.status(401).json({message: 'Correo electrónico o contraseña incorrectos'});
@@ -49,7 +55,9 @@ exports.login = async (req, res) => {
         });
         console.log('Token generado:', token); // Agregamos este console.log
         res.cookie('token', token, {
-            httpOnly: false, secure: process.env.NODE_ENV === 'production', sameSite: 'strict'
+            httpOnly: false, 
+            secure: process.env.NODE_ENV === 'production', 
+            sameSite: 'strict'
         });
         res.json({token, message: 'Inicio de sesión exitoso', userType: usuario.tipo_usuario});
     } catch (error) {

@@ -1,7 +1,8 @@
 const Finanza = require('../models/Finanza');
+const Auditoria = require('../models/Auditoria');
 const fs = require('fs');
 const upload = require('../config/multer');
-
+const { Op } = require('sequelize');
 
 exports.getAllFinanzas = async (req, res) => {
     try {
@@ -17,7 +18,20 @@ exports.getFinanzaById = async (req, res) => {
     try {
         const finanza = await Finanza.findByPk(req.params.id);
         if (finanza) {
-            res.json(finanza);
+            // Obtener el historial de auditoría para esta finanza
+            const auditoria = await Auditoria.findAll({
+                where: {
+                    transaccion: {
+                        [Op.like]: `%FINANZA - ID: ${finanza.id}%`
+                    }
+                },
+                order: [['fecha_operacion', 'DESC']]
+            });
+            
+            res.json({
+                finanza,
+                historial: auditoria
+            });
         } else {
             res.status(404).json({ error: 'Finanza no encontrada' });
         }
@@ -26,7 +40,6 @@ exports.getFinanzaById = async (req, res) => {
         res.status(500).json({ error: 'Error al obtener la finanza' });
     }
 };
-
 
 exports.createFinanza = async (req, res) => {
     try {
@@ -55,15 +68,29 @@ exports.createFinanza = async (req, res) => {
         const facturaXML = req.files && req.files['factura_xml'] ? req.files['factura_xml'][0].filename : null;
         const archivoPrueba = req.files && req.files['archivo_prueba'] ? req.files['archivo_prueba'][0].filename : null;
 
+        // Asegurarse de que tenemos el usuario
+        if (!req.user || !req.user.id) {
+            return res.status(401).json({ error: 'Usuario no autenticado' });
+        }
+
         const finanza = await Finanza.create({
             tipo,
             monto: montoNumerico,
             fecha,
             descripcion,
             id_reserva,
-            categoria: categoria.toString(), // Asegúrate de que categoria sea una cadena            factura_pdf: facturaPDF,
+            id_usuario: req.user.id,
+            id_categoria: categoria,
+            factura_pdf: facturaPDF,
             factura_xml: facturaXML,
             archivo_prueba: archivoPrueba
+        });
+
+        // Registrar en auditoría con mensaje más corto
+        await Auditoria.create({
+            id_usuario: req.user.id,
+            nombre_usuario: req.user.nombre,
+            transaccion: `CREAR FINANZA ${finanza.id} - ${tipo} - ${montoNumerico}`
         });
 
         res.status(201).json(finanza);
@@ -100,7 +127,18 @@ exports.updateFinanza = async (req, res) => {
             }
         });
 
+        // Asegurar que el id_usuario no cambie
+        finanzaData.id_usuario = finanza.id_usuario;
+
         await finanza.update(finanzaData);
+
+        // Registrar en auditoría con mensaje más corto
+        await Auditoria.create({
+            id_usuario: req.user.id,
+            nombre_usuario: req.user.nombre,
+            transaccion: `ACTUALIZAR FINANZA ${finanza.id}`
+        });
+
         res.json(finanza);
     } catch (error) {
         console.error('Error al actualizar la finanza:', error);
@@ -110,22 +148,29 @@ exports.updateFinanza = async (req, res) => {
 
 exports.deleteFinanza = async (req, res) => {
     try {
-      const { id } = req.params;
-      await Finanza.update({ activo: false }, {
-        where: { id },
-        silent: true
-      });
-      res.status(200).json({ message: 'Finanza desactivada con éxito' });
+        const { id } = req.params;
+        await Finanza.update({ activo: false }, {
+            where: { id }
+        });
+
+        // Registrar en auditoría con mensaje más corto
+        await Auditoria.create({
+            id_usuario: req.user.id,
+            nombre_usuario: req.user.nombre,
+            transaccion: `DESACTIVAR FINANZA ${id}`
+        });
+
+        res.status(200).json({ message: 'Finanza desactivada con éxito' });
     } catch (error) {
-      console.error('Error al desactivar la finanza:', error);
-      res.status(500).json({ error: 'Error al desactivar la finanza' });
+        console.error('Error al desactivar la finanza:', error);
+        res.status(500).json({ error: 'Error al desactivar la finanza' });
     }
-  };
-  
+};
+
 exports.getFinanzasByCategory = async (req, res) => {
     try {
         const finanzas = await Finanza.findAll({
-            where: { categoria: req.params.categoria }
+            where: { id_categoria: req.params.categoria }
         });
         res.json(finanzas);
     } catch (error) {
@@ -137,14 +182,31 @@ exports.getFinanzasByCategory = async (req, res) => {
 exports.getCategories = async (req, res) => {
     try {
         const categories = await Finanza.findAll({
-            attributes: ['categoria'],
-            group: ['categoria'],
+            attributes: ['id_categoria'],
+            group: ['id_categoria'],
             raw: true
         });
-        res.json(categories.map(c => c.categoria));
+        res.json(categories.map(c => c.id_categoria));
     } catch (error) {
         console.error('Error al obtener las categorías:', error);
         res.status(500).json({ error: 'Error al obtener las categorías' });
+    }
+};
+
+exports.getFinanzaAuditoria = async (req, res) => {
+    try {
+        const auditoria = await Auditoria.findAll({
+            where: {
+                transaccion: {
+                    [Op.like]: '%FINANZA%'
+                }
+            },
+            order: [['fecha_operacion', 'DESC']]
+        });
+        res.json(auditoria);
+    } catch (error) {
+        console.error('Error al obtener la auditoría de finanzas:', error);
+        res.status(500).json({ error: 'Error al obtener la auditoría de finanzas' });
     }
 };
 
