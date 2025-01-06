@@ -320,8 +320,8 @@ CREATE OR REPLACE FUNCTION validar_reserva()
 RETURNS trigger 
 LANGUAGE plpgsql
 AS $$
-BEGIN
-    IF EXISTS (
+BEGIN  // AQUI COMIENZA EL PROCEDIMIENTO DE LA FUNCION
+    IF EXISTS ( // si la reserva ya existe, se lanza una excepción, si no, se retorna la nueva reserva
         SELECT 1
         FROM reservas r
         WHERE r.fecha_reserva = NEW.fecha_reserva
@@ -337,7 +337,7 @@ BEGIN
 END;
 $$;
 
-CREATE TRIGGER verificar_reserva
+CREATE TRIGGER verificar_reserva /** si la reserva ya esta hecha, no puedes hacer una reserva **/
     BEFORE INSERT OR UPDATE 
     ON reservas
     FOR EACH ROW

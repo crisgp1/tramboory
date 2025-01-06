@@ -17,19 +17,14 @@ import {
   FiImage,
 } from 'react-icons/fi';
 import PrintableReservation from '../../components/PrintableReservation';
-import axiosInstance from '../../components/axiosConfig';
 import { toast } from 'react-toastify';
-import Swal from 'sweetalert2';
 
 const ReservationModal = ({
   reservation,
   onClose,
   onSendEmail,
-  onContactUser,
-  onStatusChange
+  onContactUser
 }) => {
-  const [status, setStatus] = useState(reservation.estado);
-  const [fechaProtegida, setFechaProtegida] = useState(true);
   const [modalHeight, setModalHeight] = useState('100vh');
 
   useEffect(() => {
@@ -61,48 +56,6 @@ const ReservationModal = ({
     winPrint.close();
   };
 
-  // Function to change the reservation status
-  const handleStatusChange = async (newStatus) => {
-    const result = await Swal.fire({
-      title: '¿Estás seguro?',
-      text: `Cambiar el estado a ${newStatus}`,
-      icon: 'warning',
-      showCancelButton: true,
-      confirmButtonText: 'Sí, cambiar',
-      cancelButtonText: 'Cancelar',
-    });
-
-    if (result.isConfirmed) {
-      try {
-        await axiosInstance.put(`/api/reservas/${reservation.id}/status`, {
-          estado: newStatus,
-        });
-
-        setStatus(newStatus);
-        
-        if (onStatusChange) {
-          onStatusChange(newStatus);
-        }
-
-        toast.success(`Estado de la reserva actualizado a ${newStatus}`);
-
-        if (newStatus === 'cancelada') {
-          setTimeout(() => {
-            if (onClose) {
-              onClose();
-            }
-          }, 1500);
-        }
-      } catch (error) {
-        console.error('Error al actualizar el estado de la reserva:', error);
-        if (error.response?.status === 401) {
-          navigate('/signin');
-        }
-        toast.error('Error al actualizar el estado de la reserva');
-      }
-    }
-  };
-
   // Function to get the color of the status
   const getStatusColor = (status) => {
     switch (status) {
@@ -116,14 +69,6 @@ const ReservationModal = ({
         return 'text-gray-500';
     }
   };
-
-  useEffect(() => {
-    if (status === 'cancelada' || status === 'pendiente') {
-      setFechaProtegida(false);
-    } else {
-      setFechaProtegida(true);
-    }
-  }, [status]);
 
   // Auxiliary component for icons and text
   const IconWrapper = ({ icon: Icon, text, color = 'text-gray-700', className = '' }) => (
@@ -199,9 +144,9 @@ const ReservationModal = ({
                     <IconWrapper
                       icon={FiAlertCircle}
                       text={`Estado: ${
-                        status.charAt(0).toUpperCase() + status.slice(1)
+                        reservation.estado.charAt(0).toUpperCase() + reservation.estado.slice(1)
                       }`}
-                      color={getStatusColor(status)}
+                      color={getStatusColor(reservation.estado)}
                     />
                   </div>
                 </div>
@@ -317,44 +262,6 @@ const ReservationModal = ({
                 <p className="text-gray-700 text-sm">
                   {reservation.comentarios || 'Sin comentarios'}
                 </p>
-              </div>
-            </div>
-            {/* Change Status */}
-            <div className="mt-6">
-              <h3 className="text-lg font-medium text-gray-900 mb-3">
-                Cambiar Estado de la Reserva
-              </h3>
-              <div className="flex flex-wrap gap-2">
-                <button
-                  onClick={() => handleStatusChange('pendiente')}
-                  className={`px-4 py-2 rounded ${
-                    status === 'pendiente'
-                      ? 'bg-yellow-500 text-white'
-                      : 'bg-gray-200 text-gray-700'
-                  }`}
-                >
-                  Pendiente
-                </button>
-                <button
-                  onClick={() => handleStatusChange('confirmada')}
-                  className={`px-4 py-2 rounded ${
-                    status === 'confirmada'
-                      ? 'bg-green-500 text-white'
-                      : 'bg-gray-200 text-gray-700'
-                  }`}
-                >
-                  Confirmada
-                </button>
-                <button
-                  onClick={() => handleStatusChange('cancelada')}
-                  className={`px-4 py-2 rounded ${
-                    status === 'cancelada'
-                      ? 'bg-red-500 text-white'
-                      : 'bg-gray-200 text-gray-700'
-                  }`}
-                >
-                  Cancelada
-                </button>
               </div>
             </div>
           </div>

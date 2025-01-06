@@ -84,7 +84,6 @@ const ReservationForm = ({
       edad_festejado: '',
       comentarios: '',
       total: '0.00',
-      estado: 'pendiente',
       activo: true,
       tuesdayFee: 0,
     },
@@ -272,7 +271,6 @@ const ReservationForm = ({
             }
           : null,
         total: editingItem.total || '0.00',
-        estado: editingItem.estado || 'pendiente',
         activo: editingItem.activo !== undefined ? editingItem.activo : true,
         tuesdayFee: editingItem.tuesdayFee || 0,
       };
@@ -360,7 +358,7 @@ const ReservationForm = ({
       edad_festejado: Number(data.edad_festejado),
       comentarios: data.comentarios,
       total: parseFloat(data.total),
-      estado: data.estado,
+      estado: 'pendiente',
       activo: data.activo,
       tuesdayFee: data.tuesdayFee ? parseFloat(data.tuesdayFee) : 0,
     };
