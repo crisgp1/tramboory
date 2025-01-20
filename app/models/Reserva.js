@@ -1,6 +1,9 @@
 const { DataTypes, Op } = require('sequelize');
 const sequelize = require('../config/database');
 
+// Importamos los modelos relacionados para los hooks
+const Finanza = require('./Finanza');
+
 const Reserva = sequelize.define('Reservas', {
   id: {
     type: DataTypes.INTEGER,
@@ -36,7 +39,14 @@ const Reserva = sequelize.define('Reservas', {
     allowNull: false,
     validate: {
       isAfterToday(value) {
-        if (new Date(value) < new Date().setHours(0, 0, 0, 0)) {
+        // Obtener la fecha actual en la zona horaria local
+        const now = new Date();
+        const today = new Date(now.getFullYear(), now.getMonth(), now.getDate()).toISOString().split('T')[0];
+        
+        // Asegurarnos de que value esté en el formato correcto YYYY-MM-DD
+        const dateValue = value instanceof Date ? value.toISOString().split('T')[0] : value;
+        
+        if (dateValue < today) {
           throw new Error('La fecha de reserva debe ser futura');
         }
       }
@@ -122,6 +132,23 @@ const Reserva = sequelize.define('Reservas', {
   timestamps: true,
   createdAt: 'fecha_creacion',
   updatedAt: 'fecha_actualizacion',
+  hooks: {
+    beforeValidate: async (reserva) => {
+      // Asegurarnos de que la fecha_reserva se maneje correctamente
+      if (reserva.fecha_reserva) {
+        // Si la fecha viene como objeto Date, la convertimos a YYYY-MM-DD
+        if (reserva.fecha_reserva instanceof Date) {
+          reserva.fecha_reserva = reserva.fecha_reserva.toISOString().split('T')[0];
+        }
+      }
+    },
+    beforeUpdate: async (reserva, options) => {
+      // Si la reserva se está desactivando, aseguramos que el estado sea 'cancelada'
+      if (reserva.changed('activo') && !reserva.activo) {
+        reserva.estado = 'cancelada';
+      }
+    }
+  },
   indexes: [
     {
       name: 'idx_reservas_usuario',
@@ -155,5 +182,15 @@ const Reserva = sequelize.define('Reservas', {
     }
   ]
 });
+
+// Definir las asociaciones
+Reserva.associate = function(models) {
+  Reserva.belongsToMany(models.Extra, {
+    through: 'reserva_extras',
+    foreignKey: 'id_reserva',
+    otherKey: 'id_extra',
+    as: 'extras'
+  });
+};
 
 module.exports = Reserva;

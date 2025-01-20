@@ -36,6 +36,15 @@ const authMiddleware = async (req, res, next) => {
             activo: usuario.activo
         };
 
+        // Establecer el ID del usuario actual para los triggers de auditoría
+        await Usuario.sequelize.query(
+            `SELECT set_config('app.id_usuario_actual', :userId, false)`,
+            {
+                replacements: { userId: usuario.id.toString() },
+                type: Usuario.sequelize.QueryTypes.SELECT
+            }
+        );
+
         next();
     } catch (error) {
         console.error('Error en middleware de autenticación:', error);

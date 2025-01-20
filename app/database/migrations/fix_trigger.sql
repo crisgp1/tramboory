@@ -1,99 +1,75 @@
--- Primero eliminamos los triggers y funciones existentes
-DROP TRIGGER IF EXISTS trigger_actualizar_estado_reserva_y_finanza ON tramboory.pagos;
-DROP TRIGGER IF EXISTS trigger_validar_fecha_reserva ON tramboory.reservas;
-DROP FUNCTION IF EXISTS tramboory.actualizar_estado_reserva_y_finanza();
-DROP FUNCTION IF EXISTS tramboory.validar_fecha_reserva();
+-- Comenzar transacción
+BEGIN;
 
--- Eliminamos la constraint actual
-ALTER TABLE tramboory.reservas DROP CONSTRAINT IF EXISTS reservas_fecha_reserva_check;
+-- Establecer el schema correcto
+SET search_path TO tramboory, public;
 
--- Creamos la función para validar la fecha en nuevas reservas
-CREATE OR REPLACE FUNCTION tramboory.validar_fecha_reserva()
+-- Eliminamos los triggers existentes
+DROP TRIGGER IF EXISTS trigger_reservation_deactivation ON tramboory.reservas;
+DROP TRIGGER IF EXISTS trigger_finance_deactivation ON tramboory.finanzas;
+DROP TRIGGER IF EXISTS trigger_payment_deactivation ON tramboory.pagos;
+
+-- Eliminamos las funciones existentes
+DROP FUNCTION IF EXISTS tramboory.handle_reservation_deactivation();
+DROP FUNCTION IF EXISTS tramboory.handle_finance_deactivation();
+DROP FUNCTION IF EXISTS tramboory.handle_payment_deactivation();
+
+-- Creamos una función única para manejar la desactivación
+CREATE OR REPLACE FUNCTION tramboory.handle_cascade_deactivation()
 RETURNS trigger AS $$
+DECLARE
+    _is_recursive boolean;
 BEGIN
-    IF TG_OP = 'INSERT' AND NEW.fecha_reserva < CURRENT_DATE THEN
-        RAISE EXCEPTION 'La fecha de reserva no puede ser anterior a la fecha actual';
+    -- Verificamos si estamos en una llamada recursiva
+    IF EXISTS (
+        SELECT 1
+        FROM pg_trigger
+        WHERE tgrelid = TG_RELID
+        AND tgname = TG_NAME
+        AND tgconstraint != 0
+    ) THEN
+        RETURN NEW;
     END IF;
+
+    -- Si es una reserva siendo desactivada
+    IF TG_TABLE_NAME = 'reservas' AND OLD.activo = true AND NEW.activo = false THEN
+        -- Desactivamos finanzas relacionadas directamente
+        UPDATE tramboory.finanzas
+        SET activo = false
+        WHERE id_reserva = NEW.id
+        AND activo = true;
+
+        -- Actualizamos pagos relacionados
+        UPDATE tramboory.pagos
+        SET estado = 'fallido'
+        WHERE id_reserva = NEW.id
+        AND estado != 'fallido';
+
+        -- Aseguramos que el estado sea 'cancelada'
+        NEW.estado = 'cancelada';
+    END IF;
+
     RETURN NEW;
 END;
 $$ LANGUAGE plpgsql;
 
--- Creamos el trigger para validar la fecha solo en inserciones
-CREATE TRIGGER trigger_validar_fecha_reserva
-    BEFORE INSERT ON tramboory.reservas
+-- Creamos el nuevo trigger unificado
+CREATE TRIGGER trigger_cascade_deactivation
+    BEFORE UPDATE ON tramboory.reservas
     FOR EACH ROW
-    EXECUTE FUNCTION tramboory.validar_fecha_reserva();
+    WHEN (OLD.activo = true AND NEW.activo = false)
+    EXECUTE FUNCTION tramboory.handle_cascade_deactivation();
 
--- Creamos la función para actualizar estado y finanzas
-CREATE OR REPLACE FUNCTION tramboory.actualizar_estado_reserva_y_finanza() 
-RETURNS trigger 
-LANGUAGE plpgsql
-AS $$
-DECLARE
-    categoria_id INT;
-    v_fecha_reserva DATE;
-BEGIN
-    IF OLD.estado <> NEW.estado THEN
-        -- Obtener la fecha de reserva actual
-        SELECT fecha_reserva INTO v_fecha_reserva
-        FROM tramboory.reservas
-        WHERE id = NEW.id_reserva;
+-- Agregamos índices para optimizar las consultas de desactivación
+CREATE INDEX IF NOT EXISTS idx_finanzas_reserva_activo
+    ON tramboory.finanzas (id_reserva, activo);
 
-        IF NEW.estado = 'completado' THEN
-            -- Reserva pasa a 'confirmada' manteniendo la fecha_reserva original
-            UPDATE tramboory.reservas
-            SET estado = 'confirmada',
-                fecha_actualizacion = CURRENT_TIMESTAMP
-            WHERE id = NEW.id_reserva;
+CREATE INDEX IF NOT EXISTS idx_pagos_reserva_estado
+    ON tramboory.pagos (id_reserva, estado);
 
-            -- Obtener o crear la categoria 'Reservación'
-            SELECT id INTO categoria_id
-            FROM tramboory.categorias
-            WHERE nombre = 'Reservación';
+-- Comentarios para documentar la solución
+COMMENT ON FUNCTION tramboory.handle_cascade_deactivation() IS 'Maneja la desactivación en cascada de reservas, finanzas y pagos de manera no recursiva';
+COMMENT ON TRIGGER trigger_cascade_deactivation ON tramboory.reservas IS 'Trigger que maneja la desactivación en cascada cuando una reserva se desactiva';
 
-            IF categoria_id IS NULL THEN
-                INSERT INTO tramboory.categorias(nombre, color, activo)
-                VALUES ('Reservación','#000000',TRUE)
-                RETURNING id INTO categoria_id;
-            END IF;
-
-            -- Insertar la finanza como ingreso
-            INSERT INTO tramboory.finanzas (
-                id_reserva,
-                tipo,
-                monto,
-                fecha,
-                descripcion,
-                id_usuario,
-                id_categoria
-            )
-            SELECT r.id,
-                   'ingreso',
-                   r.total,
-                   CURRENT_DATE,
-                   'Pago de reserva ' || r.id,
-                   r.id_usuario,
-                   categoria_id
-            FROM tramboory.reservas r
-            WHERE r.id = NEW.id_reserva;
-
-        ELSIF NEW.estado = 'fallido' THEN
-            -- Si el pago falla, la reserva vuelve a pendiente
-            UPDATE tramboory.reservas
-            SET estado = 'pendiente',
-                fecha_actualizacion = CURRENT_TIMESTAMP
-            WHERE id = NEW.id_reserva;
-        END IF;
-    END IF;
-
-    RETURN NEW;
-END;
-$$;
-
--- Recreamos el trigger para actualizar estado y finanzas
-CREATE TRIGGER trigger_actualizar_estado_reserva_y_finanza
-    AFTER UPDATE 
-    ON tramboory.pagos
-    FOR EACH ROW
-    WHEN (OLD.estado <> NEW.estado)
-EXECUTE FUNCTION tramboory.actualizar_estado_reserva_y_finanza();
+-- Actualizamos la configuración de la sesión
+ALTER ROLE cris SET session_replication_role = 'replica';

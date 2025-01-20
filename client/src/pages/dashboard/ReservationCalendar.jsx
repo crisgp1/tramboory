@@ -9,42 +9,104 @@ const localizer = momentLocalizer(moment);
 
 const ReservationCalendar = ({ reservations }) => {
   const [selectedEvent, setSelectedEvent] = useState(null);
-  const [unavailableDates, setUnavailableDates] = useState([]);
+  const [dateAvailability, setDateAvailability] = useState({});
 
-  const events = reservations.map(reservation => ({
-    title: `Reserva #${reservation.id}`,
-    start: new Date(reservation.fecha_reserva),
-    end: new Date(reservation.fecha_reserva),
-    allDay: true,
-    resource: reservation,
-  }));
+  // Función para verificar disponibilidad de horarios
+  const checkDateAvailability = (date, reservations) => {
+    const dateReservations = reservations.filter(
+      r => r.fecha_reserva === date && r.estado !== 'cancelada'
+    );
 
-  const eventStyleGetter = (event, start, end, isSelected) => ({
-    style: {
-      backgroundColor: isSelected ? '#3730A3' : '#4F46E5',
-      borderRadius: '5px',
-      opacity: 0.8,
-      color: 'white',
-      border: '0px',
-      display: 'block'
+    const morningReserved = dateReservations.some(r => r.hora_inicio === '11:00:00');
+    const eveningReserved = dateReservations.some(r => r.hora_inicio !== '11:00:00');
+
+    if (morningReserved && eveningReserved) return 'unavailable';
+    if (morningReserved || eveningReserved) return 'partial';
+    return 'available';
+  };
+
+  // Actualizar el estado de disponibilidad cuando cambian las reservas
+  useEffect(() => {
+    const availability = {};
+    const uniqueDates = [...new Set(reservations.map(r => r.fecha_reserva))];
+    
+    uniqueDates.forEach(date => {
+      availability[date] = checkDateAvailability(date, reservations);
+    });
+    
+    setDateAvailability(availability);
+  }, [reservations]);
+
+  const events = reservations.map(reservation => {
+    const date = moment(reservation.fecha_reserva).format('YYYY-MM-DD');
+    const availability = dateAvailability[date];
+    let title = `Reserva #${reservation.id}`;
+    
+    if (availability === 'partial') {
+      const isEvening = reservation.hora_inicio !== '11:00:00';
+      title += isEvening ? ' (Tarde)' : ' (Mañana)';
     }
+    
+    return {
+      title,
+      start: new Date(reservation.fecha_reserva),
+      end: new Date(reservation.fecha_reserva),
+      allDay: true,
+      resource: reservation,
+    };
   });
+
+  const eventStyleGetter = (event, start, end, isSelected) => {
+    const date = moment(start).format('YYYY-MM-DD');
+    const availability = dateAvailability[date];
+    
+    let backgroundColor = '#4F46E5'; // Default color
+    
+    if (availability === 'unavailable') {
+      backgroundColor = '#EF4444'; // Rojo para fechas sin disponibilidad
+    } else if (availability === 'partial') {
+      backgroundColor = '#F59E0B'; // Amarillo para fechas con un horario disponible
+    } else if (availability === 'available') {
+      backgroundColor = '#10B981'; // Verde para fechas con ambos horarios disponibles
+    }
+
+    return {
+      style: {
+        backgroundColor: isSelected ? '#3730A3' : backgroundColor,
+        borderRadius: '5px',
+        opacity: 0.8,
+        color: 'white',
+        border: '0px',
+        display: 'block'
+      }
+    };
+  };
 
   const handleSelectEvent = (event) => {
     setSelectedEvent(event.resource);
   };
 
-  useEffect(() => {
-    // Actualizar las fechas disponibles basado en las reservaciones actuales
-    const newUnavailableDates = reservations
-      .filter(r => r.estado === 'confirmada')
-      .map(r => new Date(r.fecha_reserva));
-    setUnavailableDates(newUnavailableDates);
-  }, [reservations]);
+
 
   return (
     <div className="bg-white rounded-lg shadow-lg p-4 sm:p-6">
-      <h2 className="text-2xl font-semibold mb-4 text-indigo-800">Calendario de Reservas</h2>
+      <div className="flex justify-between items-center mb-4">
+        <h2 className="text-2xl font-semibold text-indigo-800">Calendario de Reservas</h2>
+        <div className="flex gap-4 items-center text-sm">
+          <div className="flex items-center gap-2">
+            <div className="w-4 h-4 rounded bg-[#10B981]"></div>
+            <span>Ambos horarios disponibles</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <div className="w-4 h-4 rounded bg-[#F59E0B]"></div>
+            <span>Un horario disponible</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <div className="w-4 h-4 rounded bg-[#EF4444]"></div>
+            <span>Sin disponibilidad</span>
+          </div>
+        </div>
+      </div>
       <div className="h-[500px] sm:h-[600px] md:h-[700px] lg:h-[800px]">
         <Calendar
           localizer={localizer}
@@ -124,6 +186,23 @@ const EventModal = ({ event, onClose }) => {
             <p><strong>Fecha:</strong> {moment(event.fecha_reserva).format('LL')}</p>
             <p><strong>Hora:</strong> {event.hora_inicio}</p>
             <p><strong>Estado:</strong> {event.estado}</p>
+            <div className="mt-4 pt-4 border-t">
+              <h4 className="font-semibold mb-2">Disponibilidad de Horarios:</h4>
+              <div className="space-y-2">
+                <div className="flex items-center gap-2">
+                  <span className="font-medium">Mañana (11:00 - 16:00):</span>
+                  <span className={event.hora_inicio === '11:00:00' ? 'text-red-500' : 'text-green-500'}>
+                    {event.hora_inicio === '11:00:00' ? 'Ocupado' : 'Disponible'}
+                  </span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="font-medium">Tarde (17:00 - 22:00):</span>
+                  <span className={event.hora_inicio !== '11:00:00' ? 'text-red-500' : 'text-green-500'}>
+                    {event.hora_inicio !== '11:00:00' ? 'Ocupado' : 'Disponible'}
+                  </span>
+                </div>
+              </div>
+            </div>
           </div>
           <button
             onClick={onClose}

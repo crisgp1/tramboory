@@ -39,13 +39,22 @@ const DateTimeSection = ({
   const [selectedDate, setSelectedDate] = useState(null);
   const [hasShownTuesdayModal, setHasShownTuesdayModal] = useState(false);
 
-  const isDateBlocked = useCallback((date) => {
-    const dateToCheck = new Date(date.setHours(0, 0, 0, 0));
-    return unavailableDates.some(
-      (unavailableDate) =>
-        new Date(unavailableDate).setHours(0, 0, 0, 0) === dateToCheck.getTime()
+  const getDateAvailability = useCallback((date) => {
+    if (!date) return 'available';
+
+    const reservationsOnDate = existingReservations.filter(
+      (reservation) =>
+        new Date(reservation.fecha_reserva).toDateString() === date.toDateString() &&
+        reservation.estado !== 'cancelada'
     );
-  }, [unavailableDates]);
+
+    const morningReserved = reservationsOnDate.some(r => r.hora_inicio === TIME_SLOTS.MORNING.start);
+    const afternoonReserved = reservationsOnDate.some(r => r.hora_inicio === TIME_SLOTS.AFTERNOON.start);
+
+    if (morningReserved && afternoonReserved) return 'unavailable';
+    if (morningReserved || afternoonReserved) return 'partial';
+    return 'available';
+  }, [existingReservations]);
 
   const isTimeSlotAvailable = useCallback((date, timeSlot) => {
     if (!date) return true;
@@ -108,6 +117,26 @@ const DateTimeSection = ({
     })
   };
 
+  const getDayClassName = useCallback((date) => {
+    const availability = getDateAvailability(date);
+    const isWeekendDay = isWeekend(date);
+    let className = 'w-full h-full flex items-center justify-center ';
+
+    if (availability === 'unavailable') {
+      className += 'bg-red-100 text-red-800 ';
+    } else if (availability === 'partial') {
+      className += 'bg-yellow-100 text-yellow-800 ';
+    } else if (availability === 'available') {
+      className += 'bg-green-100 text-green-800 ';
+    }
+
+    if (isWeekendDay) {
+      className += 'font-medium';
+    }
+
+    return className;
+  }, [getDateAvailability]);
+
   const renderDateHeader = useCallback((date) => {
     const isWeekendDay = isWeekend(date);
     return (
@@ -161,12 +190,9 @@ const DateTimeSection = ({
                   locale="es"
                   dateFormat="dd/MM/yyyy"
                   minDate={new Date()}
-                  filterDate={(date) => !isDateBlocked(date)}
+                  filterDate={() => true}
                   renderDayContents={(day, date) => (
-                    <div
-                      className={`w-full h-full flex items-center justify-center ${isWeekend(date) ? 'font-medium text-indigo-600' : ''
-                        }`}
-                    >
+                    <div className={getDayClassName(date)}>
                       {day}
                     </div>
                   )}
@@ -250,7 +276,21 @@ const DateTimeSection = ({
         </div>
       </div>
 
-      <div className="bg-white p-4 rounded-lg border border-indigo-100 shadow-sm">
+      <div className="bg-white p-4 rounded-lg border border-indigo-100 shadow-sm space-y-4">
+        <div className="grid grid-cols-3 gap-2">
+          <div className="flex items-center gap-2 text-sm">
+            <div className="w-4 h-4 rounded bg-green-100"></div>
+            <span>Ambos horarios disponibles</span>
+          </div>
+          <div className="flex items-center gap-2 text-sm">
+            <div className="w-4 h-4 rounded bg-yellow-100"></div>
+            <span>Un horario disponible</span>
+          </div>
+          <div className="flex items-center gap-2 text-sm">
+            <div className="w-4 h-4 rounded bg-red-100"></div>
+            <span>Sin disponibilidad</span>
+          </div>
+        </div>
         <div className="flex items-center gap-2 mb-3">
           <FiInfo className="text-indigo-600" />
           <h4 className="font-medium text-gray-900">Información de Horarios</h4>

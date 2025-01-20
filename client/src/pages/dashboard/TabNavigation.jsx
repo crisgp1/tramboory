@@ -15,10 +15,11 @@ const TabNavigation = ({ activeTab, setActiveTab, handleAddItem }) => {
         { id: 'mamparas', label: 'Mamparas' },
         { id: 'payments', label: 'Pagos' },
         { id: 'auditoria', label: 'Historial' },
+        { id: 'archived', label: 'Archivados' },
     ];
 
     // Determinar si se debe mostrar el botón de agregar
-    const showAddButton = activeTab !== 'auditoria';
+    const showAddButton = !['auditoria', 'archived'].includes(activeTab);
 
     return (
         <div className="flex flex-col sm:flex-row justify-between items-center mb-4 space-y-4 sm:space-y-0">

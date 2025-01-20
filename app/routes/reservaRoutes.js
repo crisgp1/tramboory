@@ -3,17 +3,21 @@ const router = express.Router();
 const ReservaController = require('../controllers/ReservaController');
 const authMiddleware = require('../middlewares/authMiddleware');
 
-// Rutas específicas primero
-router.get('/user', authMiddleware, ReservaController.getReservasByUserId);
-router.put('/:id/status', ReservaController.updateReservaStatus);
+// Rutas de elementos archivados
+router.get('/archived', authMiddleware, ReservaController.getArchivedReservas);
+router.put('/:id/reactivate', authMiddleware, ReservaController.reactivateReserva);
 
-// Rutas con parámetros después
+// Rutas específicas
+router.get('/user', authMiddleware, ReservaController.getReservasByUserId);
+router.put('/:id/status', authMiddleware, ReservaController.updateReservaStatus);
+
+// Rutas con parámetros
 router.get('/:id', ReservaController.getReservaById);
-router.put('/:id', ReservaController.updateReserva);
-router.delete('/:id', ReservaController.deleteReserva);
+router.put('/:id', authMiddleware, ReservaController.updateReserva);
+router.delete('/:id', authMiddleware, ReservaController.deleteReserva);
  
-// Rutas generales al final
+// Rutas generales
 router.get('/', ReservaController.getAllReservas);
-router.post('/', ReservaController.createReserva);
+router.post('/', authMiddleware, ReservaController.createReserva);
 
 module.exports = router;

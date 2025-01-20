@@ -12,14 +12,12 @@ const FinanceTable = ({
     categories,  
     generateMonthlyReport 
 }) => {
-    const getCategoryColor = (categoryId) => {
-        const category = categories.find(cat => cat.id === parseInt(categoryId, 10));
-        return category ? category.color : '#CCCCCC';
+    const getCategoryColor = (finance) => {
+        return finance.categoria ? finance.categoria.color : '#CCCCCC';
     };
     
-    const getCategoryName = (categoryId) => {
-        const category = categories.find(cat => cat.id === parseInt(categoryId, 10));
-        return category ? category.nombre : 'Sin categoría';
+    const getCategoryName = (finance) => {
+        return finance.categoria ? finance.categoria.nombre : 'Sin categoría';
     };
 
     // Filtramos las finanzas activas
@@ -90,11 +88,11 @@ const FinanceTable = ({
                             <span
                                 className="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full"
                                 style={{
-                                    backgroundColor: getCategoryColor(finance.categoria),
+                                    backgroundColor: getCategoryColor(finance),
                                     color: '#FFFFFF'
                                 }}
                             >
-                                {getCategoryName(finance.categoria)}
+                                {getCategoryName(finance)}
                             </span>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-center">

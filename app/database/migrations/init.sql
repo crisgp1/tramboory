@@ -19,11 +19,75 @@ SET search_path TO tramboory;
 -- ============================================================================
 -- 4) Definición de tipos ENUM
 -- ============================================================================
-CREATE TYPE enum_usuarios_tipo_usuario AS ENUM ('cliente', 'admin');
-CREATE TYPE enum_reservas_estado AS ENUM ('pendiente', 'confirmada', 'cancelada');
-CREATE TYPE enum_finanzas_tipo AS ENUM ('ingreso', 'gasto');
-CREATE TYPE enum_pagos_estado AS ENUM ('pendiente', 'completado', 'fallido');
-CREATE TYPE enum_turno AS ENUM ('manana', 'tarde', 'ambos');
+DO $$
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1 
+        FROM pg_type t
+        JOIN pg_namespace n ON t.typnamespace = n.oid
+        WHERE t.typname = 'enum_usuarios_tipo_usuario'
+          AND n.nspname = 'tramboory'
+    ) THEN
+        CREATE TYPE enum_usuarios_tipo_usuario AS ENUM ('cliente', 'admin');
+    END IF;
+END;
+$$;
+
+DO $$
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1 
+        FROM pg_type t
+        JOIN pg_namespace n ON t.typnamespace = n.oid
+        WHERE t.typname = 'enum_reservas_estado'
+          AND n.nspname = 'tramboory'
+    ) THEN
+        CREATE TYPE enum_reservas_estado AS ENUM ('pendiente', 'confirmada', 'cancelada');
+    END IF;
+END;
+$$;
+
+DO $$
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1 
+        FROM pg_type t
+        JOIN pg_namespace n ON t.typnamespace = n.oid
+        WHERE t.typname = 'enum_finanzas_tipo'
+          AND n.nspname = 'tramboory'
+    ) THEN
+        CREATE TYPE enum_finanzas_tipo AS ENUM ('ingreso', 'gasto');
+    END IF;
+END;
+$$;
+
+DO $$
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1 
+        FROM pg_type t
+        JOIN pg_namespace n ON t.typnamespace = n.oid
+        WHERE t.typname = 'enum_pagos_estado'
+          AND n.nspname = 'tramboory'
+    ) THEN
+        CREATE TYPE enum_pagos_estado AS ENUM ('pendiente', 'completado', 'fallido');
+    END IF;
+END;
+$$;
+
+DO $$
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1 
+        FROM pg_type t
+        JOIN pg_namespace n ON t.typnamespace = n.oid
+        WHERE t.typname = 'enum_turno'
+          AND n.nspname = 'tramboory'
+    ) THEN
+        CREATE TYPE enum_turno AS ENUM ('manana', 'tarde', 'ambos');
+    END IF;
+END;
+$$;
 
 -- ============================================================================
 -- 5) Creación de tablas con restricciones y llaves foráneas
@@ -206,6 +270,10 @@ CREATE TABLE pagos
     monto               NUMERIC(10, 2) NOT NULL CHECK (monto > 0),
     fecha_pago          DATE NOT NULL,
     estado              enum_pagos_estado NOT NULL DEFAULT 'pendiente',
+    metodo_pago         VARCHAR(50),
+    referencia_pago     VARCHAR(100),
+    es_pago_parcial     BOOLEAN DEFAULT FALSE,
+    notas               TEXT,
     fecha_creacion      TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     fecha_actualizacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
@@ -260,7 +328,7 @@ CREATE TABLE auditoria
 CREATE OR REPLACE FUNCTION funcion_auditoria() 
 RETURNS trigger 
 LANGUAGE plpgsql
-AS $$
+AS $func$
 BEGIN
     IF TG_OP = 'DELETE' THEN
         INSERT INTO registro_auditoria(
@@ -313,15 +381,16 @@ BEGIN
 
     RETURN NULL;
 END;
-$$;
+$func$;
 
 -- 6.2) Validar reserva (no permitir solapamiento de reservas confirmadas)
 CREATE OR REPLACE FUNCTION validar_reserva() 
 RETURNS trigger 
 LANGUAGE plpgsql
 AS $$
-BEGIN  // AQUI COMIENZA EL PROCEDIMIENTO DE LA FUNCION
-    IF EXISTS ( // si la reserva ya existe, se lanza una excepción, si no, se retorna la nueva reserva
+BEGIN
+    -- Verificar si existe una reserva confirmada que se solape con la nueva
+    IF EXISTS (
         SELECT 1
         FROM reservas r
         WHERE r.fecha_reserva = NEW.fecha_reserva
@@ -370,51 +439,79 @@ LANGUAGE plpgsql
 AS $$
 DECLARE
     categoria_id INT;
+    total_pagado NUMERIC(10, 2);
+    total_reserva NUMERIC(10, 2);
 BEGIN
     IF OLD.estado <> NEW.estado THEN
-
         IF NEW.estado = 'completado' THEN
-            -- Reserva pasa a 'confirmada'
-            UPDATE reservas
-            SET estado = 'confirmada'
+            -- Calcular el total pagado para esta reserva
+            SELECT COALESCE(SUM(monto), 0) INTO total_pagado
+            FROM pagos
+            WHERE id_reserva = NEW.id_reserva 
+            AND estado = 'completado';
+
+            -- Obtener el total de la reserva
+            SELECT total INTO total_reserva
+            FROM reservas
             WHERE id = NEW.id_reserva;
 
-            -- Obtener o crear la categoria 'Reservación'
-            SELECT id INTO categoria_id
-            FROM categorias
-            WHERE nombre = 'Reservación';
+            -- Si el total pagado iguala o supera el total de la reserva
+            IF total_pagado >= total_reserva THEN
+                -- Actualizar estado de la reserva a confirmada
+                UPDATE reservas
+                SET estado = 'confirmada'
+                WHERE id = NEW.id_reserva;
 
-            IF categoria_id IS NULL THEN
-                INSERT INTO categorias(nombre, color, activo)
-                VALUES ('Reservación','#000000',TRUE)
-                RETURNING id INTO categoria_id;
+                -- Obtener o crear la categoria 'Reservación'
+                SELECT id INTO categoria_id
+                FROM categorias
+                WHERE nombre = 'Reservación';
+
+                IF categoria_id IS NULL THEN
+                    INSERT INTO categorias(nombre, color, activo)
+                    VALUES ('Reservación','#000000',TRUE)
+                    RETURNING id INTO categoria_id;
+                END IF;
+
+                -- Insertar la finanza como ingreso
+                INSERT INTO finanzas (
+                    id_reserva,
+                    tipo,
+                    monto,
+                    fecha,
+                    descripcion,
+                    id_usuario,
+                    id_categoria
+                )
+                SELECT 
+                    r.id,
+                    'ingreso',
+                    NEW.monto,
+                    CURRENT_DATE,
+                    CASE 
+                        WHEN NEW.es_pago_parcial THEN 'Pago parcial de reserva ' || r.id
+                        ELSE 'Pago completo de reserva ' || r.id
+                    END,
+                    r.id_usuario,
+                    categoria_id
+                FROM reservas r
+                WHERE r.id = NEW.id_reserva;
             END IF;
 
-            -- Insertar la finanza como ingreso
-            INSERT INTO finanzas (
-                id_reserva,
-                tipo,
-                monto,
-                fecha,
-                descripcion,
-                id_usuario,
-                id_categoria
-            )
-            SELECT r.id,
-                   'ingreso',
-                   r.total,
-                   CURRENT_DATE,
-                   'Pago de reserva ' || r.id,
-                   r.id_usuario,
-                   categoria_id
-            FROM reservas r
-            WHERE r.id = NEW.id_reserva;
-
         ELSIF NEW.estado = 'fallido' THEN
-            -- Si el pago falla, la reserva vuelve a pendiente
-            UPDATE reservas
-            SET estado = 'pendiente'
-            WHERE id = NEW.id_reserva;
+            -- Si el pago falla, verificar si hay otros pagos completados
+            SELECT COALESCE(SUM(monto), 0) INTO total_pagado
+            FROM pagos
+            WHERE id_reserva = NEW.id_reserva 
+            AND estado = 'completado'
+            AND id != NEW.id;
+
+            -- Si no hay otros pagos completados o el total pagado es menor al total
+            IF total_pagado = 0 THEN
+                UPDATE reservas
+                SET estado = 'pendiente'
+                WHERE id = NEW.id_reserva;
+            END IF;
         END IF;
     END IF;
 

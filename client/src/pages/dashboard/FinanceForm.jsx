@@ -92,12 +92,12 @@ const FinanceForm = ({
 
   const onSubmit = data => {
     // Enviamos los datos con la reserva seleccionada (o null si no hay)
-    onSave({
-      ...data,
-      categoria: data.categoria,
-      // data.id_reserva ya se setea en handleSelectReservation o se limpia en handleRemoveReservation
-      id_reserva: data.id_reserva || null
-    })
+      onSave({
+        ...data,
+        id_categoria: data.id_categoria,
+        // data.id_reserva ya se setea en handleSelectReservation o se limpia en handleRemoveReservation
+        id_reserva: data.id_reserva || null
+      })
   }
 
   const handleAddCategory = () => {
@@ -112,9 +112,9 @@ const FinanceForm = ({
     <form
       id={activeTab + 'Form'}
       onSubmit={handleSubmit(onSubmit)}
-      className='space-y-4'
+      className='flex flex-col space-y-3 max-h-[calc(100vh-200px)] overflow-y-auto px-2'
     >
-      <div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
+      <div className='grid grid-cols-1 lg:grid-cols-2 gap-3'>
         {/* Tipo */}
         <div>
           <label className='block text-sm font-medium text-gray-700 mb-1'>
@@ -176,7 +176,7 @@ const FinanceForm = ({
           <div className='relative flex items-center'>
             <FiTag className='absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400' />
             <select
-              {...register('categoria', {
+              {...register('id_categoria', {
                 required: 'Este campo es requerido'
               })}
               className='pl-10 w-full p-2 border rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500'
@@ -200,7 +200,7 @@ const FinanceForm = ({
       </div>
 
       {showNewCategoryInput && (
-        <div className='mt-4 p-4 bg-gray-100 rounded-md'>
+        <div className='mt-2 p-3 bg-gray-100 rounded-md'>
           <div className='flex items-center space-x-2 mb-2'>
             <input
               type='text'
@@ -241,7 +241,7 @@ const FinanceForm = ({
       )}
 
       {/* Descripción */}
-      <div className='col-span-2'>
+      <div className='lg:col-span-2'>
         <label className='block text-sm font-medium text-gray-700 mb-1'>
           Descripción
         </label>
@@ -259,11 +259,11 @@ const FinanceForm = ({
       {/* ------------------------------------------------------------- */}
       {/* Buscador de Reserva Asociada (Opcional) */}
       {/* ------------------------------------------------------------- */}
-      <div>
+      <div className='lg:col-span-2'>
         <label className='block text-sm font-medium text-gray-700 mb-1'>
           Reserva Asociada (Opcional)
         </label>
-        <div className='flex items-center text-sm text-gray-500 mb-2'>
+        <div className='flex items-center text-sm text-gray-500 mb-1'>
           <FiInfo className='mr-1' />
           <span>
             Seleccione la reserva si el ingreso o gasto está relacionado con una reserva. De lo contrario, déjelo en blanco.
@@ -327,7 +327,7 @@ const FinanceForm = ({
       {/* ------------------------------------------------------------- */}
 
       {/* Factura PDF */}
-      <div>
+      <div className='lg:col-span-2'>
         <label className='block text-sm font-medium text-gray-700 mb-1'>
           Factura PDF
         </label>
@@ -343,7 +343,7 @@ const FinanceForm = ({
       </div>
 
       {/* Factura XML */}
-      <div>
+      <div className='lg:col-span-2'>
         <label className='block text-sm font-medium text-gray-700 mb-1'>
           Factura XML
         </label>
@@ -369,7 +369,7 @@ const FinanceForm = ({
           </div>
         </div>
       )}
-      <div>
+      <div className='lg:col-span-2'>
         <label className='block text-sm font-medium text-gray-700 mb-1'>
           Archivo de Prueba (Opcional)
         </label>

@@ -45,7 +45,6 @@ const ReservationForm = ({
   mamparas = [],
   onSave,
   activeTab,
-  blockedDates = [],
   existingReservations = [],
   onClose,
 }) => {
@@ -84,7 +83,7 @@ const ReservationForm = ({
       edad_festejado: '',
       comentarios: '',
       total: '0.00',
-      activo: true,
+      activo: false,
       tuesdayFee: 0,
     },
   });
@@ -374,35 +373,34 @@ const ReservationForm = ({
         const cleanedData = cleanFormData(data);
         addLog('Datos formateados para guardar');
 
-        const savedReservation = await onSave(cleanedData);
-        addLog('Reserva guardada');
+        try {
+          const savedReservation = await onSave(cleanedData);
+          addLog('Reserva guardada');
 
-        if (savedReservation?.id) {
-          const financeData = {
-            id_reserva: savedReservation.id,
-            tipo: 'ingreso',
-            monto: cleanedData.total,
-            fecha: new Date(),
-            descripcion: `Ingreso por reserva #${savedReservation.id}`,
-            categoria: 'Reserva',
-          };
+          if (savedReservation?.id) {
+            // Solo creamos el pago, la finanza se creará automáticamente cuando el pago se confirme
+            const paymentData = {
+              id_reserva: savedReservation.id,
+              monto: cleanedData.total,
+              fecha_pago: new Date(),
+              metodo_pago: 'pendiente',
+              estado: 'pendiente',
+            };
 
-          await axiosInstance.post('/api/finanzas', financeData);
-          addLog('Entrada de finanzas creada');
+            await axiosInstance.post('/api/pagos', paymentData);
+            addLog('Entrada de pagos creada');
 
-          const paymentData = {
-            id_reserva: savedReservation.id,
-            monto: cleanedData.total,
-            fecha_pago: new Date(),
-            metodo_pago: 'pendiente',
-            estado: 'pendiente',
-          };
-
-          await axiosInstance.post('/api/pagos', paymentData);
-          addLog('Entrada de pagos creada');
-
-          toast.success('¡Reservación creada exitosamente!');
-          onClose();
+            toast.success('¡Reservación creada exitosamente!');
+            onClose();
+          }
+        } catch (error) {
+          console.error('Error al crear el pago:', error);
+          // Si falla la creación del pago, eliminamos la reserva para mantener consistencia
+          if (savedReservation?.id) {
+            await axiosInstance.delete(`/api/reservas/${savedReservation.id}`);
+            addLog('Reserva eliminada debido a error en creación de pago');
+          }
+          throw error;
         }
       } catch (error) {
         console.error('Error al guardar la reserva:', error);
@@ -553,8 +551,7 @@ const ReservationForm = ({
                 control={control}
                 errors={errors}
                 setValue={setValue}
-                unavailableDates={blockedDates}
-                existingReservations={existingReservations}
+                existingReservations={existingReservations.filter(r => r.estado !== 'cancelada')}
                 packages={packages}
                 showTuesdayModal={showTuesdayModal}
                 setShowTuesdayModal={setShowTuesdayModal}

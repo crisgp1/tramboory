@@ -71,41 +71,16 @@ app.use('/api/mamparas', auditMiddleware, mamparaRoutes);
 app.options('*', cors());
 
 // Sincronizar la base de datos
+const { runMigrations } = require('./utils/dbMigrations');
+
 const initializeDatabase = async () => {
     try {
         await sequelize.authenticate();
         console.log('Conexión a la base de datos establecida correctamente.');
         
-        // Crear el esquema si no existe
-        await sequelize.query(`CREATE SCHEMA IF NOT EXISTS ${process.env.SCHEMA}`);
-        console.log('Esquema verificado correctamente.');
-
-        // Crear los tipos ENUM si no existen
-        await sequelize.query(`
-            DO $$ 
-            BEGIN
-                IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'enum_usuarios_tipo_usuario') THEN
-                    CREATE TYPE ${process.env.SCHEMA}.enum_usuarios_tipo_usuario AS ENUM ('cliente', 'admin');
-                END IF;
-                
-                IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'enum_reservas_estado') THEN
-                    CREATE TYPE ${process.env.SCHEMA}.enum_reservas_estado AS ENUM ('pendiente', 'confirmada', 'cancelada');
-                END IF;
-                
-                IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'enum_finanzas_tipo') THEN
-                    CREATE TYPE ${process.env.SCHEMA}.enum_finanzas_tipo AS ENUM ('ingreso', 'gasto');
-                END IF;
-                
-                IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'enum_pagos_estado') THEN
-                    CREATE TYPE ${process.env.SCHEMA}.enum_pagos_estado AS ENUM ('pendiente', 'completado', 'fallido');
-                END IF;
-                
-                IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'enum_turno') THEN
-                    CREATE TYPE ${process.env.SCHEMA}.enum_turno AS ENUM ('manana', 'tarde', 'ambos');
-                END IF;
-            END $$;
-        `);
-        console.log('Tipos ENUM verificados correctamente.');
+        // Ejecutar las migraciones SQL
+        await runMigrations();
+        console.log('Migraciones SQL ejecutadas correctamente.');
         
         // Sincronizar los modelos
         await sequelize.sync({ force: false });

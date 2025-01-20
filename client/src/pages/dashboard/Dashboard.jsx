@@ -36,6 +36,7 @@ import PaymentForm from './PaymentForm'
 import PaymentModal from './PaymentModal'
 import PaymentDetails from './PaymentDetails'
 import AuditHistory from './AuditHistory'
+import ArchivedTable from './ArchivedTable'
 
 const Dashboard = () => {
   const [users, setUsers] = useState([])
@@ -46,7 +47,9 @@ const Dashboard = () => {
   const [extras, setExtras] = useState([])
   const [tematicas, setTematicas] = useState([])
   const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth())
-  const [activeTab, setActiveTab] = useState('users')
+  const [activeTab, setActiveTab] = useState('users');
+  const [archivedItems, setArchivedItems] = useState([]);
+  const [archivedSearch, setArchivedSearch] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [editingItem, setEditingItem] = useState(null)
   const [generatedPassword, setGeneratedPassword] = useState('')
@@ -65,7 +68,6 @@ const Dashboard = () => {
   const [selectedPayment, setSelectedPayment] = useState(null)
   const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false)
   const [paymentModalMode, setPaymentModalMode] = useState('view')
-  const [unavailableDates, setUnavailableDates] = useState([])
 
   const navigate = useNavigate()
 
@@ -82,7 +84,7 @@ const Dashboard = () => {
   }
 
   const fetchData = useCallback(async () => {
-    setLoading(true)
+    setLoading(true);
     try {
       const responses = await Promise.allSettled([
         axiosInstance.get('/api/usuarios'),
@@ -94,10 +96,28 @@ const Dashboard = () => {
         axiosInstance.get('/api/opciones-alimentos'),
         axiosInstance.get('/api/tematicas'),
         axiosInstance.get('/api/mamparas'),
-        axiosInstance.get('/api/pagos')
-      ])
+        axiosInstance.get('/api/pagos'),
+        // Obtener elementos archivados
+        axiosInstance.get('/api/reservas/archived'),
+        axiosInstance.get('/api/pagos/archived'),
+        axiosInstance.get('/api/finanzas/archived')
+      ]);
 
-      if (responses[0].status === 'fulfilled') setUsers(responses[0].value.data)
+      if (responses[0].status === 'fulfilled') setUsers(responses[0].value.data);
+      // ... otros setters ...
+
+      // Manejar elementos archivados
+      const archivedData = [];
+      if (responses[10].status === 'fulfilled') {
+        archivedData.push(...responses[10].value.data.map(item => ({ ...item, type: 'reservas' })));
+      }
+      if (responses[11].status === 'fulfilled') {
+        archivedData.push(...responses[11].value.data.map(item => ({ ...item, type: 'pagos' })));
+      }
+      if (responses[12].status === 'fulfilled') {
+        archivedData.push(...responses[12].value.data.map(item => ({ ...item, type: 'finanzas' })));
+      }
+      setArchivedItems(archivedData);
       if (responses[1].status === 'fulfilled')
         setReservations(responses[1].value.data)
       if (responses[2].status === 'fulfilled') {
@@ -265,57 +285,7 @@ const Dashboard = () => {
           : reservation
       )
     )
-  
-    if (newStatus === 'cancelada' || newStatus === 'pendiente') {
-      const updatedReservation = reservations.find(r => r.id === reservationId)
-      if (updatedReservation) {
-        const reservationDate = new Date(updatedReservation.fecha_reserva)
-        
-        setUnavailableDates(prevDates => {
-          const newDates = prevDates.filter(date => 
-            date.getTime() !== reservationDate.getTime()
-          )
-          
-          const activeDates = reservations
-            .filter(r => 
-              r.id !== reservationId && 
-              (r.estado === 'confirmada' || r.estado === 'pendiente')
-            )
-            .map(r => new Date(r.fecha_reserva))
-            
-          return [...new Set([...newDates, ...activeDates])]
-        })
-      }
-    } else if (newStatus === 'confirmada') {
-      const updatedReservation = reservations.find(r => r.id === reservationId)
-      if (updatedReservation) {
-        const reservationDate = new Date(updatedReservation.fecha_reserva)
-        setUnavailableDates(prevDates => {
-          if (!prevDates.some(date => date.getTime() === reservationDate.getTime())) {
-            return [...prevDates, reservationDate]
-          }
-          return prevDates
-        })
-      }
-    }
-  }, [reservations])
-
-  useEffect(() => {
-    const initializeUnavailableDates = () => {
-      const dates = reservations
-        .filter(reservation => 
-          reservation.estado === 'confirmada' || 
-          reservation.estado === 'pendiente'
-        )
-        .map(reservation => new Date(reservation.fecha_reserva))
-      
-      setUnavailableDates([...new Set(dates)])
-    }
-  
-    if (reservations.length > 0) {
-      initializeUnavailableDates()
-    }
-  }, [reservations])
+  }, [])
 
   const handleSendEmail = useCallback(reservation => {
     toast.info(`Funcionalidad de enviar correo a ${reservation.usuario.email}`)
@@ -641,7 +611,6 @@ const Dashboard = () => {
         <ReservationCalendar
           reservations={reservations}
           onSelectReservation={handleSelectReservation}
-          unavailableDates={unavailableDates}
         />
         <UserSummary users={users} />
         <ReservationSummary
@@ -683,7 +652,13 @@ const Dashboard = () => {
             setReservationSearch={setReservationSearch}
             handleViewReservation={handleViewReservation}
             handleEditItem={handleEditItem}
-            handleDeleteItem={handleDeleteItem}
+            handleDeleteItem={id =>
+              handleDeleteItem(
+                '/api/reservas',
+                id,
+                'Reserva desactivada con éxito'
+              )
+            }
             selectedMonth={selectedMonth}
           />
         )}
@@ -787,6 +762,16 @@ const Dashboard = () => {
         )}
         {activeTab === 'auditoria' && (
           <AuditHistory />
+        )}
+        {activeTab === 'archived' && (
+          <ArchivedTable
+            items={archivedItems}
+            itemSearch={archivedSearch}
+            setItemSearch={setArchivedSearch}
+            fetchData={fetchData}
+            selectedMonth={selectedMonth}
+            type="reservas"
+          />
         )}
       </div>
       <MonthSelector

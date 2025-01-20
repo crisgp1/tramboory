@@ -3,6 +3,7 @@ const sequelize = require('../config/database');
 
 const Pago = sequelize.define('Pagos', {
   id: {
+    
     type: DataTypes.INTEGER,
     autoIncrement: true,
     primaryKey: true
@@ -30,8 +31,8 @@ const Pago = sequelize.define('Pagos', {
     allowNull: false
   },
   metodo_pago: {
-    type: DataTypes.ENUM('transferencia', 'efectivo'),
-    allowNull: false
+    type: DataTypes.ENUM('transferencia', 'efectivo', 'tarjeta_debito', 'tarjeta_credito'),
+    allowNull: true
   },
   estado: {
     type: DataTypes.ENUM('pendiente', 'completado', 'fallido'),
