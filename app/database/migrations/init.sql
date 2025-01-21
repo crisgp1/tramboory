@@ -10,8 +10,8 @@ BEGIN;
 -- ============================================================================
 -- 3) Creación del schema 'tramboory' (separado de 'public')
 -- ============================================================================
-DROP SCHEMA IF EXISTS tramboory CASCADE;
-CREATE SCHEMA tramboory;
+-- Crear schema solo si no existe (preserva datos)
+CREATE SCHEMA IF NOT EXISTS tramboory;
 
 -- Ajustar el search_path para que todo se cree dentro de 'tramboory'
 SET search_path TO tramboory;
@@ -94,7 +94,7 @@ $$;
 -- ============================================================================
 
 -- 5.1) Tabla de usuarios
-CREATE TABLE usuarios
+CREATE TABLE IF NOT EXISTS usuarios
 (
     id                  SERIAL PRIMARY KEY,
     nombre              VARCHAR(100) NOT NULL,
@@ -110,7 +110,7 @@ CREATE TABLE usuarios
 );
 
 -- 5.2) Tabla de categorias
-CREATE TABLE categorias
+CREATE TABLE IF NOT EXISTS categorias
 (
     id                  SERIAL PRIMARY KEY,
     nombre              VARCHAR(100) NOT NULL UNIQUE,
@@ -122,7 +122,7 @@ CREATE TABLE categorias
 );
 
 -- 5.3) Tabla de extras
-CREATE TABLE extras
+CREATE TABLE IF NOT EXISTS extras
 (
     id                  SERIAL PRIMARY KEY,
     nombre              VARCHAR(100) NOT NULL,
@@ -134,7 +134,7 @@ CREATE TABLE extras
 );
 
 -- 5.4) Tabla de paquetes_alimentos
-CREATE TABLE paquetes_alimentos
+CREATE TABLE IF NOT EXISTS paquetes_alimentos
 (
     id                  SERIAL PRIMARY KEY,
     nombre              VARCHAR(100) NOT NULL,
@@ -142,7 +142,7 @@ CREATE TABLE paquetes_alimentos
 );
 
 -- 5.5) Tabla de paquetes
-CREATE TABLE paquetes
+CREATE TABLE IF NOT EXISTS paquetes
 (
     id                     SERIAL PRIMARY KEY,
     nombre                 VARCHAR(100) NOT NULL,
@@ -155,10 +155,20 @@ CREATE TABLE paquetes
     fecha_actualizacion    TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
-CREATE INDEX idx_paquetes_paquete_alimento ON paquetes (id_paquete_alimento);
+DO $$
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1 FROM pg_indexes 
+        WHERE schemaname = 'tramboory' 
+        AND tablename = 'paquetes' 
+        AND indexname = 'idx_paquetes_paquete_alimento'
+    ) THEN
+        CREATE INDEX idx_paquetes_paquete_alimento ON paquetes (id_paquete_alimento);
+    END IF;
+END $$;
 
 -- 5.6) Tabla de tematicas
-CREATE TABLE tematicas
+CREATE TABLE IF NOT EXISTS tematicas
 (
     id                  SERIAL PRIMARY KEY,
     nombre              VARCHAR(100) NOT NULL,
@@ -170,7 +180,7 @@ CREATE TABLE tematicas
 );
 
 -- 5.7) Tabla de mamparas
-CREATE TABLE mamparas
+CREATE TABLE IF NOT EXISTS mamparas
 (
     id                  SERIAL PRIMARY KEY,
     id_tematica         INT NOT NULL REFERENCES tematicas(id) ON DELETE RESTRICT,
@@ -182,10 +192,20 @@ CREATE TABLE mamparas
     fecha_actualizacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
-CREATE INDEX idx_mamparas_tematica ON mamparas (id_tematica);
+DO $$
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1 FROM pg_indexes 
+        WHERE schemaname = 'tramboory' 
+        AND tablename = 'mamparas' 
+        AND indexname = 'idx_mamparas_tematica'
+    ) THEN
+        CREATE INDEX idx_mamparas_tematica ON mamparas (id_tematica);
+    END IF;
+END $$;
 
 -- 5.8) Tabla de opciones_alimentos
-CREATE TABLE opciones_alimentos
+CREATE TABLE IF NOT EXISTS opciones_alimentos
 (
     id                  SERIAL PRIMARY KEY,
     nombre              VARCHAR(100) NOT NULL,
@@ -205,7 +225,7 @@ CREATE TABLE opciones_alimentos
 );
 
 -- 5.9) Tabla de reservas (al borrar un usuario, se borran sus reservas)
-CREATE TABLE reservas
+CREATE TABLE IF NOT EXISTS reservas
 (
     id                  SERIAL PRIMARY KEY,
     id_usuario          INT NOT NULL REFERENCES usuarios(id) ON DELETE CASCADE,
@@ -227,20 +247,44 @@ CREATE TABLE reservas
     CONSTRAINT horario_valido CHECK (hora_fin > hora_inicio)
 );
 
-CREATE INDEX idx_reservas_fecha ON reservas (fecha_reserva);
-CREATE INDEX idx_reservas_usuario ON reservas (id_usuario);
-CREATE INDEX idx_reservas_paquete ON reservas (id_paquete);
-CREATE INDEX idx_reservas_opcion_alimento ON reservas (id_opcion_alimento);
-CREATE INDEX idx_reservas_mampara ON reservas (id_mampara);
-CREATE INDEX idx_reservas_tematica ON reservas (id_tematica);
+DO $$
+BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_indexes WHERE schemaname = 'tramboory' AND tablename = 'reservas' AND indexname = 'idx_reservas_fecha')
+    THEN CREATE INDEX idx_reservas_fecha ON reservas (fecha_reserva); END IF;
+    
+    IF NOT EXISTS (SELECT 1 FROM pg_indexes WHERE schemaname = 'tramboory' AND tablename = 'reservas' AND indexname = 'idx_reservas_usuario')
+    THEN CREATE INDEX idx_reservas_usuario ON reservas (id_usuario); END IF;
+    
+    IF NOT EXISTS (SELECT 1 FROM pg_indexes WHERE schemaname = 'tramboory' AND tablename = 'reservas' AND indexname = 'idx_reservas_paquete')
+    THEN CREATE INDEX idx_reservas_paquete ON reservas (id_paquete); END IF;
+    
+    IF NOT EXISTS (SELECT 1 FROM pg_indexes WHERE schemaname = 'tramboory' AND tablename = 'reservas' AND indexname = 'idx_reservas_opcion_alimento')
+    THEN CREATE INDEX idx_reservas_opcion_alimento ON reservas (id_opcion_alimento); END IF;
+    
+    IF NOT EXISTS (SELECT 1 FROM pg_indexes WHERE schemaname = 'tramboory' AND tablename = 'reservas' AND indexname = 'idx_reservas_mampara')
+    THEN CREATE INDEX idx_reservas_mampara ON reservas (id_mampara); END IF;
+    
+    IF NOT EXISTS (SELECT 1 FROM pg_indexes WHERE schemaname = 'tramboory' AND tablename = 'reservas' AND indexname = 'idx_reservas_tematica')
+    THEN CREATE INDEX idx_reservas_tematica ON reservas (id_tematica); END IF;
+END $$;
 
 -- Impedir superposición de reservas confirmadas
-CREATE UNIQUE INDEX idx_reservas_horario
-    ON reservas (fecha_reserva, hora_inicio, hora_fin)
-    WHERE (estado <> 'cancelada');
+DO $$
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1 FROM pg_indexes 
+        WHERE schemaname = 'tramboory' 
+        AND tablename = 'reservas' 
+        AND indexname = 'idx_reservas_horario'
+    ) THEN
+        CREATE UNIQUE INDEX idx_reservas_horario
+        ON reservas (fecha_reserva, hora_inicio, hora_fin)
+        WHERE (estado <> 'cancelada');
+    END IF;
+END $$;
 
 -- 5.10) Tabla de finanzas
-CREATE TABLE finanzas
+CREATE TABLE IF NOT EXISTS finanzas
 (
     id                  SERIAL PRIMARY KEY,
     id_reserva          INT REFERENCES reservas(id),
@@ -259,11 +303,17 @@ CREATE TABLE finanzas
     id_usuario          INT NOT NULL REFERENCES usuarios(id) ON DELETE CASCADE
 );
 
-CREATE INDEX idx_finanzas_fecha ON finanzas (fecha);
-CREATE INDEX idx_finanzas_reserva ON finanzas (id_reserva);
+DO $$
+BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_indexes WHERE schemaname = 'tramboory' AND tablename = 'finanzas' AND indexname = 'idx_finanzas_fecha')
+    THEN CREATE INDEX idx_finanzas_fecha ON finanzas (fecha); END IF;
+    
+    IF NOT EXISTS (SELECT 1 FROM pg_indexes WHERE schemaname = 'tramboory' AND tablename = 'finanzas' AND indexname = 'idx_finanzas_reserva')
+    THEN CREATE INDEX idx_finanzas_reserva ON finanzas (id_reserva); END IF;
+END $$;
 
 -- 5.11) Tabla de pagos
-CREATE TABLE pagos
+CREATE TABLE IF NOT EXISTS pagos
 (
     id                  SERIAL PRIMARY KEY,
     id_reserva          INT NOT NULL REFERENCES reservas(id),
@@ -278,12 +328,20 @@ CREATE TABLE pagos
     fecha_actualizacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
-CREATE INDEX idx_pagos_fecha ON pagos (fecha_pago);
-CREATE INDEX idx_pagos_reserva ON pagos (id_reserva);
-CREATE INDEX idx_pagos_compuesto ON pagos (id_reserva, estado, fecha_pago);
+DO $$
+BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_indexes WHERE schemaname = 'tramboory' AND tablename = 'pagos' AND indexname = 'idx_pagos_fecha')
+    THEN CREATE INDEX idx_pagos_fecha ON pagos (fecha_pago); END IF;
+    
+    IF NOT EXISTS (SELECT 1 FROM pg_indexes WHERE schemaname = 'tramboory' AND tablename = 'pagos' AND indexname = 'idx_pagos_reserva')
+    THEN CREATE INDEX idx_pagos_reserva ON pagos (id_reserva); END IF;
+    
+    IF NOT EXISTS (SELECT 1 FROM pg_indexes WHERE schemaname = 'tramboory' AND tablename = 'pagos' AND indexname = 'idx_pagos_compuesto')
+    THEN CREATE INDEX idx_pagos_compuesto ON pagos (id_reserva, estado, fecha_pago); END IF;
+END $$;
 
 -- 5.12) Tabla de reserva_extras (N:M entre reservas y extras)
-CREATE TABLE reserva_extras
+CREATE TABLE IF NOT EXISTS reserva_extras
 (
     id_reserva          INT NOT NULL REFERENCES reservas(id) ON DELETE CASCADE,
     id_extra            INT NOT NULL REFERENCES extras(id) ON DELETE CASCADE,
@@ -293,11 +351,17 @@ CREATE TABLE reserva_extras
     PRIMARY KEY (id_reserva, id_extra)
 );
 
-CREATE INDEX idx_reserva_extras_reserva ON reserva_extras (id_reserva);
-CREATE INDEX idx_reserva_extras_extra ON reserva_extras (id_extra);
+DO $$
+BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_indexes WHERE schemaname = 'tramboory' AND tablename = 'reserva_extras' AND indexname = 'idx_reserva_extras_reserva')
+    THEN CREATE INDEX idx_reserva_extras_reserva ON reserva_extras (id_reserva); END IF;
+    
+    IF NOT EXISTS (SELECT 1 FROM pg_indexes WHERE schemaname = 'tramboory' AND tablename = 'reserva_extras' AND indexname = 'idx_reserva_extras_extra')
+    THEN CREATE INDEX idx_reserva_extras_extra ON reserva_extras (id_extra); END IF;
+END $$;
 
 -- 5.13) Tabla de registro_auditoria (logging de cambios)
-CREATE TABLE registro_auditoria
+CREATE TABLE IF NOT EXISTS registro_auditoria
 (
     id               BIGSERIAL PRIMARY KEY,
     nombre_tabla     VARCHAR(50) NOT NULL,
@@ -311,7 +375,7 @@ CREATE TABLE registro_auditoria
 );
 
 -- 5.14) Tabla auditoria (cascada al borrar usuario)
-CREATE TABLE auditoria
+CREATE TABLE IF NOT EXISTS auditoria
 (
     id              SERIAL PRIMARY KEY,
     id_usuario      INT NOT NULL REFERENCES usuarios(id) ON DELETE CASCADE,
@@ -406,11 +470,19 @@ BEGIN
 END;
 $$;
 
-CREATE TRIGGER verificar_reserva /** si la reserva ya esta hecha, no puedes hacer una reserva **/
-    BEFORE INSERT OR UPDATE 
-    ON reservas
-    FOR EACH ROW
-EXECUTE FUNCTION validar_reserva();
+DO $$
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1 FROM pg_trigger 
+        WHERE tgname = 'verificar_reserva'
+    ) THEN
+        CREATE TRIGGER verificar_reserva
+        BEFORE INSERT OR UPDATE 
+        ON reservas
+        FOR EACH ROW
+        EXECUTE FUNCTION validar_reserva();
+    END IF;
+END $$;
 
 -- 6.3) Aplicar fee de martes (1500 pesos) a la reserva
 CREATE OR REPLACE FUNCTION aplicar_fee_martes() 
@@ -426,11 +498,19 @@ BEGIN
 END;
 $$;
 
-CREATE TRIGGER trigger_fee_martes
-    BEFORE INSERT OR UPDATE 
-    ON reservas
-    FOR EACH ROW
-EXECUTE FUNCTION aplicar_fee_martes();
+DO $$
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1 FROM pg_trigger 
+        WHERE tgname = 'trigger_fee_martes'
+    ) THEN
+        CREATE TRIGGER trigger_fee_martes
+        BEFORE INSERT OR UPDATE 
+        ON reservas
+        FOR EACH ROW
+        EXECUTE FUNCTION aplicar_fee_martes();
+    END IF;
+END $$;
 
 -- 6.4) Actualizar estado de la reserva según el pago y crear finanza
 CREATE OR REPLACE FUNCTION actualizar_estado_reserva_y_finanza() 
@@ -519,12 +599,20 @@ BEGIN
 END;
 $$;
 
-CREATE TRIGGER trigger_actualizar_estado_reserva_y_finanza
-    AFTER UPDATE 
-    ON pagos
-    FOR EACH ROW
-    WHEN (OLD.estado <> NEW.estado)
-EXECUTE FUNCTION actualizar_estado_reserva_y_finanza();
+DO $$
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1 FROM pg_trigger 
+        WHERE tgname = 'trigger_actualizar_estado_reserva_y_finanza'
+    ) THEN
+        CREATE TRIGGER trigger_actualizar_estado_reserva_y_finanza
+        AFTER UPDATE 
+        ON pagos
+        FOR EACH ROW
+        WHEN (OLD.estado <> NEW.estado)
+        EXECUTE FUNCTION actualizar_estado_reserva_y_finanza();
+    END IF;
+END $$;
 
 -- ============================================================================
 -- 7) Confirmamos la transacción (COMMIT) para que todo sea ACID

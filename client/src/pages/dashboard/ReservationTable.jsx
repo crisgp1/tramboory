@@ -1,6 +1,6 @@
 import React, { useState, useCallback, useMemo } from 'react';
 import { FiEdit2, FiEye, FiTrash2, FiSearch, FiFilter, FiX } from 'react-icons/fi';
-import { formatDate } from '../../utils/formatters';
+import { formatDate, formatTime } from '../../utils/formatters';
 
 const ReservationTable = ({
   reservations,
@@ -312,7 +312,7 @@ const ReservationTable = ({
                   {formatDate(reservation.fecha_reserva)}
                 </td>
                 <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-500">
-                  {reservation.hora_inicio}
+                  {formatTime(reservation.hora_inicio)}
                 </td>
                 <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-500">
                   {renderWithFallback(reservation.paquete?.nombre)}

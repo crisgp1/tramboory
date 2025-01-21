@@ -460,16 +460,68 @@ exports.updateReservaStatus = async (req, res) => {
     const { id } = req.params;
     const { estado } = req.body;
 
+    // Validar estado válido
+    if (!['pendiente', 'confirmada', 'cancelada'].includes(estado)) {
+      return res.status(400).json({ error: 'Estado inválido' });
+    }
+
+    // Obtener la reserva con sus pagos
+    const reserva = await Reserva.findOne({
+      where: { id },
+      include: [{
+        model: Pago,
+        as: 'pagos'
+      }]
+    });
+
+    if (!reserva) {
+      return res.status(404).json({ error: 'Reserva no encontrada' });
+    }
+
+    // Validar transición de estado
+    if (estado === 'confirmada') {
+      // Calcular total de pagos completados
+      const totalPagado = reserva.pagos
+        .filter(p => p.estado === 'completado')
+        .reduce((sum, p) => sum + parseFloat(p.monto), 0);
+
+      if (totalPagado < parseFloat(reserva.total)) {
+        return res.status(400).json({ 
+          error: 'No se puede confirmar la reserva sin completar el pago total',
+          totalPagado,
+          totalRequerido: reserva.total
+        });
+      }
+    }
+
+    // Si se está cancelando, marcar pagos pendientes como fallidos
+    if (estado === 'cancelada') {
+      await Promise.all(
+        reserva.pagos
+          .filter(p => p.estado === 'pendiente')
+          .map(p => p.update({ estado: 'fallido' }))
+      );
+    }
+
+    // Actualizar estado de la reserva
     const [updated] = await Reserva.update(
       { estado },
       { 
         where: { id },
-        user: req.user // Pasar el usuario para los hooks de auditoría
+        user: req.user
       }
     );
 
     if (updated) {
-      const updatedReserva = await Reserva.findByPk(id);
+      // Obtener la reserva actualizada con sus relaciones
+      const updatedReserva = await Reserva.findOne({
+        where: { id },
+        include: [{
+          model: Pago,
+          as: 'pagos'
+        }]
+      });
+      
       res.json(updatedReserva);
     } else {
       res.status(404).json({ error: 'Reserva no encontrada' });
@@ -477,5 +529,16 @@ exports.updateReservaStatus = async (req, res) => {
   } catch (error) {
     console.error('Error al actualizar el estado de la reserva:', error);
     res.status(500).json({ error: 'Error al actualizar el estado de la reserva' });
+  }
+};
+
+// Nuevo método para validar pagos pendientes
+exports.validarPagosPendientes = async (req, res) => {
+  try {
+    await Pago.validarPagosPendientes();
+    res.json({ message: 'Validación de pagos pendientes completada' });
+  } catch (error) {
+    console.error('Error al validar pagos pendientes:', error);
+    res.status(500).json({ error: 'Error al validar pagos pendientes' });
   }
 };

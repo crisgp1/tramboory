@@ -11,12 +11,12 @@ router.put('/:id/reactivate', authMiddleware, PagoController.reactivatePago);
 router.put('/:id/status', authMiddleware, PagoController.updatePagoStatus);
 
 // Rutas con parámetros
-router.get('/:id', PagoController.getPagoById);
+router.get('/:id', authMiddleware, PagoController.getPagoById);
 router.put('/:id', authMiddleware, PagoController.updatePago);
 router.delete('/:id', authMiddleware, PagoController.deletePago);
 
 // Rutas generales
-router.get('/', PagoController.getAllPagos);
+router.get('/', authMiddleware, PagoController.getAllPagos);
 router.post('/', authMiddleware, PagoController.createPago);
 
 module.exports = router;

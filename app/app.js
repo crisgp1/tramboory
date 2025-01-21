@@ -17,6 +17,7 @@ const extraRoutes = require('./routes/extraRoutes');
 const mamparaRoutes = require('./routes/mamparaRoutes');
 const pagoRoutes = require('./routes/pagoRoutes');
 const auditoriaRoutes = require('./routes/auditoriaRoutes');
+const errorHandler = require('./middlewares/errorMiddleware');
 const fs = require('fs');
 const cors = require('cors');
 
@@ -69,6 +70,9 @@ app.use('/api/mamparas', auditMiddleware, mamparaRoutes);
 
 // Manejar solicitudes preflight
 app.options('*', cors());
+
+// Middleware global de manejo de errores (debe ir después de todas las rutas)
+app.use(errorHandler);
 
 // Sincronizar la base de datos
 const { runMigrations } = require('./utils/dbMigrations');

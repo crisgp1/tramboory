@@ -1,10 +1,45 @@
-const { DataTypes, Op } = require('sequelize');
+const { Model, DataTypes, Op } = require('sequelize');
 const sequelize = require('../config/database');
-
-// Importamos los modelos relacionados para los hooks
 const Finanza = require('./Finanza');
 
-const Reserva = sequelize.define('Reservas', {
+class Reserva extends Model {
+  async validarPagosCompletos() {
+    const pagos = await this.getPagos();
+    const totalPagado = pagos
+      .filter(p => p.estado === 'completado')
+      .reduce((sum, p) => sum + parseFloat(p.monto), 0);
+    
+    return totalPagado >= parseFloat(this.total);
+  }
+
+  async cancelarPagosPendientes() {
+    const pagos = await this.getPagos({
+      where: {
+        estado: 'pendiente'
+      }
+    });
+
+    await Promise.all(
+      pagos.map(pago => pago.update({ estado: 'fallido' }))
+    );
+  }
+
+  static associate(models) {
+    Reserva.belongsToMany(models.Extra, {
+      through: 'reserva_extras',
+      foreignKey: 'id_reserva',
+      otherKey: 'id_extra',
+      as: 'extras'
+    });
+    
+    Reserva.hasMany(models.Pago, {
+      foreignKey: 'id_reserva',
+      as: 'pagos'
+    });
+  }
+}
+
+Reserva.init({
   id: {
     type: DataTypes.INTEGER,
     autoIncrement: true,
@@ -127,6 +162,8 @@ const Reserva = sequelize.define('Reservas', {
     defaultValue: sequelize.literal('CURRENT_TIMESTAMP')
   }
 }, {
+  sequelize,
+  modelName: 'Reserva',
   tableName: 'reservas',
   schema: 'tramboory',
   timestamps: true,
@@ -142,10 +179,24 @@ const Reserva = sequelize.define('Reservas', {
         }
       }
     },
-    beforeUpdate: async (reserva, options) => {
-      // Si la reserva se está desactivando, aseguramos que el estado sea 'cancelada'
+    beforeUpdate: async (reserva) => {
+      // Si la reserva se está desactivando
       if (reserva.changed('activo') && !reserva.activo) {
         reserva.estado = 'cancelada';
+        await reserva.cancelarPagosPendientes();
+      }
+      
+      // Si se está confirmando la reserva
+      if (reserva.changed('estado') && reserva.estado === 'confirmada') {
+        const pagosCompletos = await reserva.validarPagosCompletos();
+        if (!pagosCompletos) {
+          throw new Error('No se puede confirmar la reserva sin completar el pago total');
+        }
+      }
+      
+      // Si se está cancelando la reserva
+      if (reserva.changed('estado') && reserva.estado === 'cancelada') {
+        await reserva.cancelarPagosPendientes();
       }
     }
   },
@@ -182,15 +233,5 @@ const Reserva = sequelize.define('Reservas', {
     }
   ]
 });
-
-// Definir las asociaciones
-Reserva.associate = function(models) {
-  Reserva.belongsToMany(models.Extra, {
-    through: 'reserva_extras',
-    foreignKey: 'id_reserva',
-    otherKey: 'id_extra',
-    as: 'extras'
-  });
-};
 
 module.exports = Reserva;
