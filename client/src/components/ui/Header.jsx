@@ -18,7 +18,8 @@ import {
   FiChevronDown,
   FiBell,
   FiSettings,
-  FiAlertCircle
+  FiAlertCircle,
+  FiBox
 } from 'react-icons/fi';
 
 export const Header = () => {
@@ -105,7 +106,8 @@ export const Header = () => {
   const menuItems = [
     { icon: <FiHome />, text: 'Inicio', link: '/' },
     ...(userType === 'admin' ? [
-      { icon: <FiGrid />, text: 'Dashboard', link: '/dashboard' }
+      { icon: <FiGrid />, text: 'Dashboard', link: '/dashboard' },
+      { icon: <FiBox />, text: 'Inventario', link: '/inventory' }
     ] : []),
     ...(isAuthenticated ? [
       { icon: <FiCalendar />, text: 'Mis Reservas', link: '/reservations' },

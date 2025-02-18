@@ -14,7 +14,15 @@ const Modal = ({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 bg-gray-500 bg-opacity-75 flex items-center justify-center p-2 sm:p-4">
+    <div className="fixed inset-0 z-50 bg-gray-500 bg-opacity-75 flex items-center justify-center p-2 sm:p-4"
+      onClick={(e) => {
+        if (e.target === e.currentTarget && !e.defaultPrevented) {
+          e.preventDefault();
+          e.stopPropagation();
+          onClose();
+        }
+      }}
+    >
       <div className={`bg-white rounded-lg shadow-xl w-full max-w-${maxWidth} flex flex-col max-h-[90vh]`}>
         {/* Header */}
         <div className="px-4 sm:px-6 py-3 sm:py-4 border-b border-gray-200 flex justify-between items-center sticky top-0 bg-white z-10">

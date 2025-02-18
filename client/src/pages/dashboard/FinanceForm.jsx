@@ -1,5 +1,6 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useRef } from 'react'
 import { useForm, Controller } from 'react-hook-form'
+import { toast } from 'react-toastify'
 import {
   FiDollarSign,
   FiCalendar,
@@ -12,7 +13,9 @@ import {
   FiMinus,
   FiX,
   FiInfo,
-  FiSearch
+  FiSearch,
+  FiChevronDown,
+  FiSave
 } from 'react-icons/fi'
 import { TwitterPicker } from 'react-color'
 import CurrencyInput from '../../components/CurrencyInput'
@@ -23,11 +26,19 @@ const FinanceForm = ({
   categories,
   onAddCategory,
   reservations = [],
-  activeTab
+  activeTab,
+  currentUser // Necesitamos el usuario actual para id_usuario
 }) => {
   const { register, handleSubmit, control, setValue, watch } = useForm({
     defaultValues: editingItem || {
-      fecha: new Date().toISOString().split('T')[0] // Establece la fecha de hoy por defecto
+      fecha: new Date().toISOString().split('T')[0],
+      tipo: '',
+      monto: '',
+      id_categoria: null,
+      id_usuario: currentUser?.id,
+      factura_pdf: null,
+      factura_xml: null,
+      archivo_prueba: null
     }
   })
 
@@ -35,6 +46,7 @@ const FinanceForm = ({
   const [newCategory, setNewCategory] = useState('')
   const [categoryColor, setCategoryColor] = useState('#FF6900')
   const [showColorPicker, setShowColorPicker] = useState(false)
+  const [showInvoiceFields, setShowInvoiceFields] = useState(false)
 
   const [searchTerm, setSearchTerm] = useState('')
   const [filteredReservations, setFilteredReservations] = useState([])
@@ -91,13 +103,28 @@ const FinanceForm = ({
   }
 
   const onSubmit = data => {
-    // Enviamos los datos con la reserva seleccionada (o null si no hay)
-      onSave({
-        ...data,
-        id_categoria: data.id_categoria,
-        // data.id_reserva ya se setea en handleSelectReservation o se limpia en handleRemoveReservation
-        id_reserva: data.id_reserva || null
-      })
+    if (!currentUser?.id) {
+      toast.error('Error: Usuario no disponible');
+      return;
+    }
+
+    const formattedData = {
+      ...data,
+      id_categoria: data.id_categoria,
+      id_reserva: data.id_reserva || null,
+      id_usuario: currentUser.id,
+      monto: parseFloat(data.monto || '0'),
+      factura_pdf: null,
+      factura_xml: null,
+      archivo_prueba: null
+    };
+
+    if (isNaN(formattedData.monto) || formattedData.monto <= 0) {
+      toast.error('El monto debe ser mayor que 0');
+      return;
+    }
+
+    onSave(formattedData);
   }
 
   const handleAddCategory = () => {
@@ -108,12 +135,30 @@ const FinanceForm = ({
     }
   }
 
+  // Asegurarnos de que id_usuario esté establecido
+  useEffect(() => {
+    if (currentUser?.id) {
+      setValue('id_usuario', currentUser.id);
+    } else {
+      console.error('No hay usuario disponible');
+    }
+  }, [currentUser, setValue]);
+
+  // Establecer id_usuario al montar el componente
+  useEffect(() => {
+    if (currentUser?.id && !watch('id_usuario')) {
+      setValue('id_usuario', currentUser.id);
+    }
+  }, []);
+
   return (
     <form
       id={activeTab + 'Form'}
       onSubmit={handleSubmit(onSubmit)}
       className='flex flex-col space-y-3 max-h-[calc(100vh-200px)] overflow-y-auto px-2'
     >
+      {/* Campo oculto para id_usuario */}
+      <input type="hidden" {...register('id_usuario')} />
       <div className='grid grid-cols-1 lg:grid-cols-2 gap-3'>
         {/* Tipo */}
         <div>
@@ -122,14 +167,19 @@ const FinanceForm = ({
           </label>
           <div className='relative'>
             <FiDollarSign className='absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400' />
-            <select
-              {...register('tipo', { required: 'Este campo es requerido' })}
+            <div className="relative">
+              <select
+              {...register('tipo', { 
+                required: 'Este campo es requerido',
+                validate: value => ['ingreso', 'gasto'].includes(value) || 'Tipo de transacción inválido'
+              })}
               className='pl-10 w-full p-2 border rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500'
             >
               <option value=''>Seleccionar tipo</option>
               <option value='ingreso'>Ingreso</option>
               <option value='gasto'>Gasto</option>
-            </select>
+              </select>
+            </div>
           </div>
         </div>
 
@@ -141,10 +191,25 @@ const FinanceForm = ({
           <Controller
             name='monto'
             control={control}
-            rules={{ required: 'Este campo es requerido' }}
-            render={({ field }) => (
+            rules={{ 
+              required: 'Este campo es requerido',
+              validate: {
+                isNumber: value => !isNaN(parseFloat(value)) || 'El monto debe ser un número válido',
+                isPositive: value => parseFloat(value) > 0 || 'El monto debe ser mayor que 0'
+              }
+            }}
+            defaultValue=""
+            render={({ field: { onChange, value, ...field } }) => (
               <CurrencyInput
                 {...field}
+                value={value}
+                onChange={(e) => {
+                  const numericValue = e.target.value.replace(/[^0-9.]/g, '');
+                  const parsedValue = parseFloat(numericValue);
+                  if (!isNaN(parsedValue)) {
+                    onChange(numericValue);
+                  }
+                }}
                 className='pl-10 w-full p-2 border rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500'
                 placeholder='Monto'
                 icon={FiDollarSign}
@@ -162,7 +227,12 @@ const FinanceForm = ({
             <FiCalendar className='absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400' />
             <input
               type='date'
-              {...register('fecha', { required: 'Este campo es requerido' })}
+              {...register('fecha', { 
+                required: 'Este campo es requerido',
+                validate: {
+                  validDate: value => !isNaN(Date.parse(value)) || 'Fecha inválida'
+                }
+              })}
               className='pl-10 w-full p-2 border rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500'
             />
           </div>
@@ -177,7 +247,7 @@ const FinanceForm = ({
             <FiTag className='absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400' />
             <select
               {...register('id_categoria', {
-                required: 'Este campo es requerido'
+                setValueAs: value => value === '' ? null : parseInt(value, 10)
               })}
               className='pl-10 w-full p-2 border rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500'
             >
@@ -326,50 +396,96 @@ const FinanceForm = ({
       </div>
       {/* ------------------------------------------------------------- */}
 
-      {/* Factura PDF */}
+      {/* Botón para mostrar/ocultar facturas */}
       <div className='lg:col-span-2'>
-        <label className='block text-sm font-medium text-gray-700 mb-1'>
-          Factura PDF
-        </label>
-        <div className='relative'>
+        <button
+          type='button'
+          onClick={() => setShowInvoiceFields(!showInvoiceFields)}
+          className='w-full p-2 flex items-center text-gray-700 hover:text-gray-900 transition-colors duration-200'
+        >
+          <div className='flex-1 flex items-center'>
+            <div className={`w-6 h-6 rounded-full flex items-center justify-center mr-2 transition-colors duration-200 ${
+              showInvoiceFields ? 'bg-indigo-100 text-indigo-600' : 'bg-gray-100'
+            }`}>
+              <FiFile className='w-4 h-4' />
+            </div>
+            <span className='font-medium'>
+              {showInvoiceFields ? 'Ocultar facturas' : 'Agregar facturas'}
+            </span>
+          </div>
+          <FiChevronDown 
+            className={`w-5 h-5 transform transition-transform duration-200 ${
+              showInvoiceFields ? 'rotate-180 text-indigo-600' : 'text-gray-400'
+            }`}
+          />
+        </button>
+      </div>
+
+      {/* Sección de facturas con animación suave y scroll */}
+      <div 
+        className={`space-y-4 transition-all duration-700 ease-in-out transform origin-top ${
+          showInvoiceFields 
+            ? 'opacity-100 max-h-[800px] mb-4 scale-y-100' 
+            : 'opacity-0 max-h-0 mb-0 scale-y-95 overflow-hidden'
+        }`}
+      >
+        <div className='lg:col-span-2 space-y-4'>
+          <label className='block text-sm font-medium text-gray-700 mb-1'>
+            Factura PDF
+          </label>
+          <div className='relative'>
           <FiUpload className='absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400' />
           <input
             type='file'
-            accept='.pdf'
-            {...register('factura_pdf')}
+            accept='application/pdf'
+            {...register('factura_pdf', {
+              validate: {
+                fileType: (value) => {
+                  if (!value || !value[0]) return true;
+                  return value[0].type === 'application/pdf' || 'Solo se permiten archivos PDF';
+                }
+              }
+            })}
             className='pl-10 w-full p-2 border rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500'
           />
         </div>
       </div>
 
-      {/* Factura XML */}
-      <div className='lg:col-span-2'>
-        <label className='block text-sm font-medium text-gray-700 mb-1'>
-          Factura XML
-        </label>
-        <div className='relative'>
+        {/* Factura XML */}
+        <div className='lg:col-span-2'>
+          <label className='block text-sm font-medium text-gray-700 mb-1'>
+            Factura XML
+          </label>
+          <div className='relative'>
           <FiFile className='absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400' />
           <input
             type='file'
-            accept='.xml'
-            {...register('factura_xml')}
+            accept='application/xml,text/xml'
+            {...register('factura_xml', {
+              validate: {
+                fileType: (value) => {
+                  if (!value || !value[0]) return true;
+                  return ['application/xml', 'text/xml'].includes(value[0].type) || 'Solo se permiten archivos XML';
+                }
+              }
+            })}
             className='pl-10 w-full p-2 border rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500'
           />
         </div>
       </div>
 
-      {/* Archivo de prueba */}
-      {editingItem && editingItem.archivo_prueba && (
-        <div>
-          <label className='block text-sm font-medium text-gray-700 mb-1'>
-            Archivo de prueba actual
-          </label>
-          <div className='text-sm text-gray-500'>
-            {editingItem.archivo_prueba}
+        {/* Archivo de prueba */}
+        {editingItem && editingItem.archivo_prueba && (
+          <div>
+            <label className='block text-sm font-medium text-gray-700 mb-1'>
+              Archivo de prueba actual
+            </label>
+            <div className='text-sm text-gray-500'>
+              {editingItem.archivo_prueba}
+            </div>
           </div>
-        </div>
-      )}
-      <div className='lg:col-span-2'>
+        )}
+        <div className='lg:col-span-2'>
         <label className='block text-sm font-medium text-gray-700 mb-1'>
           Archivo de Prueba (Opcional)
         </label>
@@ -381,6 +497,7 @@ const FinanceForm = ({
             className='pl-10 w-full p-2 border rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500'
           />
         </div>
+      </div>
       </div>
     </form>
   )

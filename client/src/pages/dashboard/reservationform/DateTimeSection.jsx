@@ -3,7 +3,7 @@ import { Controller } from 'react-hook-form';
 import { FiCalendar, FiClock, FiAlertCircle, FiInfo } from 'react-icons/fi';
 import DatePicker, { registerLocale } from 'react-datepicker';
 import es from 'date-fns/locale/es';
-import { format, isWeekend, isTuesday } from 'date-fns';
+import { format, isWeekend, isTuesday, addDays, isBefore, startOfDay } from 'date-fns';
 import "react-datepicker/dist/react-datepicker.css";
 import Select from 'react-select';
 
@@ -42,6 +42,13 @@ const DateTimeSection = ({
   const getDateAvailability = useCallback((date) => {
     if (!date) return 'available';
 
+    // Check if date is in the past or within one week
+    const today = startOfDay(new Date());
+    const oneWeekFromNow = addDays(today, 7);
+    if (isBefore(date, oneWeekFromNow)) {
+      return 'unavailable';
+    }
+
     const reservationsOnDate = existingReservations.filter(
       (reservation) =>
         new Date(reservation.fecha_reserva).toDateString() === date.toDateString() &&
@@ -79,18 +86,21 @@ const DateTimeSection = ({
   const timeSlotOptions = useMemo(() =>
     availableTimeSlots.map((slot) => ({
       value: slot.value,
-      label: (
-        <div className="flex items-center gap-2">
-          <span>{slot.icon}</span>
-          <span>{slot.label}</span>
-        </div>
-      ),
+      label: slot.label,
+      icon: slot.icon,
       hora_inicio: slot.start,
       hora_fin: slot.end,
       data: slot
     })),
     [availableTimeSlots]
   );
+
+  const formatOptionLabel = useCallback(({ label, icon, value }) => (
+    <div key={`time-slot-${value}`} className="flex items-center gap-2">
+      <span>{icon}</span>
+      <span>{label}</span>
+    </div>
+  ), []);
 
   const customSelectStyles = {
     control: (base, state) => ({
@@ -118,12 +128,18 @@ const DateTimeSection = ({
   };
 
   const getDayClassName = useCallback((date) => {
+    const today = startOfDay(new Date());
+    const oneWeekFromNow = addDays(today, 7);
     const availability = getDateAvailability(date);
     const isWeekendDay = isWeekend(date);
+    const isPastDate = isBefore(date, today);
+    const isWithinFirstWeek = isBefore(date, oneWeekFromNow);
     let className = 'w-full h-full flex items-center justify-center ';
 
-    if (availability === 'unavailable') {
-      className += 'bg-red-100 text-red-800 ';
+    if (isPastDate || isWithinFirstWeek) {
+      className += 'bg-gray-100 text-gray-400 cursor-not-allowed ';
+    } else if (availability === 'unavailable') {
+      className += 'bg-red-100 text-red-800 cursor-not-allowed ';
     } else if (availability === 'partial') {
       className += 'bg-yellow-100 text-yellow-800 ';
     } else if (availability === 'available') {
@@ -144,6 +160,13 @@ const DateTimeSection = ({
         {format(date, 'EEE', { locale: es })}
       </div>
     );
+  }, []);
+
+  const filterDate = useCallback((date) => {
+    const today = startOfDay(new Date());
+    const oneWeekFromNow = addDays(today, 7);
+    const availability = getDateAvailability(date);
+    return !isBefore(date, oneWeekFromNow) && availability !== 'unavailable';
   }, []);
 
   const handleDateChange = useCallback((date) => {
@@ -189,8 +212,8 @@ const DateTimeSection = ({
                   onChange={handleDateChange}
                   locale="es"
                   dateFormat="dd/MM/yyyy"
-                  minDate={new Date()}
-                  filterDate={() => true}
+                  minDate={addDays(new Date(), 7)}
+                  filterDate={filterDate}
                   renderDayContents={(day, date) => (
                     <div className={getDayClassName(date)}>
                       {day}
@@ -262,6 +285,7 @@ const DateTimeSection = ({
                   className="react-select-container"
                   classNamePrefix="react-select"
                   styles={customSelectStyles}
+                  formatOptionLabel={formatOptionLabel}
                   noOptionsMessage={() => "No hay horarios disponibles"}
                 />
                 {errors.hora_inicio && (
@@ -298,7 +322,7 @@ const DateTimeSection = ({
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {Object.values(TIME_SLOTS).map((slot) => (
             <div
-              key={slot.value}
+              key={`time-slot-info-${slot.value}`}
               className="flex items-center gap-3 bg-gray-50 p-3 rounded-md"
             >
               <span className="text-xl">{slot.icon}</span>

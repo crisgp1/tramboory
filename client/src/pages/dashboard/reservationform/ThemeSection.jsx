@@ -8,8 +8,16 @@ const ThemeSection = ({ control, errors, tematicas, setValue }) => {
     value: tematica.id,
     label: tematica.nombre,
     descripcion: tematica.descripcion || '',
-    foto: tematica.foto || null
+    foto: tematica.foto || null,
+    key: `theme-${tematica.id}`
   }), []);
+
+  const formatOptionLabel = useCallback(({ label, value }) => (
+    <div key={`theme-label-${value}`} className="flex items-center gap-2">
+      <FiImage className="w-4 h-4 text-gray-500" />
+      <span>{label}</span>
+    </div>
+  ), []);
 
   const themeOptions = useMemo(() => {
     const options = tematicas
@@ -67,7 +75,7 @@ const ThemeSection = ({ control, errors, tematicas, setValue }) => {
         <div className="grid grid-cols-1 gap-3">
           {details.map(({ icon: Icon, label, value, fullWidth }) => (
             <div 
-              key={label} 
+              key={`theme-detail-${label}-${value}`}
               className={`flex items-start gap-3 bg-gray-50 p-3 rounded-md ${
                 fullWidth ? 'col-span-full' : ''
               }`}
@@ -137,6 +145,7 @@ const ThemeSection = ({ control, errors, tematicas, setValue }) => {
               className="react-select-container"
               classNamePrefix="react-select"
               styles={customSelectStyles}
+              formatOptionLabel={formatOptionLabel}
               noOptionsMessage={() => "No hay temáticas disponibles"}
               onChange={(selectedOption) => handleThemeChange(selectedOption, field.onChange)}
               onBlur={() => {
@@ -154,11 +163,8 @@ const ThemeSection = ({ control, errors, tematicas, setValue }) => {
         )}
       />
 
-      <Controller
-        name="id_tematica"
-        control={control}
-        render={({ field }) => renderThemeDetails(field.value)}
-      />
+      {/* Use the current form value directly */}
+      {renderThemeDetails(control._formValues.id_tematica)}
 
       {themeOptions.length === 0 && (
         <div className="flex items-start gap-3 p-4 bg-amber-50 text-amber-700 rounded-lg border border-amber-200">

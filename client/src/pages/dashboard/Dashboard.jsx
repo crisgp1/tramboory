@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { toast } from 'react-toastify'
 import axiosInstance from '../../components/axiosConfig'
+import { useAuth } from '../../hooks/useAuth'
 import ScreenSizeAlert from './ScreenSizeAlert'
 import UserSummary from './UserSummary'
 import ReservationSummary from './ReservationSummary'
@@ -39,6 +40,7 @@ import AuditHistory from './AuditHistory'
 import ArchivedTable from './ArchivedTable'
 
 const Dashboard = () => {
+  const { user: currentUser } = useAuth();
   const [users, setUsers] = useState([])
   const [reservations, setReservations] = useState([])
   const [finances, setFinances] = useState([])
@@ -88,7 +90,7 @@ const Dashboard = () => {
     try {
       const responses = await Promise.allSettled([
         axiosInstance.get('/api/usuarios'),
-        axiosInstance.get('/api/reservas'),
+        axiosInstance.get('/api/reservas/user'),
         axiosInstance.get('/api/finanzas'),
         axiosInstance.get('/api/paquetes'),
         axiosInstance.get('/api/categorias'),
@@ -158,8 +160,19 @@ const Dashboard = () => {
   }, [])
 
   useEffect(() => {
-    fetchData()
-  }, [fetchData])
+    fetchData();
+
+    // Escuchar el evento de actualización de reservaciones
+    const handleReservationsUpdate = (event) => {
+      setReservations(event.detail);
+    };
+
+    window.addEventListener('reservationsUpdated', handleReservationsUpdate);
+
+    return () => {
+      window.removeEventListener('reservationsUpdated', handleReservationsUpdate);
+    };
+  }, [fetchData]);
 
   const filteredUsers = useMemo(() => {
     return users.filter(
@@ -253,7 +266,7 @@ const Dashboard = () => {
   
   const handleUpdatePaymentStatus = useCallback(async (paymentId, newStatus) => {
     try {
-      const response = await axiosInstance.put(`/api/pagos/${paymentId}/estado`, {
+      const response = await axiosInstance.put(`/api/pagos/${paymentId}/status`, {
         estado: newStatus
       })
   
@@ -358,6 +371,12 @@ const Dashboard = () => {
             break
           case 'reservations':
             endpoint = '/api/reservas'
+            // Asegurarse de que id_usuario esté presente
+            if (!data.id_usuario) {
+              toast.error('Debe seleccionar un usuario para la reserva')
+              setLoading(false)
+              return
+            }
             successMessage = editingItem
               ? 'Reserva actualizada exitosamente'
               : 'Reserva creada exitosamente'
@@ -408,8 +427,19 @@ const Dashboard = () => {
             throw new Error('Tipo de formulario no reconocido')
         }
 
+        // Limpiar y validar los datos
         const cleanedData = removeCircularReferences(data)
         console.log('Datos limpios a enviar al servidor:', cleanedData)
+
+        // Para reservas, validar y asegurar que id_usuario sea un número
+        if (activeTab === 'reservations') {
+          if (!cleanedData.id_usuario) {
+            toast.error('Debe seleccionar un usuario para la reserva')
+            setLoading(false)
+            return
+          }
+          cleanedData.id_usuario = Number(cleanedData.id_usuario)
+        }
 
         const serializedData = JSON.stringify(cleanedData)
 
@@ -559,7 +589,8 @@ const Dashboard = () => {
       reservations,
       tematicas,
       foodOptions,
-      extras
+      extras,
+      currentUser
     }
     switch (activeTab) {
       case 'users':
@@ -814,6 +845,7 @@ const Dashboard = () => {
           foodOptions={foodOptions}
           extras={extras}
           mamparas={mamparas}
+          currentUser={currentUser}
         />
       )}
       {selectedFinance && (

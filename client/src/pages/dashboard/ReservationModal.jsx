@@ -1,5 +1,7 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import axiosInstance from '../../components/axiosConfig';
+import { toast } from 'react-hot-toast';
 import {
   FiCalendar,
   FiClock,
@@ -17,8 +19,6 @@ import {
   FiImage,
 } from 'react-icons/fi';
 import PrintableReservation from '../../components/PrintableReservation';
-import { toast } from 'react-toastify';
-
 const ReservationModal = ({
   reservation,
   onClose,
@@ -26,7 +26,24 @@ const ReservationModal = ({
   onContactUser
 }) => {
   const [modalHeight, setModalHeight] = useState('100vh');
+  const [isUpdatingPayment, setIsUpdatingPayment] = useState(false);
 
+  const handleUpdatePaymentStatus = async (pagoId, newStatus) => {
+    setIsUpdatingPayment(true);
+    try {
+      await axiosInstance.put(`/api/pagos/${pagoId}/status`, {
+        estado: newStatus
+      });
+      toast.success('Estado del pago actualizado');
+      // Actualizar la lista de pagos en el componente padre
+      window.dispatchEvent(new CustomEvent('reservationsUpdated'));
+    } catch (error) {
+      console.error('Error al actualizar el estado del pago:', error);
+      toast.error('Error al actualizar el estado del pago');
+    } finally {
+      setIsUpdatingPayment(false);
+    }
+  };
   useEffect(() => {
     const updateModalHeight = () => {
       const vh = window.innerHeight;
@@ -141,6 +158,8 @@ const ReservationModal = ({
                         reservation.opcionAlimento?.nombre || 'No especificada'
                       }`}
                     />
+
+                  {  /** AQUI ESTA EL DISEÑO DE PAGOS DIRECTAMENTE */ }
                     <IconWrapper
                       icon={FiAlertCircle}
                       text={`Estado: ${
@@ -150,6 +169,59 @@ const ReservationModal = ({
                     />
                   </div>
                 </div>
+                {/* Payment Information */}
+                <div>
+                  <h3 className="text-lg font-medium text-gray-900 mb-3">
+                    Información de Pagos
+                  </h3>
+                  <div className="bg-gray-50 p-4 rounded-lg">
+                    {reservation.pagos && reservation.pagos.length > 0 ? (
+                      <div className="space-y-4">
+                        {reservation.pagos.map((pago, index) => (
+                          <div key={pago.id} className="bg-white p-3 rounded-lg shadow-sm">
+                            <div className="flex justify-between items-center mb-2">
+                              <span className="text-sm font-medium">
+                                Pago #{index + 1}
+                              </span>
+                              <span className="text-sm text-gray-500">
+                                {new Date(pago.fecha_pago).toLocaleDateString()}
+                              </span>
+                            </div>
+                            <div className="flex items-center justify-between">
+                              <div>
+                                <p className="text-sm text-gray-600">
+                                  Método: {pago.metodo_pago}
+                                </p>
+                                <p className="text-sm font-medium">
+                                  Monto: ${pago.monto}
+                                </p>
+                              </div>
+                              <select
+                                value={pago.estado}
+                                onChange={(e) => handleUpdatePaymentStatus(pago.id, e.target.value)}
+                                disabled={isUpdatingPayment}
+                                className={`ml-2 rounded-full px-3 py-1 text-sm font-medium border-0 focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 ${
+                                  pago.estado === 'completado'
+                                    ? 'bg-green-100 text-green-800'
+                                    : pago.estado === 'fallido'
+                                    ? 'bg-red-100 text-red-800'
+                                    : 'bg-yellow-100 text-yellow-800'
+                                }`}
+                              >
+                                <option value="pendiente">Pendiente</option>
+                                <option value="completado">Completado</option>
+                                <option value="fallido">Fallido</option>
+                              </select>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <p className="text-gray-500 text-sm">No hay pagos registrados</p>
+                    )}
+                  </div>
+                </div>
+
                 {/* Client Details */}
                 <div>
                   <h3 className="text-lg font-medium text-gray-900 mb-3">
@@ -235,14 +307,17 @@ const ReservationModal = ({
                   <div className="bg-gray-50 p-4 rounded-lg">
                     {reservation.extras && reservation.extras.length > 0 ? (
                       <ul>
-                        {reservation.extras.map((extra) => (
-                          <li key={extra.id} className="flex items-center mb-2">
-                            <FiCheckCircle className="text-green-600 mr-2" />
-                            <span>
-                              {`${extra.nombre} (x${extra.ReservaExtra.cantidad || 1}) - $${extra.precio * (extra.ReservaExtra.cantidad || 1)}`}
-                            </span>
-                          </li>
-                        ))}
+                        {reservation.extras.map((extra) => {
+                          const cantidad = extra.ReservaExtra?.cantidad || 1;
+                          return (
+                            <li key={extra.id} className="flex items-center mb-2">
+                              <FiCheckCircle className="text-green-600 mr-2" />
+                              <span>
+                                {`${extra.nombre} (x${cantidad}) - $${extra.precio * cantidad}`}
+                              </span>
+                            </li>
+                          );
+                        })}
                       </ul>
                     ) : (
                       <p className="text-gray-500">

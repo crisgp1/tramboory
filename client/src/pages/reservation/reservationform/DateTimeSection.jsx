@@ -7,6 +7,7 @@ import Select from 'react-select';
 import FormSection from './FormSection';
 import { customSelectStyles } from './styles';
 import 'react-datepicker/dist/react-datepicker.css';
+import { addDays, isBefore, startOfDay } from 'date-fns';
 
 registerLocale('es', es);
 
@@ -15,13 +16,15 @@ const TIME_SLOTS = {
     label: 'Mañana (11:00 - 16:00)',
     value: 'mañana',
     hora_inicio: '11:00:00',
-    hora_fin: '16:00:00'
+    hora_fin: '16:00:00',
+    icon: '🌅'
   },
   AFTERNOON: {
     label: 'Tarde (17:00 - 22:00)',
     value: 'tarde',
     hora_inicio: '17:00:00',
-    hora_fin: '22:00:00'
+    hora_fin: '22:00:00',
+    icon: '🌇'
   }
 };
 
@@ -179,9 +182,20 @@ const DateTimeSection = ({
       setTuesdayModalShown(false);
     }
   };
-  
-  const isDateFullyBooked = (date) => {
-    if (!date || !(date instanceof Date)) return false;
+
+  const getDateAvailability = (date) => {
+    if (!date) return 'available';
+
+    const today = startOfDay(new Date());
+    if (isBefore(date, today)) {
+      return 'past';
+    }
+
+    // Check if date is within one week
+    const oneWeekFromNow = addDays(today, 7);
+    if (isBefore(date, oneWeekFromNow)) {
+      return 'unavailable';
+    }
 
     const dateStr = date.toISOString().split('T')[0];
     const reservationsForDate = existingReservations.filter(
@@ -195,7 +209,35 @@ const DateTimeSection = ({
     const morningBooked = reservationsForDate.some(r => r.hora_inicio === TIME_SLOTS.MORNING.hora_inicio);
     const afternoonBooked = reservationsForDate.some(r => r.hora_inicio === TIME_SLOTS.AFTERNOON.hora_inicio);
 
-    return morningBooked && afternoonBooked;
+    if (morningBooked && afternoonBooked) return 'unavailable';
+    if (morningBooked || afternoonBooked) return 'partial';
+    return 'available';
+  };
+
+  const getDayClassName = (date) => {
+    const today = startOfDay(new Date());
+    const oneWeekFromNow = addDays(today, 7);
+    const availability = getDateAvailability(date);
+    const isWithinFirstWeek = isBefore(date, oneWeekFromNow);
+    let className = 'w-full h-full flex items-center justify-center ';
+
+    if (availability === 'past' || isWithinFirstWeek) {
+      className += 'bg-gray-100 text-gray-400 cursor-not-allowed ';
+    } else if (availability === 'unavailable') {
+      className += 'bg-red-100 text-red-800 cursor-not-allowed ';
+    } else if (availability === 'partial') {
+      className += 'bg-yellow-100 text-yellow-800 ';
+    } else if (availability === 'available') {
+      className += 'bg-green-100 text-green-800 ';
+    }
+
+    return className;
+  };
+
+  const filterDate = (date) => {
+    const today = startOfDay(new Date());
+    const oneWeekFromNow = addDays(today, 7);
+    return !isBefore(date, oneWeekFromNow);
   };
 
   const CustomInput = React.forwardRef(({ value, onClick, onChange }, ref) => (
@@ -231,6 +273,11 @@ const DateTimeSection = ({
                     if (!(value instanceof Date) || isNaN(value.getTime())) {
                       return 'Fecha inválida';
                     }
+                    const today = startOfDay(new Date());
+                    const oneWeekFromNow = addDays(today, 7);
+                    if (isBefore(value, oneWeekFromNow)) {
+                      return 'Las reservas deben hacerse con al menos una semana de anticipación';
+                    }
                     return true;
                   }
                 }
@@ -239,21 +286,21 @@ const DateTimeSection = ({
                 <DatePicker
                   selected={field.value}
                   onChange={(date) => handleDateChange(date, field.onChange)}
-                  filterDate={(date) => !isDateFullyBooked(date)}
                   customInput={<CustomInput />}
                   dateFormat="dd/MM/yyyy"
                   minDate={new Date()}
+                  filterDate={filterDate}
                   excludeDates={unavailableDates}
                   locale="es"
                   showPopperArrow={false}
                   popperPlacement="bottom-start"
                   popperClassName="datepicker-popper"
                   calendarClassName="shadow-lg border border-gray-200 rounded-lg"
-                  dayClassName={date => 
-                    date.getDay() === 0 || date.getDay() === 6 
-                      ? "weekend-day" 
-                      : undefined
-                  }
+                  renderDayContents={(day, date) => (
+                    <div className={getDayClassName(date)}>
+                      {day}
+                    </div>
+                  )}
                 />
               )}
             />
@@ -304,6 +351,28 @@ const DateTimeSection = ({
                 {errors.hora_inicio.message}
               </p>
             )}
+          </div>
+        </div>
+      </div>
+
+      {/* Leyenda de colores */}
+      <div className="mt-4 bg-white p-4 rounded-lg border border-indigo-100 shadow-sm space-y-4">
+        <div className="grid grid-cols-4 gap-2">
+          <div className="flex items-center gap-2 text-sm">
+            <div className="w-4 h-4 rounded bg-green-100"></div>
+            <span>Ambos horarios disponibles</span>
+          </div>
+          <div className="flex items-center gap-2 text-sm">
+            <div className="w-4 h-4 rounded bg-yellow-100"></div>
+            <span>Un horario disponible</span>
+          </div>
+          <div className="flex items-center gap-2 text-sm">
+            <div className="w-4 h-4 rounded bg-red-100"></div>
+            <span>Sin disponibilidad</span>
+          </div>
+          <div className="flex items-center gap-2 text-sm">
+            <div className="w-4 h-4 rounded bg-gray-100"></div>
+            <span>Fechas pasadas</span>
           </div>
         </div>
       </div>

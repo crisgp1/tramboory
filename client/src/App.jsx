@@ -26,6 +26,7 @@ const Dashboard = lazy(() => import('./pages/dashboard/Dashboard.jsx'))
 const Reservation = lazy(() => import('./pages/reservation/index.jsx'))
 const ForgotPassword = lazy(() => import('./pages/ForgotPassword.jsx'))
 const Appointment = lazy(() => import('./pages/Appointment.jsx'))
+const InventoryDashboard = lazy(() => import('./pages/inventory/InventoryDashboard.jsx'))
 const ReservationStatus = lazy(() =>
   import('./pages/reservation/ReservationStatus.jsx')
 )
@@ -287,6 +288,18 @@ function App () {
               />
 
               <Route path='/forgot-password' element={<ForgotPassword />} />
+              
+              <Route
+                path='/inventory'
+                element={
+                  <ProtectedRoute
+                    allowedRoles={['admin']}
+                    redirectPath='/signin'
+                  >
+                    <InventoryDashboard />
+                  </ProtectedRoute>
+                }
+              />
             </Route>
 
             <Route path='*' element={<Navigate to='/' />} />

@@ -35,14 +35,16 @@ export const useReservationData = () => {
         extrasRes,
         mamparasRes,
         foodOptionsRes,
-        reservationsRes
+        reservationsRes,
+        userReservationsRes
       ] = await Promise.all([
         axiosInstance.get('/api/paquetes'),
         axiosInstance.get('/api/tematicas'),
         axiosInstance.get('/api/extras'),
         axiosInstance.get('/api/mamparas'),
         axiosInstance.get('/api/opcion-alimentos'),
-        axiosInstance.get('/api/reservas')
+        axiosInstance.get('/api/reservas'),
+        axiosInstance.get('/api/reservas/user')
       ]);
 
       setData({
@@ -53,8 +55,8 @@ export const useReservationData = () => {
         userData: userData,
         foodOptions: foodOptionsRes.data,
         existingReservations: reservationsRes.data,
-        userReservations: reservationsRes.data,
-        hasReservations: reservationsRes.data.length > 0
+        userReservations: userReservationsRes.data,
+        hasReservations: userReservationsRes.data.length > 0
       });
     } catch (error) {
       console.error('Error fetching reservation data:', error);

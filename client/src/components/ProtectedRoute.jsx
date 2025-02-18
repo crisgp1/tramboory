@@ -1,37 +1,23 @@
 import { Navigate, Outlet } from 'react-router-dom';
-import { jwtDecode } from 'jwt-decode';
+import {jwtDecode} from 'jwt-decode';
 import { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { toast, ToastContainer } from 'react-toastify';
-import { ShieldCheck, Shield, Check, X, ArrowRight, Lock } from 'lucide-react';
 import 'react-toastify/dist/ReactToastify.css';
 
 const ProtectedRoute = ({ redirectPath = '/signin', allowedRoles = [], children }) => {
-  const [isAllowed, setIsAllowed] = useState(false);
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
-  const [currentStep, setCurrentStep] = useState(0);
-  const [showFinalAnimation, setShowFinalAnimation] = useState(false);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [isAllowed, setIsAllowed] = useState(false);
+  const [showFinalIcon, setShowFinalIcon] = useState(false);
   const hasNotified = useRef(false);
-
-  const verificationSteps = [
-    { id: 0, text: "Verificando acceso", status: "pending" },
-    { id: 1, text: "Validando permisos", status: "pending" },
-    { id: 2, text: "Comprobando roles", status: "pending" }
-  ];
-
-  const [steps, setSteps] = useState(verificationSteps);
 
   useEffect(() => {
     const verifyToken = async () => {
+      const hasValidated = sessionStorage.getItem('hasValidated');
+
       try {
-        // Paso 1: Verificar acceso
-        setCurrentStep(0);
         const token = localStorage.getItem('token');
-        await new Promise(resolve => setTimeout(resolve, 400));
-        setSteps(prev => prev.map(step => 
-          step.id === 0 ? { ...step, status: token ? "success" : "error" } : step
-        ));
 
         if (!token) {
           setIsAuthenticated(false);
@@ -39,43 +25,30 @@ const ProtectedRoute = ({ redirectPath = '/signin', allowedRoles = [], children 
           throw new Error('No token found');
         }
 
-        // Paso 2: Validar token
-        setCurrentStep(1);
         const decoded = jwtDecode(token);
-        await new Promise(resolve => setTimeout(resolve, 400));
-
-        if (decoded && decoded.exp > Date.now() / 1000) {
-          setIsAuthenticated(true);
-          setSteps(prev => prev.map(step => 
-            step.id === 1 ? { ...step, status: "success" } : step
-          ));
-        } else {
+        if (!decoded || decoded.exp <= Date.now() / 1000) {
           localStorage.removeItem('token');
           setIsAuthenticated(false);
-          setSteps(prev => prev.map(step => 
-            step.id === 1 ? { ...step, status: "error" } : step
-          ));
-          throw new Error('Invalid token');
+          throw new Error('Invalid or expired token');
         }
 
-        // Paso 3: Verificar permisos
-        setCurrentStep(2);
-        await new Promise(resolve => setTimeout(resolve, 400));
-        
+        setIsAuthenticated(true);
         const hasPermission = allowedRoles.includes(decoded.userType || decoded.role);
         setIsAllowed(hasPermission);
-        setSteps(prev => prev.map(step => 
-          step.id === 2 ? { ...step, status: hasPermission ? "success" : "error" } : step
-        ));
 
-        await new Promise(resolve => setTimeout(resolve, 400));
-        setShowFinalAnimation(true);
-        
+        setShowFinalIcon(!hasValidated);
+
       } catch (error) {
         console.error('Authentication error:', error);
+        setShowFinalIcon(true);
       } finally {
-        await new Promise(resolve => setTimeout(resolve, 500));
+        // Simulamos un pequeño retardo para que se aprecie la animación
+        await new Promise((r) => setTimeout(r, 400));
         setIsLoading(false);
+
+        if (isAllowed) {
+          sessionStorage.setItem('hasValidated', 'true');
+        }
       }
     };
 
@@ -87,181 +60,165 @@ const ProtectedRoute = ({ redirectPath = '/signin', allowedRoles = [], children 
       const message = isAuthenticated
         ? 'No tienes permisos suficientes'
         : 'Por favor inicia sesión';
-      
+
       toast.error(message, {
-        position: "top-center",
+        position: 'top-center',
         autoClose: 3000,
         hideProgressBar: false,
         closeOnClick: true,
         pauseOnHover: true,
         draggable: true,
-        className: "!bg-white/10 backdrop-blur-lg border border-white/20"
+        className: '!bg-white/10 backdrop-blur-lg border border-white/20',
       });
-      
+
       hasNotified.current = true;
     }
   }, [isLoading, isAllowed, isAuthenticated]);
 
-  const StepIndicator = ({ step, index }) => {
-    return (
-      <motion.div
-        initial={{ opacity: 0, x: -20 }}
-        animate={{ opacity: 1, x: 0 }}
-        transition={{ duration: 0.3, delay: index * 0.1 }}
-        className="flex items-center gap-3"
-      >
-        <div className="relative flex items-center">
+  // Componente Preloader: Barra de Progreso Animada
+  const ProgressBarLoader = () => (
+    <motion.div
+      className="fixed inset-0 flex items-center justify-center bg-white"
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      transition={{ duration: 0.3 }}
+    >
+      <div className="w-80">
+        <div className="w-full h-4 bg-gray-200 rounded-full overflow-hidden shadow-md">
           <motion.div
-            className={`w-8 h-8 rounded-full flex items-center justify-center transition-colors duration-300
-              ${currentStep === index ? 'bg-blue-500/20' : 
-                step.status === "success" ? 'bg-green-500/20' : 
-                step.status === "error" ? 'bg-red-500/20' : 
-                'bg-white/10'}`}
-          >
-            <AnimatePresence mode="wait">
-              {step.status === "success" ? (
-                <motion.div
-                  key="success"
-                  initial={{ scale: 0 }}
-                  animate={{ scale: 1 }}
-                  exit={{ scale: 0 }}
-                >
-                  <Check className="w-4 h-4 text-green-500" />
-                </motion.div>
-              ) : step.status === "error" ? (
-                <motion.div
-                  key="error"
-                  initial={{ scale: 0 }}
-                  animate={{ scale: 1 }}
-                  exit={{ scale: 0 }}
-                >
-                  <X className="w-4 h-4 text-red-500" />
-                </motion.div>
-              ) : currentStep === index ? (
-                <motion.div
-                  key="loading"
-                  className="w-4 h-4 border-2 border-blue-500 rounded-full border-r-transparent"
-                  animate={{ rotate: 360 }}
-                  transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
-                />
-              ) : (
-                <motion.div
-                  key="waiting"
-                  className="w-2 h-2 bg-white/30 rounded-full"
-                />
-              )}
-            </AnimatePresence>
-          </motion.div>
+            className="h-full bg-gradient-to-r from-blue-400 to-blue-600"
+            initial={{ x: '-100%' }}
+            animate={{ x: '100%' }}
+            transition={{
+              duration: 1.5,
+              ease: 'easeInOut',
+              repeat: Infinity,
+              repeatType: 'loop'
+            }}
+          />
         </div>
-        <span className={`text-sm transition-colors duration-300
-          ${currentStep === index ? 'text-white' : 
-            step.status === "success" ? 'text-green-500' : 
-            step.status === "error" ? 'text-red-500' : 
-            'text-white/50'}`}>
-          {step.text}
-        </span>
-      </motion.div>
-    );
-  };
+      </div>
+    </motion.div>
+  );
 
-  const FinalAnimation = () => (
-    <motion.div 
-      className="relative"
-      initial={{ scale: 0.8, opacity: 0 }}
+  // Icono de éxito: Check animado
+  const SuccessIcon = () => (
+    <motion.svg
+      xmlns="http://www.w3.org/2000/svg"
+      width="80"
+      height="80"
+      viewBox="0 0 24 24"
+      initial={{ scale: 0, opacity: 0 }}
       animate={{ scale: 1, opacity: 1 }}
-      transition={{ duration: 0.5, type: "spring" }}
+      transition={{ duration: 0.5, ease: 'easeInOut' }}
+    >
+      <motion.path
+        d="M5 13l4 4L19 7"
+        fill="transparent"
+        stroke="#4CAF50"
+        strokeWidth="2.5"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        initial={{ pathLength: 0 }}
+        animate={{ pathLength: 1 }}
+        transition={{ duration: 0.5, ease: 'easeInOut', delay: 0.2 }}
+      />
+    </motion.svg>
+  );
+
+  // Icono de error: Cruz animada
+  const ErrorIcon = () => (
+    <motion.svg
+      xmlns="http://www.w3.org/2000/svg"
+      width="80"
+      height="80"
+      viewBox="0 0 24 24"
+      initial={{ scale: 0, opacity: 0, rotate: -45 }}
+      animate={{ scale: 1, opacity: 1, rotate: 0 }}
+      transition={{ duration: 0.5, ease: 'easeInOut' }}
+    >
+      <motion.line
+        x1="6"
+        y1="6"
+        x2="18"
+        y2="18"
+        stroke="#F44336"
+        strokeWidth="2.5"
+        strokeLinecap="round"
+        initial={{ pathLength: 0 }}
+        animate={{ pathLength: 1 }}
+        transition={{ duration: 0.5, ease: 'easeInOut', delay: 0.2 }}
+      />
+      <motion.line
+        x1="6"
+        y1="18"
+        x2="18"
+        y2="6"
+        stroke="#F44336"
+        strokeWidth="2.5"
+        strokeLinecap="round"
+        initial={{ pathLength: 0 }}
+        animate={{ pathLength: 1 }}
+        transition={{ duration: 0.5, ease: 'easeInOut', delay: 0.2 }}
+      />
+    </motion.svg>
+  );
+
+  // Componente FinalIcon que decide qué icono mostrar
+  const FinalIcon = ({ success }) => (
+    <motion.div
+      className="fixed inset-0 flex items-center justify-center bg-white"
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
     >
       <motion.div
-        className={`absolute inset-0 rounded-full ${
-          isAllowed ? 'bg-green-500/20' : 'bg-red-500/20'
-        } blur-xl`}
-        animate={{
-          scale: [1, 1.2, 1],
-          opacity: [0.5, 0.8, 0.5]
-        }}
-        transition={{
-          duration: 2,
-          repeat: Infinity,
-          ease: "easeInOut"
-        }}
-      />
-      
-      <motion.div
-        className="relative w-24 h-24 flex items-center justify-center"
-        whileHover={{ scale: 1.05 }}
+        initial={{ scale: 0 }}
+        animate={{ scale: 1 }}
+        transition={{ type: 'spring', stiffness: 300, damping: 20 }}
       >
-        {isAllowed ? (
-          <motion.div
-            initial={{ scale: 0 }}
-            animate={{ scale: 1 }}
-            transition={{ 
-              type: "spring",
-              damping: 10,
-              stiffness: 100,
-              delay: 0.2
-            }}
-          >
-            <ShieldCheck className="w-16 h-16 text-green-500" />
-          </motion.div>
-        ) : (
-          <motion.div
-            initial={{ scale: 0 }}
-            animate={{ scale: 1 }}
-            transition={{ 
-              type: "spring",
-              damping: 10,
-              stiffness: 100,
-              delay: 0.2
-            }}
-          >
-            <Lock className="w-16 h-16 text-red-500" />
-          </motion.div>
-        )}
+        {success ? <SuccessIcon /> : <ErrorIcon />}
       </motion.div>
     </motion.div>
   );
 
+  // Lógica de renderizado
   if (isLoading) {
     return (
-      <div className="fixed inset-0 flex items-center justify-center bg-gradient-to-br from-gray-900 to-black">
-        <div className="relative z-10 flex flex-col items-center gap-12 max-w-md mx-auto p-8">
-          {/* Estado de verificación */}
-          {!showFinalAnimation ? (
-            <>
-              <div className="space-y-4 w-full">
-                {steps.map((step, index) => (
-                  <StepIndicator key={step.id} step={step} index={index} />
-                ))}
-              </div>
-
-              <motion.div
-                className="w-full h-1 bg-white/5 rounded-full overflow-hidden"
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-              >
-                <motion.div
-                  className="h-full bg-blue-500"
-                  initial={{ width: "0%" }}
-                  animate={{ width: `${(currentStep / (steps.length - 1)) * 100}%` }}
-                  transition={{ duration: 0.3 }}
-                />
-              </motion.div>
-            </>
-          ) : (
-            <FinalAnimation />
-          )}
-        </div>
+      <>
+        <ProgressBarLoader />
         <ToastContainer />
-      </div>
+      </>
+    );
+  }
+
+  if (showFinalIcon) {
+    return (
+      <AnimatePresence>
+        <FinalIcon success={isAllowed} />
+        {setTimeout(() => {
+          setShowFinalIcon(false);
+          if (isAllowed) {
+            return;
+          } else {
+            if (isAuthenticated) {
+              window.location.replace('/reservations');
+            } else {
+              window.location.replace(redirectPath);
+            }
+          }
+        }, 800)}
+        <ToastContainer />
+      </AnimatePresence>
     );
   }
 
   if (isAllowed) {
     return (
       <motion.div
+        key="protected-content"
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
-        exit={{ opacity: 0 }}
         transition={{ duration: 0.3 }}
       >
         {children ? children : <Outlet />}
@@ -270,17 +227,7 @@ const ProtectedRoute = ({ redirectPath = '/signin', allowedRoles = [], children 
     );
   }
 
-  return isAuthenticated ? (
-    <>
-      <Navigate to="/reservations" replace />
-      <ToastContainer />
-    </>
-  ) : (
-    <>
-      <Navigate to={redirectPath} replace />
-      <ToastContainer />
-    </>
-  );
+  return null;
 };
 
-export default ProtectedRoute;  
+export default ProtectedRoute;

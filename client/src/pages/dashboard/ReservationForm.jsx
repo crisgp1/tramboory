@@ -6,7 +6,6 @@ import { FiX, FiSearch } from 'react-icons/fi';
 import { toast } from 'react-hot-toast';
 
 // Importar las secciones restantes (sin UserSection, porque lo reemplazamos):
-import StatusSection from './reservationform/StatusSection';
 import PackageSection from './reservationform/PackageSection';
 import FoodOptionsSection from './reservationform/FoodOptionsSection';
 import DateTimeSection from './reservationform/DateTimeSection';
@@ -52,6 +51,7 @@ const ReservationForm = ({
   const [total, setTotal] = useState('0.00');
   const [calculationLogs, setCalculationLogs] = useState([]);
   const [showTuesdayModal, setShowTuesdayModal] = useState(false);
+  const [savedReservation, setSavedReservation] = useState(null);
   const formRef = useRef(null);
 
   // ----------- ESTADOS Y LÓGICA PARA EL BUSCADOR DE USUARIOS -----------
@@ -83,7 +83,7 @@ const ReservationForm = ({
       edad_festejado: '',
       comentarios: '',
       total: '0.00',
-      activo: false,
+      activo: true,
       tuesdayFee: 0,
     },
   });
@@ -374,13 +374,15 @@ const ReservationForm = ({
         addLog('Datos formateados para guardar');
 
         try {
-          const savedReservation = await onSave(cleanedData);
+          const reservation = await onSave(cleanedData);
           addLog('Reserva guardada');
 
-          if (savedReservation?.id) {
-            // Solo creamos el pago, la finanza se creará automáticamente cuando el pago se confirme
+          if (reservation?.id) {
+            setSavedReservation(reservation);
+            
+            // Crear pago pendiente automáticamente
             const paymentData = {
-              id_reserva: savedReservation.id,
+              id_reserva: reservation.id,
               monto: cleanedData.total,
               fecha_pago: new Date(),
               metodo_pago: 'pendiente',
@@ -388,8 +390,7 @@ const ReservationForm = ({
             };
 
             await axiosInstance.post('/api/pagos', paymentData);
-            addLog('Entrada de pagos creada');
-
+            addLog('Entrada de pagos creada como pendiente');
             toast.success('¡Reservación creada exitosamente!');
             onClose();
           }
@@ -526,7 +527,6 @@ const ReservationForm = ({
               --------------------------------------------------------------------------------
             */}
 
-            <StatusSection register={register} />
 
             <div className="bg-white p-4 rounded-lg shadow-sm border border-gray-200">
               <PackageSection
@@ -678,7 +678,7 @@ const ReservationForm = ({
             <button
               type="submit"
               form={activeTab + 'Form'}
-              className="px-4 py-2 bg-indigo-600 text-white font-medium rounded-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
+              className="px-6 py-2 font-medium rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 bg-indigo-600 hover:bg-indigo-700 text-white focus:ring-indigo-500"
             >
               {editingItem ? 'Actualizar' : 'Crear'} Reservación
             </button>

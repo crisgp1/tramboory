@@ -28,7 +28,8 @@ const ItemModal = ({
   extras,
   tematicas,
   mamparas,
-  payments
+  payments,
+  currentUser
 }) => {
   const commonProps = {
     editingItem,
@@ -39,6 +40,7 @@ const ItemModal = ({
     users,
     packages,
     foodOptions,
+    currentUser,
     extras,
     tematicas,
     mamparas,

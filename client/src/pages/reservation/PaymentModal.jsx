@@ -1,5 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { gsap } from 'gsap';
+import axiosInstance from '../../components/axiosConfig';
+import { toast } from 'react-hot-toast';
 import {
   FiDollarSign,
   FiCreditCard,
@@ -15,7 +17,7 @@ const PaymentModal = ({ reservationData, onCancel, onConfirm }) => {
   const modalRef = useRef(null);
   const [paymentMethod, setPaymentMethod] = useState('');
   const [copiedClabe, setCopiedClabe] = useState(false);
-
+  const [isProcessing, setIsProcessing] = useState(false);
   const CLABE = '646016206867172653';
   const ADDRESS = 'P.º Solares 1639, Solares Residencial, 45019 Zapopan, Jal.';
 
@@ -40,18 +42,32 @@ const PaymentModal = ({ reservationData, onCancel, onConfirm }) => {
     setTimeout(() => setCopiedClabe(false), 2000);
   };
 
-  const handleConfirm = () => {
-    if (!paymentMethod) return;
+  const handleConfirm = async () => {
+    if (!paymentMethod || isProcessing) return;
+    setIsProcessing(true);
 
-    const pagoData = {
-      id_reserva: reservationData.id,
-      monto: reservationData.total,
-      fecha_pago: new Date().toISOString().split('T')[0], // Fecha actual en formato YYYY-MM-DD
-      metodo_pago: paymentMethod === 'transfer' ? 'transferencia' : 'efectivo',
-      estado_reserva: 'pendiente', // Ajusta el estado según tu lógica
-    };
+    try {
+      // Crear el pago directamente como completado
+      const pagoData = {
+        id_reserva: reservationData.id,
+        monto: reservationData.total,
+        fecha_pago: new Date().toISOString().split('T')[0],
+        metodo_pago: paymentMethod === 'transfer' ? 'transferencia' : 'efectivo',
+        estado: 'completado', // Crear directamente como completado
+      };
 
-    onConfirm(pagoData);
+      const response = await axiosInstance.post('/api/pagos', pagoData);
+
+      if (response && response.data) {
+        toast.success('¡Pago registrado exitosamente!');
+        onCancel(); // Cerrar el modal después de completar el pago
+      }
+    } catch (error) {
+      console.error('Error al procesar el pago:', error);
+      toast.error('Error al procesar el pago');
+    } finally {
+      setIsProcessing(false);
+    }
   };
 
   const PaymentOption = ({ value, title, icon: Icon, description }) => (
@@ -188,15 +204,15 @@ const PaymentModal = ({ reservationData, onCancel, onConfirm }) => {
           </button>
           <button
             onClick={handleConfirm}
-            disabled={!paymentMethod}
+            disabled={!paymentMethod || isProcessing}
             className={`px-6 py-2 rounded-lg text-white flex items-center gap-2 ${
-              paymentMethod
+              paymentMethod && !isProcessing
                 ? 'bg-indigo-600 hover:bg-indigo-700'
                 : 'bg-gray-400 cursor-not-allowed'
             } transition duration-300`}
           >
             <FiCheck className="w-5 h-5" />
-            Confirmar Pago
+            {isProcessing ? 'Procesando...' : 'Confirmar Pago'}
           </button>
         </div>
       </div>

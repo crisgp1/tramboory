@@ -1,6 +1,9 @@
 import React, { useState, useCallback, useMemo } from 'react';
-import { FiEdit2, FiEye, FiTrash2, FiSearch, FiFilter, FiX } from 'react-icons/fi';
+import { FiEdit2, FiEye, FiTrash2, FiSearch, FiFilter, FiX, FiDollarSign } from 'react-icons/fi';
+import PaymentModal from '../../pages/reservation/PaymentModal';
 import { formatDate, formatTime } from '../../utils/formatters';
+import axiosInstance from '../../components/axiosConfig';
+import { toast } from 'react-hot-toast';
 
 const ReservationTable = ({
   reservations,
@@ -11,6 +14,8 @@ const ReservationTable = ({
   handleDeleteItem,
   selectedMonth,
 }) => {
+  const [showPaymentModal, setShowPaymentModal] = useState(false);
+  const [selectedReservation, setSelectedReservation] = useState(null);
   const [showFilters, setShowFilters] = useState(false);
   const [filters, setFilters] = useState({
     estado: '',
@@ -29,6 +34,26 @@ const ReservationTable = ({
     tematicas: [...new Set(reservations.map(r => r.tematicaReserva?.nombre).filter(Boolean))],
     horas: [...new Set(reservations.map(r => r.hora_inicio))]
   }), [reservations]);
+
+  const calculateTotalPaid = (pagos) => {
+    if (!pagos || !Array.isArray(pagos)) return 0;
+    return pagos
+      .filter(p => p.estado === 'completado')
+      .reduce((sum, p) => sum + (p.monto || 0), 0);
+  };
+
+  const getPaymentStatus = (reservation) => {
+    if (!reservation.pagos) return { status: 'pendiente', style: 'bg-yellow-100 text-yellow-800' };
+    
+    const totalPaid = calculateTotalPaid(reservation.pagos);
+    
+    if (totalPaid >= reservation.total) {
+      return { status: 'Pagado', style: 'bg-green-100 text-green-800' };
+    } else if (totalPaid > 0) {
+      return { status: 'Pago Parcial', style: 'bg-blue-100 text-blue-800' };
+    }
+    return { status: 'Pendiente', style: 'bg-yellow-100 text-yellow-800' };
+  };
 
   const renderStatus = (estado) => {
     const statusStyles = {
@@ -295,67 +320,91 @@ const ReservationTable = ({
                 Estado
               </th>
               <th scope="col" className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Estado de Pago
+              </th>
+              <th scope="col" className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                 Acciones
               </th>
             </tr>
           </thead>
           <tbody className="bg-white divide-y divide-gray-200">
-            {filteredReservations.map((reservation) => (
-              <tr key={reservation.id} className="hover:bg-gray-50">
-                <td className="px-4 py-3 whitespace-nowrap text-sm font-medium text-gray-900">
-                  {reservation.id}
-                </td>
-                <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-500">
-                  {renderWithFallback(reservation.usuario?.nombre)}
-                </td>
-                <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-500">
-                  {formatDate(reservation.fecha_reserva)}
-                </td>
-                <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-500">
-                  {formatTime(reservation.hora_inicio)}
-                </td>
-                <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-500">
-                  {renderWithFallback(reservation.paquete?.nombre)}
-                </td>
-                <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-500">
-                  {renderWithFallback(reservation.opcionAlimento?.nombre)}
-                </td>
-                <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-500">
-                  {renderWithFallback(reservation.tematicaReserva?.nombre)}
-                </td>
-                <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-500">
-                  {renderMampara(reservation.mampara)}
-                </td>
-                <td className="px-4 py-3 whitespace-nowrap text-sm">
-                  {renderStatus(reservation.estado)}
-                </td>
-                <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-500">
-                  <div className="flex items-center space-x-2">
-                    <button
-                      onClick={() => handleViewReservation(reservation)}
-                      className="text-blue-600 hover:text-blue-900 transition-colors duration-200"
-                      title="Ver detalles"
-                    >
-                      <FiEye className="h-5 w-5" />
-                    </button>
-                    <button
-                      onClick={() => handleEditItem(reservation)}
-                      className="text-green-600 hover:text-green-900 transition-colors duration-200"
-                      title="Editar reserva"
-                    >
-                      <FiEdit2 className="h-5 w-5" />
-                    </button>
-                    <button
-                      onClick={() => handleDeleteItem(reservation.id)}
-                      className="text-red-600 hover:text-red-900 transition-colors duration-200"
-                      title="Eliminar reserva"
-                    >
-                      <FiTrash2 className="h-5 w-5" />
-                    </button>
-                  </div>
-                </td>
-              </tr>
-            ))}
+            {filteredReservations.map((reservation) => {
+              const paymentStatus = getPaymentStatus(reservation);
+              const totalPaid = calculateTotalPaid(reservation.pagos);
+              return (
+                <tr key={reservation.id} className="hover:bg-gray-50">
+                  <td className="px-4 py-3 whitespace-nowrap text-sm font-medium text-gray-900">
+                    {reservation.id}
+                  </td>
+                  <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-500">
+                    {renderWithFallback(reservation.usuario?.nombre)}
+                  </td>
+                  <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-500">
+                    {formatDate(reservation.fecha_reserva)}
+                  </td>
+                  <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-500">
+                    {formatTime(reservation.hora_inicio)}
+                  </td>
+                  <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-500">
+                    {renderWithFallback(reservation.paquete?.nombre)}
+                  </td>
+                  <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-500">
+                    {renderWithFallback(reservation.opcionAlimento?.nombre)}
+                  </td>
+                  <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-500">
+                    {renderWithFallback(reservation.tematicaReserva?.nombre)}
+                  </td>
+                  <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-500">
+                    {renderMampara(reservation.mampara)}
+                  </td>
+                  <td className="px-4 py-3 whitespace-nowrap text-sm">
+                    {renderStatus(reservation.estado)}
+                  </td>
+                  <td className="px-4 py-3 whitespace-nowrap text-sm">
+                    <span className={`px-2 py-1 rounded-full text-xs font-semibold ${paymentStatus.style}`}>
+                      {paymentStatus.status}
+                    </span>
+                  </td>
+                  <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-500">
+                    <div className="flex items-center space-x-2">
+                      <button
+                        onClick={() => handleViewReservation(reservation)}
+                        className="text-blue-600 hover:text-blue-900 transition-colors duration-200"
+                        title="Ver detalles"
+                      >
+                        <FiEye className="h-5 w-5" />
+                      </button>
+                      <button
+                        onClick={() => handleEditItem(reservation)}
+                        className="text-green-600 hover:text-green-900 transition-colors duration-200"
+                        title="Editar reserva"
+                      >
+                        <FiEdit2 className="h-5 w-5" />
+                      </button>
+                      <button
+                        onClick={() => handleDeleteItem(reservation.id)}
+                        className="text-red-600 hover:text-red-900 transition-colors duration-200"
+                        title="Eliminar reserva"
+                      >
+                        <FiTrash2 className="h-5 w-5" />
+                      </button>
+                      {totalPaid < reservation.total && (
+                        <button
+                          onClick={() => {
+                            setSelectedReservation(reservation);
+                            setShowPaymentModal(true);
+                          }}
+                          className="text-indigo-600 hover:text-indigo-900 transition-colors duration-200"
+                          title="Procesar pago"
+                        >
+                          <FiDollarSign className="h-5 w-5" />
+                        </button>
+                      )}
+                    </div>
+                  </td>
+                </tr>
+              );
+            })}
           </tbody>
         </table>
       </div>
@@ -364,6 +413,35 @@ const ReservationTable = ({
         <div className="text-center py-8 bg-white">
           <p className="text-gray-500 text-sm">No se encontraron reservaciones para el mes seleccionado</p>
         </div>
+      )}
+
+      {/* Modal de Pago */}
+      {showPaymentModal && selectedReservation && (
+        <PaymentModal
+          reservationData={selectedReservation}
+          onCancel={() => {
+            setShowPaymentModal(false);
+            setSelectedReservation(null);
+          }}
+          onConfirm={async (paymentData) => {
+            try {
+              const response = await axiosInstance.post('/api/pagos', {
+                ...paymentData,
+                id_reserva: selectedReservation.id
+              });
+
+              if (response.data) {
+                toast.success('Pago registrado exitosamente');
+                setShowPaymentModal(false);
+                setSelectedReservation(null);
+              }
+              return response;
+            } catch (error) {
+              console.error('Error al crear el pago:', error);
+              toast.error('Error al registrar el pago');
+            }
+          }}
+        />
       )}
     </div>
   );
