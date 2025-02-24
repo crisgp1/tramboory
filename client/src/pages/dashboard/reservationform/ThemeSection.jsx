@@ -112,10 +112,18 @@ const ThemeSection = ({ control, errors, tematicas, setValue }) => {
 
   const handleThemeChange = useCallback((selectedOption, onChange) => {
     console.log('[ThemeSection] Theme selection changed:', selectedOption);
+    const currentTheme = control._formValues.id_tematica;
+    
+    // Solo limpiar la mampara si realmente cambia la temática
+    if (!selectedOption || !currentTheme || selectedOption.value !== currentTheme.value) {
+      console.log('[ThemeSection] Clearing mampara due to theme change');
+      setValue('id_mampara', null);
+    } else {
+      console.log('[ThemeSection] Preserving mampara as theme remains the same');
+    }
+    
     onChange(selectedOption);
-    // Limpiar la mampara cuando se cambia la temática
-    setValue('id_mampara', null);
-  }, [setValue]);
+  }, [setValue, control._formValues.id_tematica]);
 
   return (
     <div className="space-y-4">

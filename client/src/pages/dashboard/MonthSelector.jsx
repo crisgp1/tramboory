@@ -1,24 +1,45 @@
-const MonthSelector = ({ selectedMonth, setSelectedMonth }) => (
-    <div className="mt-8 flex justify-end">
-        <select
-            value={selectedMonth}
-            onChange={(e) => setSelectedMonth(parseInt(e.target.value))}
-            className="bg-white border border-gray-300 rounded-md px-4 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500"
-        >
-            <option value={0}>Enero</option>
-            <option value={1}>Febrero</option>
-            <option value={2}>Marzo</option>
-            <option value={3}>Abril</option>
-            <option value={4}>Mayo</option>
-            <option value={5}>Junio</option>
-            <option value={6}>Julio</option>
-            <option value={7}>Agosto</option>
-            <option value={8}>Septiembre</option>
-            <option value={9}>Octubre</option>
-            <option value={10}>Noviembre</option>
-            <option value={11}>Diciembre</option>
-        </select>
-    </div>
-);
+import { useState, useEffect } from 'react';
+
+const MonthSelector = ({ selectedMonth, setSelectedMonth, selectedYear, setSelectedYear }) => {
+    const currentYear = new Date().getFullYear();
+    const years = Array.from({ length: 5 }, (_, i) => currentYear - 2 + i);
+
+    const months = [
+        'Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
+        'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'
+    ];
+
+    return (
+        <div className="mt-8 flex justify-end gap-4 items-center">
+            <div className="flex gap-2 items-center">
+                <select
+                    value={selectedMonth}
+                    onChange={(e) => setSelectedMonth(parseInt(e.target.value))}
+                    className="bg-white border border-gray-300 rounded-md px-4 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                >
+                    {months.map((month, index) => (
+                        <option key={index} value={index}>
+                            {month}
+                        </option>
+                    ))}
+                </select>
+                <select
+                    value={selectedYear}
+                    onChange={(e) => setSelectedYear(parseInt(e.target.value))}
+                    className="bg-white border border-gray-300 rounded-md px-4 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                >
+                    {years.map(year => (
+                        <option key={year} value={year}>
+                            {year}
+                        </option>
+                    ))}
+                </select>
+            </div>
+            <div className="text-sm text-gray-600">
+                {months[selectedMonth]} {selectedYear}
+            </div>
+        </div>
+    );
+};
 
 export default MonthSelector;

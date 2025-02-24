@@ -5,22 +5,31 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="4bd84676-8d61-4ef2-9beb-8ef06ab2176f" name="Changes" comment="">
-      <change beforePath="$PROJECT_DIR$/README.md" beforeDir="false" afterPath="$PROJECT_DIR$/README.md" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/controllers/AuthController.js" beforeDir="false" afterPath="$PROJECT_DIR$/app/controllers/AuthController.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/controllers/ReservaController.js" beforeDir="false" afterPath="$PROJECT_DIR$/app/controllers/ReservaController.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/models/OpcionAlimento.js" beforeDir="false" afterPath="$PROJECT_DIR$/app/models/OpcionAlimento.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/models/Pago.js" beforeDir="false" afterPath="$PROJECT_DIR$/app/models/Pago.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/models/Reserva.js" beforeDir="false" afterPath="$PROJECT_DIR$/app/models/Reserva.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/routes/authRoutes.js" beforeDir="false" afterPath="$PROJECT_DIR$/app/routes/authRoutes.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/routes/reservaRoutes.js" beforeDir="false" afterPath="$PROJECT_DIR$/app/routes/reservaRoutes.js" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/client/src/App.jsx" beforeDir="false" afterPath="$PROJECT_DIR$/client/src/App.jsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/client/src/components/CurrencyInput.jsx" beforeDir="false" afterPath="$PROJECT_DIR$/client/src/components/CurrencyInput.jsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/client/src/components/ProtectedRoute.jsx" beforeDir="false" afterPath="$PROJECT_DIR$/client/src/components/ProtectedRoute.jsx" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/client/src/components/ui/Header.jsx" beforeDir="false" afterPath="$PROJECT_DIR$/client/src/components/ui/Header.jsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/client/src/components/ui/Modal.jsx" beforeDir="false" afterPath="$PROJECT_DIR$/client/src/components/ui/Modal.jsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/client/src/hooks/useReservationData.js" beforeDir="false" afterPath="$PROJECT_DIR$/client/src/hooks/useReservationData.js" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/client/src/pages/dashboard/Dashboard.jsx" beforeDir="false" afterPath="$PROJECT_DIR$/client/src/pages/dashboard/Dashboard.jsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/client/src/pages/dashboard/FinanceDetailModal.jsx" beforeDir="false" afterPath="$PROJECT_DIR$/client/src/pages/dashboard/FinanceDetailModal.jsx" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/client/src/pages/dashboard/FinanceForm.jsx" beforeDir="false" afterPath="$PROJECT_DIR$/client/src/pages/dashboard/FinanceForm.jsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/client/src/pages/dashboard/ItemModal.jsx" beforeDir="false" afterPath="$PROJECT_DIR$/client/src/pages/dashboard/ItemModal.jsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/client/src/pages/dashboard/FinancialSummary.jsx" beforeDir="false" afterPath="$PROJECT_DIR$/client/src/pages/dashboard/FinancialSummary.jsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/client/src/pages/dashboard/MonthSelector.jsx" beforeDir="false" afterPath="$PROJECT_DIR$/client/src/pages/dashboard/MonthSelector.jsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/client/src/pages/dashboard/MonthlyReportModal.jsx" beforeDir="false" afterPath="$PROJECT_DIR$/client/src/pages/dashboard/MonthlyReportModal.jsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/client/src/pages/dashboard/PaymentForm.jsx" beforeDir="false" afterPath="$PROJECT_DIR$/client/src/pages/dashboard/PaymentForm.jsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/client/src/pages/dashboard/ReservationCalendar.jsx" beforeDir="false" afterPath="$PROJECT_DIR$/client/src/pages/dashboard/ReservationCalendar.jsx" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/client/src/pages/dashboard/ReservationForm.jsx" beforeDir="false" afterPath="$PROJECT_DIR$/client/src/pages/dashboard/ReservationForm.jsx" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/client/src/pages/dashboard/ReservationModal.jsx" beforeDir="false" afterPath="$PROJECT_DIR$/client/src/pages/dashboard/ReservationModal.jsx" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/client/src/pages/dashboard/ReservationTable.jsx" beforeDir="false" afterPath="$PROJECT_DIR$/client/src/pages/dashboard/ReservationTable.jsx" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/client/src/pages/dashboard/reservationform/DateTimeSection.jsx" beforeDir="false" afterPath="$PROJECT_DIR$/client/src/pages/dashboard/reservationform/DateTimeSection.jsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/client/src/pages/dashboard/reservationform/MamparaSection.jsx" beforeDir="false" afterPath="$PROJECT_DIR$/client/src/pages/dashboard/reservationform/MamparaSection.jsx" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/client/src/pages/dashboard/reservationform/ThemeSection.jsx" beforeDir="false" afterPath="$PROJECT_DIR$/client/src/pages/dashboard/reservationform/ThemeSection.jsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/client/src/pages/reservation/PaymentModal.jsx" beforeDir="false" afterPath="$PROJECT_DIR$/client/src/pages/reservation/PaymentModal.jsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/client/src/pages/inventory/InventoryDashboard.jsx" beforeDir="false" afterPath="$PROJECT_DIR$/client/src/pages/inventory/InventoryDashboard.jsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/client/src/pages/reservation/ProfileForm.jsx" beforeDir="false" afterPath="$PROJECT_DIR$/client/src/pages/reservation/ProfileForm.jsx" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/client/src/pages/reservation/reservationform/DateTimeSection.jsx" beforeDir="false" afterPath="$PROJECT_DIR$/client/src/pages/reservation/reservationform/DateTimeSection.jsx" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
@@ -78,7 +87,7 @@
       <workItem from="1738876926052" duration="599000" />
       <workItem from="1738889069550" duration="21000" />
       <workItem from="1739822711414" duration="166000" />
-      <workItem from="1739822882908" duration="1513000" />
+      <workItem from="1739822882908" duration="2112000" />
     </task>
     <servers />
   </component>

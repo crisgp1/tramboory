@@ -1,7 +1,16 @@
-const { DataTypes } = require('sequelize');
+const { Model, DataTypes } = require('sequelize');
 const sequelize = require('../config/database');
 
-const OpcionAlimento = sequelize.define('OpcionesAlimentos', {
+class OpcionAlimento extends Model {
+    static associate(models) {
+        OpcionAlimento.hasMany(models.Reserva, {
+            foreignKey: 'id_opcion_alimento',
+            as: 'reservas'
+        });
+    }
+}
+
+OpcionAlimento.init({
     id: {
         type: DataTypes.INTEGER,
         autoIncrement: true,
@@ -91,6 +100,8 @@ const OpcionAlimento = sequelize.define('OpcionesAlimentos', {
         defaultValue: DataTypes.NOW
     }
 }, {
+    sequelize,
+    modelName: 'OpcionAlimento',
     tableName: 'opciones_alimentos',
     schema: 'tramboory',
     timestamps: false

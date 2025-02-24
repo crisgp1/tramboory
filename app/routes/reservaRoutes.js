@@ -10,6 +10,7 @@ router.put('/:id/reactivate', authMiddleware, ReservaController.reactivateReserv
 // Rutas específicas
 router.get('/user', authMiddleware, ReservaController.getReservasByUserId);
 router.put('/:id/status', authMiddleware, ReservaController.updateReservaStatus);
+router.post('/block-dates', authMiddleware, ReservaController.blockDates);
 
 // Rutas con parámetros
 router.get('/:id', ReservaController.getReservaById);

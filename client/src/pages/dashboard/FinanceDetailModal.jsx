@@ -1,14 +1,18 @@
-import React from 'react';
+import React, { useState } from 'react';
 import PropTypes from 'prop-types';
 import Modal from '../../components/ui/Modal';
-import { FiDollarSign, FiCalendar, FiTag, FiFileText, FiDownload, FiPrinter } from 'react-icons/fi';
+import { FiDollarSign, FiCalendar, FiTag, FiFileText, FiDownload, FiPrinter, FiEye } from 'react-icons/fi';
+import ReservationPreviewModal from './ReservationPreviewModal';
 import { formatDate, formatNumber } from '../../utils/formatters';
 
 const FinanceDetailModal = ({ finance, onClose, onDownloadFile }) => {
+    const [showReservationPreview, setShowReservationPreview] = useState(false);
     const IconWrapper = ({ icon: Icon, text, color = "text-gray-700" }) => (
-        <div className={`flex items-center mb-3 ${color}`}>
-            <Icon className="mr-2 text-xl" />
-            <span className="text-sm">{text}</span>
+        <div className={`flex items-center mb-3 group hover:scale-[1.02] transition-all duration-200 ${color}`}>
+            <div className={`flex items-center justify-center w-8 h-8 rounded-lg ${color} bg-opacity-10 mr-3`}>
+                <Icon className={`w-4 h-4 ${color} group-hover:scale-110 transition-transform duration-200`} />
+            </div>
+            <span className="text-sm font-medium">{text}</span>
         </div>
     );
 
@@ -16,14 +20,16 @@ const FinanceDetailModal = ({ finance, onClose, onDownloadFile }) => {
         <div className="flex justify-end gap-2 sm:gap-4">
             <button
                 onClick={() => {/* Implementar función de impresión */}}
-                className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 transition duration-300 flex items-center text-sm"
+                className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-all duration-200 flex items-center text-sm hover:shadow-md"
+                title="Imprimir detalle del movimiento"
             >
                 <FiPrinter className="mr-2" />
                 Imprimir Detalle
             </button>
             <button
                 onClick={onClose}
-                className="bg-gray-300 text-gray-700 px-4 py-2 rounded-md hover:bg-gray-400 transition duration-300 flex items-center text-sm"
+                className="bg-gray-100 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-200 transition-all duration-200 flex items-center text-sm border border-gray-300"
+                title="Cerrar ventana"
             >
                 Cerrar
             </button>
@@ -36,12 +42,29 @@ const FinanceDetailModal = ({ finance, onClose, onDownloadFile }) => {
             onClose={onClose}
             title="Detalles del Movimiento Financiero"
             footer={footerContent}
+            className="animate-modalEntry"
+            overlayClassName="backdrop-blur-sm"
         >
+            <style jsx global>{`
+                @keyframes modalEntry {
+                    from {
+                        opacity: 0;
+                        transform: scale(0.95) translateY(-10px);
+                    }
+                    to {
+                        opacity: 1;
+                        transform: scale(1) translateY(0);
+                    }
+                }
+                .animate-modalEntry {
+                    animation: modalEntry 0.3s ease-out;
+                }
+            `}</style>
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
                 <div className="space-y-6">
                     <div>
                         <h3 className="text-lg font-medium text-gray-900 mb-3">Información General</h3>
-                        <div className="bg-gray-50 p-4 rounded-lg">
+                        <div className="bg-white p-4 rounded-xl border border-gray-200 shadow-sm hover:shadow-md transition-all duration-200">
                             <IconWrapper
                                 icon={FiDollarSign}
                                 text={`Monto: ${formatNumber(Math.abs(finance.monto))}`}
@@ -49,12 +72,47 @@ const FinanceDetailModal = ({ finance, onClose, onDownloadFile }) => {
                             />
                             <IconWrapper icon={FiCalendar} text={`Fecha: ${formatDate(finance.fecha)}`} />
                             <IconWrapper icon={FiTag} text={`Tipo: ${finance.tipo.charAt(0).toUpperCase() + finance.tipo.slice(1)}`} />
-                            <IconWrapper icon={FiTag} text={`Categoría: ${finance.categoria || 'No especificada'}`} />
+            <div className="flex items-center mb-3 group">
+                <FiTag className="mr-2 text-xl text-gray-700 group-hover:text-indigo-500 transition-colors duration-200" />
+                <span className="text-sm flex items-center">
+                    Categoría: {finance.categoria ? (
+                        <span className="flex items-center ml-1">
+                            <span 
+                                className="w-3 h-3 rounded-full mr-1 inline-block"
+                                style={{ backgroundColor: finance.categoria.color }}
+                            />
+                            {finance.categoria.nombre}
+                        </span>
+                    ) : 'No especificada'}
+                </span>
+            </div>
+            {finance.reserva && (
+                <div 
+                    className="flex items-center mb-3 text-blue-600 hover:text-blue-800 transition-all duration-300 cursor-pointer group hover:scale-[1.02] active:scale-95 hover:bg-blue-50/50 p-2 rounded-lg"
+                    title="Ver detalles de la reserva"
+                    onClick={() => setShowReservationPreview(true)}
+                >
+                    <FiEye className="mr-2 text-xl group-hover:scale-125 group-hover:rotate-12 transition-all duration-300" />
+                    <FiCalendar className="mr-2 text-xl group-hover:scale-110 group-hover:-rotate-12 transition-all duration-300" />
+                    <span className="text-sm group-hover:translate-x-1 transition-transform duration-300">
+                        Reserva: #{finance.reserva.id} - {finance.reserva.nombre_festejado}
+                        <span className="text-gray-500 ml-2">
+                            ({formatDate(finance.reserva.fecha_reserva)})
+                        </span>
+                    </span>
+                </div>
+            )}
+            {showReservationPreview && finance.reserva && (
+                <ReservationPreviewModal
+                    reservation={finance.reserva}
+                    onClose={() => setShowReservationPreview(false)}
+                />
+            )}
                         </div>
                     </div>
                     <div>
                         <h3 className="text-lg font-medium text-gray-900 mb-3">Descripción</h3>
-                        <div className="bg-gray-50 p-4 rounded-lg">
+                        <div className="bg-white p-4 rounded-xl border border-gray-200 shadow-sm hover:shadow-md transition-all duration-200">
                             <p className="text-gray-700 text-sm">{finance.descripcion}</p>
                         </div>
                     </div>
@@ -62,14 +120,15 @@ const FinanceDetailModal = ({ finance, onClose, onDownloadFile }) => {
                 <div className="space-y-6">
                     <div>
                         <h3 className="text-lg font-medium text-gray-900 mb-3">Archivos Adjuntos</h3>
-                        <div className="bg-gray-50 p-4 rounded-lg">
+                        <div className="bg-white p-4 rounded-xl border border-gray-200 shadow-sm hover:shadow-md transition-all duration-200">
                             {finance.factura_pdf && (
                                 <IconWrapper
                                     icon={FiFileText}
                                     text={
                                         <button
                                             onClick={() => onDownloadFile(finance.id, 'pdf')}
-                                            className="text-blue-600 hover:text-blue-800"
+                            className="text-blue-600 hover:text-blue-800 transition-colors duration-200 flex items-center gap-2 hover:underline"
+                            title="Descargar archivo PDF"
                                         >
                                             Descargar Factura PDF
                                         </button>
@@ -82,7 +141,8 @@ const FinanceDetailModal = ({ finance, onClose, onDownloadFile }) => {
                                     text={
                                         <button
                                             onClick={() => onDownloadFile(finance.id, 'xml')}
-                                            className="text-blue-600 hover:text-blue-800"
+                            className="text-blue-600 hover:text-blue-800 transition-colors duration-200 flex items-center gap-2 hover:underline"
+                            title="Descargar archivo XML"
                                         >
                                             Descargar Factura XML
                                         </button>
@@ -95,7 +155,8 @@ const FinanceDetailModal = ({ finance, onClose, onDownloadFile }) => {
                                     text={
                                         <button
                                             onClick={() => onDownloadFile(finance.id, 'prueba')}
-                                            className="text-blue-600 hover:text-blue-800"
+                            className="text-blue-600 hover:text-blue-800 transition-colors duration-200 flex items-center gap-2 hover:underline"
+                            title="Descargar archivo de prueba"
                                         >
                                             Descargar Archivo de Prueba
                                         </button>
@@ -110,7 +171,7 @@ const FinanceDetailModal = ({ finance, onClose, onDownloadFile }) => {
                     {finance.comentarios && (
                         <div>
                             <h3 className="text-lg font-medium text-gray-900 mb-3">Comentarios</h3>
-                            <div className="bg-gray-50 p-4 rounded-lg">
+                        <div className="bg-white p-4 rounded-xl border border-gray-200 shadow-sm hover:shadow-md transition-all duration-200">
                                 <p className="text-gray-700 text-sm">{finance.comentarios}</p>
                             </div>
                         </div>
@@ -129,7 +190,22 @@ FinanceDetailModal.propTypes = {
         monto: PropTypes.number.isRequired,
         tipo: PropTypes.oneOf(['ingreso', 'gasto']).isRequired,
         fecha: PropTypes.string.isRequired,
-        categoria: PropTypes.string,
+        categoria: PropTypes.shape({
+            id: PropTypes.number,
+            nombre: PropTypes.string,
+            color: PropTypes.string
+        }),
+        reserva: PropTypes.shape({
+            id: PropTypes.number,
+            nombre_festejado: PropTypes.string,
+            fecha_reserva: PropTypes.string,
+            estado: PropTypes.string,
+            hora_inicio: PropTypes.string,
+            hora_fin: PropTypes.string,
+            total: PropTypes.number,
+            comentarios: PropTypes.string,
+            edad_festejado: PropTypes.number
+        }),
         factura_pdf: PropTypes.string,
         factura_xml: PropTypes.string,
         archivo_prueba: PropTypes.string,

@@ -293,7 +293,7 @@ function App () {
                 path='/inventory'
                 element={
                   <ProtectedRoute
-                    allowedRoles={['admin']}
+                    allowedRoles={['admin', 'inventario']}
                     redirectPath='/signin'
                   >
                     <InventoryDashboard />

@@ -5,13 +5,31 @@ import { formatNumber } from '../../utils/formatters';
 import html2canvas from 'html2canvas';
 import jsPDF from 'jspdf';
 
-const MonthlyReportModal = ({ isOpen, onClose, finances, categories }) => {
+const MonthlyReportModal = ({ isOpen, onClose, finances, categories, selectedMonth, selectedYear }) => {
     const reportRef = useRef(null);
 
     if (!isOpen) return null;
 
-    const categoryTotals = finances.reduce((acc, finance) => {
-        const categoryName = categories.find(cat => cat.id === finance.categoria)?.nombre || 'Sin categoría';
+    // Filtrar finanzas del mes actual
+    const currentMonthFinances = finances.filter(finance => {
+        const financeDate = new Date(finance.fecha);
+        return financeDate.getMonth() === selectedMonth && 
+               financeDate.getFullYear() === selectedYear;
+    });
+
+    // Calcular mes anterior
+    const previousMonth = selectedMonth === 0 ? 11 : selectedMonth - 1;
+    const previousYear = selectedMonth === 0 ? selectedYear - 1 : selectedYear;
+
+    // Filtrar finanzas del mes anterior
+    const previousMonthFinances = finances.filter(finance => {
+        const financeDate = new Date(finance.fecha);
+        return financeDate.getMonth() === previousMonth && 
+               financeDate.getFullYear() === previousYear;
+    });
+
+    const categoryTotals = currentMonthFinances.reduce((acc, finance) => {
+        const categoryName = finance.categoria?.nombre || 'Sin categoría';
         if (!acc[categoryName]) {
             acc[categoryName] = { ingreso: 0, gasto: 0 };
         }
@@ -50,9 +68,20 @@ const MonthlyReportModal = ({ isOpen, onClose, finances, categories }) => {
         },
     };
 
-    const totalIngresos = finances.reduce((sum, f) => f.tipo === 'ingreso' ? sum + f.monto : sum, 0);
-    const totalGastos = finances.reduce((sum, f) => f.tipo === 'gasto' ? sum + f.monto : sum, 0);
+    // Calcular totales del mes anterior
+    const previousMonthIngresos = previousMonthFinances.reduce((sum, f) => f.tipo === 'ingreso' ? sum + f.monto : sum, 0);
+    const previousMonthGastos = previousMonthFinances.reduce((sum, f) => f.tipo === 'gasto' ? sum + f.monto : sum, 0);
+    const previousMonthBalance = previousMonthIngresos - previousMonthGastos;
+
+    // Calcular totales del mes actual
+    const totalIngresos = currentMonthFinances.reduce((sum, f) => f.tipo === 'ingreso' ? sum + f.monto : sum, 0);
+    const totalGastos = currentMonthFinances.reduce((sum, f) => f.tipo === 'gasto' ? sum + f.monto : sum, 0);
     const balance = totalIngresos - totalGastos;
+
+    // Calcular diferencia porcentual
+    const balanceChange = previousMonthBalance !== 0 
+        ? ((balance - previousMonthBalance) / Math.abs(previousMonthBalance)) * 100 
+        : balance > 0 ? 100 : balance < 0 ? -100 : 0;
 
     const handlePrint = () => {
         const printContent = document.getElementById('monthly-report');
@@ -126,17 +155,52 @@ const MonthlyReportModal = ({ isOpen, onClose, finances, categories }) => {
                     </div>
                     <div className="mb-6">
                         <h3 className="text-xl font-semibold mb-4">Análisis</h3>
-                        <div className="flex items-center">
-                            {balance >= 0 ? (
-                                <FiTrendingUp className="text-green-500 text-4xl mr-2" />
-                            ) : (
-                                <FiTrendingDown className="text-red-500 text-4xl mr-2" />
-                            )}
-                            <p className="text-lg">
-                                {balance >= 0
-                                    ? `Ganancia de ${formatNumber(balance)}`
-                                    : `Pérdida de ${formatNumber(Math.abs(balance))}`}
-                            </p>
+                        <div className="space-y-4">
+                            {/* Mes Actual */}
+                            <div className="flex items-center">
+                                {balance >= 0 ? (
+                                    <FiTrendingUp className="text-green-500 text-4xl mr-2" />
+                                ) : (
+                                    <FiTrendingDown className="text-red-500 text-4xl mr-2" />
+                                )}
+                                <p className="text-lg">
+                                    {balance >= 0
+                                        ? `Ganancia de ${formatNumber(balance)}`
+                                        : `Pérdida de ${formatNumber(Math.abs(balance))}`}
+                                </p>
+                            </div>
+
+                            {/* Comparación con Mes Anterior */}
+                            <div className="bg-gray-50 p-4 rounded-lg">
+                                <h4 className="text-md font-medium mb-2">Comparación con Mes Anterior</h4>
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div>
+                                        <p className="text-sm text-gray-600">Balance Mes Anterior:</p>
+                                        <p className={`text-lg font-medium ${previousMonthBalance >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                                            {formatNumber(previousMonthBalance)}
+                                        </p>
+                                    </div>
+                                    <div>
+                                        <p className="text-sm text-gray-600">Cambio Porcentual:</p>
+                                        <div className="flex items-center">
+                                            {balanceChange > 0 ? (
+                                                <FiTrendingUp className="text-green-500 mr-1" />
+                                            ) : balanceChange < 0 ? (
+                                                <FiTrendingDown className="text-red-500 mr-1" />
+                                            ) : (
+                                                <span className="text-gray-500 mr-1">=</span>
+                                            )}
+                                            <p className={`text-lg font-medium ${
+                                                balanceChange > 0 ? 'text-green-600' : 
+                                                balanceChange < 0 ? 'text-red-600' : 
+                                                'text-gray-600'
+                                            }`}>
+                                                {balanceChange.toFixed(1)}%
+                                            </p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                     </div>
                     <div className="mb-6">

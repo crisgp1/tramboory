@@ -41,14 +41,40 @@ class Pago extends Model {
         throw new Error('Reserva no encontrada');
       }
 
-      const pagosCompletados = await Pago.sum('monto', {
-        where: {
-          id_reserva: this.id_reserva,
-          estado: 'completado'
-        }
-      }) || 0;
+      // Para pagos nuevos, no sumamos nada
+      let pagosCompletados = 0;
+      
+      if (this.id) {
+        // Para pagos existentes, sumamos todos los pagos completados excepto este
+        pagosCompletados = parseFloat(await Pago.sum('monto', {
+          where: {
+            id_reserva: this.id_reserva,
+            estado: 'completado',
+            id: { [Op.ne]: this.id }
+          }
+        }) || 0);
+      } else {
+        // Para pagos nuevos, sumamos todos los pagos completados existentes
+        pagosCompletados = parseFloat(await Pago.sum('monto', {
+          where: {
+            id_reserva: this.id_reserva,
+            estado: 'completado'
+          }
+        }) || 0);
+      }
 
-      const nuevoTotal = pagosCompletados + (this.estado === 'completado' ? this.monto : 0);
+      const montoActual = this.estado === 'completado' ? parseFloat(this.monto) : 0;
+      const nuevoTotal = pagosCompletados + montoActual;
+      const totalReserva = parseFloat(reserva.total);
+
+      console.log('Desglose de validación:', {
+        pagoId: this.id || 'nuevo',
+        pagosCompletadosAnteriores: pagosCompletados,
+        montoActual,
+        nuevoTotal,
+        totalReserva,
+        esNuevo: !this.id
+      });
       
       console.log('Validación de monto total:', {
         pagoId: this.id,

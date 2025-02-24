@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Controller, useWatch } from 'react-hook-form';
 import { FiCalendar, FiClock, FiAlertCircle, FiInfo } from 'react-icons/fi';
 import DatePicker, { registerLocale } from 'react-datepicker';
@@ -214,14 +214,34 @@ const DateTimeSection = ({
     return 'available';
   };
 
+  const getDatePriceInfo = useCallback((date) => {
+    if (!selectedPackage || !packages.length) return '';
+    
+    const pkg = packages.find((p) => p.id === selectedPackage);
+    if (!pkg) return '';
+
+    const dayOfWeek = date.getDay();
+    const basePrice = dayOfWeek >= 1 && dayOfWeek <= 4
+      ? pkg.precio_lunes_jueves
+      : pkg.precio_viernes_domingo;
+
+    const isTuesdayDate = date.getDay() === 2;
+    const priceInfo = `Precio: $${basePrice}${isTuesdayDate ? ' + $1,500 (Martes)' : ''}`;
+    
+    return priceInfo;
+  }, [selectedPackage, packages]);
+
   const getDayClassName = (date) => {
     const today = startOfDay(new Date());
     const oneWeekFromNow = addDays(today, 7);
     const availability = getDateAvailability(date);
     const isWithinFirstWeek = isBefore(date, oneWeekFromNow);
-    let className = 'w-full h-full flex items-center justify-center ';
+    const isToday = date.getTime() === today.getTime();
+    let className = 'w-full h-full flex items-center justify-center hover:bg-opacity-80 transition-all duration-200 ';
 
-    if (availability === 'past' || isWithinFirstWeek) {
+    if (isToday) {
+      className += 'bg-blue-100 text-blue-800 font-bold ring-2 ring-blue-400 ';
+    } else if (availability === 'past' || isWithinFirstWeek) {
       className += 'bg-gray-100 text-gray-400 cursor-not-allowed ';
     } else if (availability === 'unavailable') {
       className += 'bg-red-100 text-red-800 cursor-not-allowed ';
@@ -297,8 +317,24 @@ const DateTimeSection = ({
                   popperClassName="datepicker-popper"
                   calendarClassName="shadow-lg border border-gray-200 rounded-lg"
                   renderDayContents={(day, date) => (
-                    <div className={getDayClassName(date)}>
-                      {day}
+                    <div className="relative group">
+                      <div 
+                        className={getDayClassName(date)}
+                        aria-label={
+                          date.getTime() === startOfDay(new Date()).getTime() 
+                            ? "Día actual" 
+                            : getDatePriceInfo(date)
+                        }
+                      >
+                        {day}
+                      </div>
+                      <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-1 hidden group-hover:block">
+                        <div className="bg-gray-900 text-white text-xs rounded py-1 px-2 whitespace-nowrap">
+                          {date.getTime() === startOfDay(new Date()).getTime() 
+                            ? "Día actual" 
+                            : getDatePriceInfo(date)}
+                        </div>
+                      </div>
                     </div>
                   )}
                 />

@@ -3,7 +3,7 @@ import { Controller, useWatch } from 'react-hook-form';
 import { FiLayout, FiAlertCircle, FiImage, FiDollarSign, FiLayers } from 'react-icons/fi';
 import Select from 'react-select';
 
-const MamparaSection = ({ control, errors, filteredMamparas, setValue }) => {
+const MamparaSection = ({ control, errors, filteredMamparas, setValue, getValues }) => {
   // Usar useWatch para observar los cambios en los campos relevantes
   const selectedTheme = useWatch({
     control,
@@ -41,21 +41,33 @@ const MamparaSection = ({ control, errors, filteredMamparas, setValue }) => {
     return options;
   }, [filteredMamparas, formatMamparaOption]);
 
-  // Efecto para limpiar la mampara cuando cambia la temática
+  // Efecto para validar la mampara cuando cambia la temática
   useEffect(() => {
     console.log('[MamparaSection] Theme changed:', selectedTheme);
-    if (!isThemeSelected) {
-      console.log('[MamparaSection] Clearing mampara selection');
-      setValue('id_mampara', null);
+    const currentMampara = getValues('id_mampara');
+    
+    // Solo validar si hay una mampara seleccionada
+    if (currentMampara) {
+      // Verificar si la mampara actual es válida para la nueva temática
+      const isMamparaValid = filteredMamparas.some(
+        m => m.id === currentMampara.value
+      );
+      
+      if (!isMamparaValid) {
+        console.log('[MamparaSection] Current mampara is not valid for new theme');
+        setValue('id_mampara', null);
+      } else {
+        console.log('[MamparaSection] Current mampara is valid for new theme');
+      }
     }
-  }, [isThemeSelected, setValue]);
+  }, [selectedTheme, filteredMamparas, setValue, getValues]);
 
-  // Efecto para actualizar el total cuando cambia la mampara
+  // Efecto para notificar cambios en la mampara
   useEffect(() => {
-    console.log('[MamparaSection] Mampara changed:', selectedMampara);
-    // Forzar actualización del total
-    setValue('total', null, { shouldValidate: true });
-  }, [selectedMampara, setValue]);
+    if (selectedMampara) {
+      console.log('[MamparaSection] Mampara changed:', selectedMampara);
+    }
+  }, [selectedMampara]);
 
   const customSelectStyles = {
     control: (base, state) => ({

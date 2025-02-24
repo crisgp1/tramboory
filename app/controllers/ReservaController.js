@@ -311,6 +311,11 @@ exports.getReservasByUserId = async (req, res) => {
       attributes: ['id', 'id_paquete', 'id_opcion_alimento', 'fecha_reserva', 'hora_inicio', 'estado', 'total', 'nombre_festejado', 'edad_festejado', 'id_tematica', 'comentarios', 'activo', 'id_mampara'],
       include: [
         {
+          model: Usuario,
+          as: 'usuario',
+          attributes: ['id', 'nombre', 'email', 'telefono']
+        },
+        {
           model: Paquete,
           as: 'paquete',
           attributes: ['id', 'nombre']
@@ -540,5 +545,91 @@ exports.validarPagosPendientes = async (req, res) => {
   } catch (error) {
     console.error('Error al validar pagos pendientes:', error);
     res.status(500).json({ error: 'Error al validar pagos pendientes' });
+  }
+};
+
+exports.blockDates = async (req, res) => {
+  try {
+    const { dates } = req.body;
+    
+    if (!Array.isArray(dates) || dates.length === 0) {
+      return res.status(400).json({ error: 'Se requiere un array de fechas para bloquear' });
+    }
+
+    // Verificar que todas las fechas sean futuras
+    const today = moment().startOf('day').format('YYYY-MM-DD');
+    const invalidDates = dates.filter(date => date < today);
+    if (invalidDates.length > 0) {
+      return res.status(400).json({ 
+        error: 'No se pueden bloquear fechas pasadas',
+        invalidDates 
+      });
+    }
+
+    // Crear reservas de bloqueo para ambos horarios de cada fecha
+    const blockReservations = [];
+    for (const date of dates) {
+      // Verificar si ya existen reservas para esta fecha
+      const existingReservations = await Reserva.findAll({
+        where: {
+          fecha_reserva: date,
+          estado: {
+            [Op.in]: ['pendiente', 'confirmada']
+          }
+        }
+      });
+
+      if (existingReservations.length > 0) {
+        continue; // Saltar fechas que ya tienen reservas
+      }
+
+      // Crear bloqueo para horario de mañana
+      blockReservations.push({
+        id_usuario: req.user.id,
+        id_paquete: 1, // Usar un paquete por defecto
+        fecha_reserva: date,
+        hora_inicio: '11:00:00',
+        hora_fin: '16:00:00',
+        estado: 'confirmada',
+        total: 0,
+        nombre_festejado: 'BLOQUEO ADMINISTRATIVO',
+        edad_festejado: 0,
+        comentarios: 'Día bloqueado por administración',
+        id_tematica: 1, // Usar una temática por defecto
+        id_mampara: 1, // Usar una mampara por defecto
+      });
+
+      // Crear bloqueo para horario de tarde
+      blockReservations.push({
+        id_usuario: req.user.id,
+        id_paquete: 1,
+        fecha_reserva: date,
+        hora_inicio: '17:00:00',
+        hora_fin: '22:00:00',
+        estado: 'confirmada',
+        total: 0,
+        nombre_festejado: 'BLOQUEO ADMINISTRATIVO',
+        edad_festejado: 0,
+        comentarios: 'Día bloqueado por administración',
+        id_tematica: 1,
+        id_mampara: 1,
+      });
+    }
+
+    // Crear todas las reservas de bloqueo
+    await Reserva.bulkCreate(blockReservations, {
+      user: req.user // Para los hooks de auditoría
+    });
+
+    res.status(201).json({ 
+      message: 'Fechas bloqueadas exitosamente',
+      blockedDates: dates
+    });
+  } catch (error) {
+    console.error('Error al bloquear fechas:', error);
+    res.status(500).json({ 
+      error: 'Error al bloquear fechas',
+      details: error.message 
+    });
   }
 };

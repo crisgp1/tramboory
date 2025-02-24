@@ -8,5 +8,6 @@ router.post('/login', AuthController.login);
 router.post('/logout', authMiddleware, AuthController.logout);
 router.post('/forgot-password', AuthController.forgotPassword);
 router.post('/refresh-token', AuthController.refreshToken);
-router.get('/me', authMiddleware, AuthController.getAuthenticatedUser); // Nueva ruta
+router.get('/me', authMiddleware, AuthController.getAuthenticatedUser);
+router.put('/profile', authMiddleware, AuthController.updateProfile);
 module.exports = router;

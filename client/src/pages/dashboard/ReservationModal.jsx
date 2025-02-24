@@ -19,6 +19,7 @@ import {
   FiImage,
 } from 'react-icons/fi';
 import PrintableReservation from '../../components/PrintableReservation';
+
 const ReservationModal = ({
   reservation,
   onClose,
@@ -27,6 +28,24 @@ const ReservationModal = ({
 }) => {
   const [modalHeight, setModalHeight] = useState('100vh');
   const [isUpdatingPayment, setIsUpdatingPayment] = useState(false);
+  const [isUpdatingStatus, setIsUpdatingStatus] = useState(false);
+
+  const handleUpdateReservationStatus = async (newStatus) => {
+    if (isUpdatingStatus) return;
+    setIsUpdatingStatus(true);
+    try {
+      await axiosInstance.put(`/api/reservas/${reservation.id}/status`, {
+        estado: newStatus
+      });
+      toast.success('Estado de la reservación actualizado');
+      window.dispatchEvent(new CustomEvent('reservationsUpdated'));
+    } catch (error) {
+      console.error('Error al actualizar el estado de la reservación:', error);
+      toast.error('Error al actualizar el estado de la reservación');
+    } finally {
+      setIsUpdatingStatus(false);
+    }
+  };
 
   const handleUpdatePaymentStatus = async (pagoId, newStatus) => {
     setIsUpdatingPayment(true);
@@ -35,7 +54,6 @@ const ReservationModal = ({
         estado: newStatus
       });
       toast.success('Estado del pago actualizado');
-      // Actualizar la lista de pagos en el componente padre
       window.dispatchEvent(new CustomEvent('reservationsUpdated'));
     } catch (error) {
       console.error('Error al actualizar el estado del pago:', error);
@@ -44,6 +62,7 @@ const ReservationModal = ({
       setIsUpdatingPayment(false);
     }
   };
+
   useEffect(() => {
     const updateModalHeight = () => {
       const vh = window.innerHeight;
@@ -58,7 +77,6 @@ const ReservationModal = ({
 
   if (!reservation) return null;
 
-  // Function to print the reservation
   const handlePrint = () => {
     const printContent = document.getElementById('printable-reservation');
     const winPrint = window.open(
@@ -73,7 +91,6 @@ const ReservationModal = ({
     winPrint.close();
   };
 
-  // Function to get the color of the status
   const getStatusColor = (status) => {
     switch (status) {
       case 'pendiente':
@@ -87,7 +104,6 @@ const ReservationModal = ({
     }
   };
 
-  // Auxiliary component for icons and text
   const IconWrapper = ({ icon: Icon, text, color = 'text-gray-700', className = '' }) => (
     <div className={`flex items-center mb-3 ${color} ${className}`}>
       <Icon className="mr-2 text-xl" />
@@ -158,8 +174,6 @@ const ReservationModal = ({
                         reservation.opcionAlimento?.nombre || 'No especificada'
                       }`}
                     />
-
-                  {  /** AQUI ESTA EL DISEÑO DE PAGOS DIRECTAMENTE */ }
                     <IconWrapper
                       icon={FiAlertCircle}
                       text={`Estado: ${
@@ -169,6 +183,7 @@ const ReservationModal = ({
                     />
                   </div>
                 </div>
+
                 {/* Payment Information */}
                 <div>
                   <h3 className="text-lg font-medium text-gray-900 mb-3">
@@ -249,6 +264,7 @@ const ReservationModal = ({
                   </div>
                 </div>
               </div>
+
               <div className="space-y-6">
                 {/* Event Details */}
                 <div>
@@ -328,6 +344,7 @@ const ReservationModal = ({
                 </div>
               </div>
             </div>
+
             {/* Comments */}
             <div className="mt-6">
               <h3 className="text-lg font-medium text-gray-900 mb-3">
@@ -341,31 +358,79 @@ const ReservationModal = ({
             </div>
           </div>
 
+          {/* Status Change Section */}
+          <div className="bg-white px-6 py-4 border-b">
+            <h3 className="text-lg font-medium text-gray-900 mb-4">Estado de la Reservación</h3>
+            <div className="flex flex-wrap gap-4">
+              <button
+                onClick={() => handleUpdateReservationStatus('pendiente')}
+                disabled={isUpdatingStatus || reservation.estado === 'pendiente'}
+                className={`flex items-center px-4 py-2 rounded-md text-sm font-medium transition-colors duration-200 ${
+                  reservation.estado === 'pendiente'
+                    ? 'bg-yellow-500 text-white cursor-default'
+                    : 'bg-yellow-100 text-yellow-800 hover:bg-yellow-200'
+                }`}
+              >
+                <FiClock className="mr-2" />
+                Pendiente
+              </button>
+              <button
+                onClick={() => handleUpdateReservationStatus('confirmada')}
+                disabled={isUpdatingStatus || reservation.estado === 'confirmada'}
+                className={`flex items-center px-4 py-2 rounded-md text-sm font-medium transition-colors duration-200 ${
+                  reservation.estado === 'confirmada'
+                    ? 'bg-green-500 text-white cursor-default'
+                    : 'bg-green-100 text-green-800 hover:bg-green-200'
+                }`}
+              >
+                <FiCheckCircle className="mr-2" />
+                Confirmada
+              </button>
+              <button
+                onClick={() => handleUpdateReservationStatus('cancelada')}
+                disabled={isUpdatingStatus || reservation.estado === 'cancelada'}
+                className={`flex items-center px-4 py-2 rounded-md text-sm font-medium transition-colors duration-200 ${
+                  reservation.estado === 'cancelada'
+                    ? 'bg-red-500 text-white cursor-default'
+                    : 'bg-red-100 text-red-800 hover:bg-red-200'
+                }`}
+              >
+                <FiXCircle className="mr-2" />
+                Cancelada
+              </button>
+            </div>
+          </div>
+
           {/* Footer */}
-          <div className="sticky bottom-0 bg-gray-50 px-6 py-4 border-t flex flex-wrap justify-end gap-4 rounded-b-lg">
-            <button
-              onClick={handlePrint}
-              className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 transition duration-300 flex items-center text-sm"
-            >
-              <FiPrinter className="mr-2" />
-              Imprimir Reserva
-            </button>
-            <button
-              onClick={() => onSendEmail(reservation)}
-              className="bg-indigo-600 text-white px-4 py-2 rounded-md hover:bg-indigo-700 transition duration-300 flex items-center text-sm"
-            >
-              <FiMail className="mr-2" />
-              Enviar por Correo
-            </button>
-            <button
-              onClick={() => onContactUser(reservation)}
-              className="bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700 transition duration-300 flex items-center text-sm"
-            >
-              <FiPhone className="mr-2" />
-              Contactar Cliente
-            </button>
+          <div className="sticky bottom-0 bg-gray-50 px-6 py-4 border-t rounded-b-lg">
+
+            {/* Action Buttons */}
+            <div className="flex flex-wrap justify-end gap-4">
+              <button
+                onClick={handlePrint}
+                className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 transition duration-300 flex items-center text-sm"
+              >
+                <FiPrinter className="mr-2" />
+                Imprimir Reserva
+              </button>
+              <button
+                onClick={() => onSendEmail(reservation)}
+                className="bg-indigo-600 text-white px-4 py-2 rounded-md hover:bg-indigo-700 transition duration-300 flex items-center text-sm"
+              >
+                <FiMail className="mr-2" />
+                Enviar por Correo
+              </button>
+              <button
+                onClick={() => onContactUser(reservation)}
+                className="bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700 transition duration-300 flex items-center text-sm"
+              >
+                <FiPhone className="mr-2" />
+                Contactar Cliente
+              </button>
+            </div>
           </div>
         </motion.div>
+
         {/* Printable Content */}
         <div id="printable-reservation" className="hidden">
           <PrintableReservation reservation={reservation} />

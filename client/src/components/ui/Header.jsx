@@ -1,6 +1,8 @@
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/authContext';
 import Logo from '../../img/logo.webp';
+import InventoryLoginModal from '../inventory/InventoryLoginModal';
+import InventoryLoader from '../inventory/InventoryLoader';
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { toast } from 'react-toastify';
@@ -36,9 +38,40 @@ export const Header = () => {
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
   const [authChecked, setAuthChecked] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+  const [showInventoryLogin, setShowInventoryLogin] = useState(false);
+  const [showLoader, setShowLoader] = useState(false);
   const menuRef = useRef(null);
   
   const navigate = useNavigate();
+
+  const handleInventoryNavigation = () => {
+    setShowLoader(true);
+    setTimeout(() => {
+      setShowLoader(false);
+      navigate('/inventory');
+    }, 1500);
+  };
+
+  const handleInventoryClick = (e) => {
+    e.preventDefault();
+    if (!isAuthenticated) {
+      setShowInventoryLogin(true);
+      return;
+    }
+    
+    if (userType === 'admin' || userType === 'inventario') {
+      handleInventoryNavigation();
+    } else {
+      toast.error('No tienes permisos para acceder al inventario');
+    }
+  };
+
+  const handleLoginSuccess = () => {
+    setShowInventoryLogin(false);
+    if (userType === 'admin' || userType === 'inventario') {
+      handleInventoryNavigation();
+    }
+  };
 
   const verifyAuth = useCallback(async () => {
     try {
@@ -107,7 +140,7 @@ export const Header = () => {
     { icon: <FiHome />, text: 'Inicio', link: '/' },
     ...(userType === 'admin' ? [
       { icon: <FiGrid />, text: 'Dashboard', link: '/dashboard' },
-      { icon: <FiBox />, text: 'Inventario', link: '/inventory' }
+      { icon: <FiBox />, text: 'Inventario', link: '#', onClick: handleInventoryClick }
     ] : []),
     ...(isAuthenticated ? [
       { icon: <FiCalendar />, text: 'Mis Reservas', link: '/reservations' },
@@ -172,7 +205,15 @@ export const Header = () => {
 
   return (
     <>
-      <header 
+      <InventoryLoginModal 
+        isOpen={showInventoryLogin}
+        onClose={() => setShowInventoryLogin(false)}
+        onLoginSuccess={handleLoginSuccess}
+      />
+      <AnimatePresence>
+        {showLoader && <InventoryLoader />}
+      </AnimatePresence>
+      <header
         className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
           isScrolled ? 'bg-white/95 backdrop-blur-sm shadow-md' : 'bg-white shadow-sm'
         }`}
@@ -195,14 +236,25 @@ export const Header = () => {
                 <>
                   <div className="flex items-center space-x-4">
                     {menuItems.filter(link => link.text !== 'Iniciar Sesión' && link.text !== 'Registrarse').map((link) => (
-                      <Link
-                        key={link.link}
-                        to={link.link}
-                        className="px-4 py-2 text-gray-600 hover:text-gray-900 hover:bg-gray-50 rounded-lg transition-colors duration-200 flex items-center gap-2"
-                      >
-                        {link.icon}
-                        <span>{link.text}</span>
-                      </Link>
+                      link.onClick ? (
+                        <button
+                          key={link.text}
+                          onClick={link.onClick}
+                          className="px-4 py-2 text-gray-600 hover:text-gray-900 hover:bg-gray-50 rounded-lg transition-colors duration-200 flex items-center gap-2"
+                        >
+                          {link.icon}
+                          <span>{link.text}</span>
+                        </button>
+                      ) : (
+                        <Link
+                          key={link.link}
+                          to={link.link}
+                          className="px-4 py-2 text-gray-600 hover:text-gray-900 hover:bg-gray-50 rounded-lg transition-colors duration-200 flex items-center gap-2"
+                        >
+                          {link.icon}
+                          <span>{link.text}</span>
+                        </Link>
+                      )
                     ))}
                   </div>
 
@@ -305,15 +357,29 @@ export const Header = () => {
 
               <div className="flex-1 py-6 px-4 space-y-2">
                 {menuItems.map((link) => (
-                  <Link
-                    key={link.link}
-                    to={link.link}
-                    onClick={() => setIsMenuOpen(false)}
-                    className="flex items-center space-x-4 px-4 py-3 rounded-lg hover:bg-gray-50 transition-colors duration-200"
-                  >
-                    <span className="text-gray-500">{link.icon}</span>
-                    <span className="text-gray-700 font-medium">{link.text}</span>
-                  </Link>
+                  link.onClick ? (
+                    <button
+                      key={link.text}
+                      onClick={(e) => {
+                        link.onClick(e);
+                        setIsMenuOpen(false);
+                      }}
+                      className="w-full flex items-center space-x-4 px-4 py-3 rounded-lg hover:bg-gray-50 transition-colors duration-200"
+                    >
+                      <span className="text-gray-500">{link.icon}</span>
+                      <span className="text-gray-700 font-medium">{link.text}</span>
+                    </button>
+                  ) : (
+                    <Link
+                      key={link.link}
+                      to={link.link}
+                      onClick={() => setIsMenuOpen(false)}
+                      className="flex items-center space-x-4 px-4 py-3 rounded-lg hover:bg-gray-50 transition-colors duration-200"
+                    >
+                      <span className="text-gray-500">{link.icon}</span>
+                      <span className="text-gray-700 font-medium">{link.text}</span>
+                    </Link>
+                  )
                 ))}
               </div>
 

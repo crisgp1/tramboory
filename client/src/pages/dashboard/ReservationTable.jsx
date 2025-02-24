@@ -320,9 +320,6 @@ const ReservationTable = ({
                 Estado
               </th>
               <th scope="col" className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Estado de Pago
-              </th>
-              <th scope="col" className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                 Acciones
               </th>
             </tr>
@@ -359,11 +356,6 @@ const ReservationTable = ({
                   </td>
                   <td className="px-4 py-3 whitespace-nowrap text-sm">
                     {renderStatus(reservation.estado)}
-                  </td>
-                  <td className="px-4 py-3 whitespace-nowrap text-sm">
-                    <span className={`px-2 py-1 rounded-full text-xs font-semibold ${paymentStatus.style}`}>
-                      {paymentStatus.status}
-                    </span>
                   </td>
                   <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-500">
                     <div className="flex items-center space-x-2">

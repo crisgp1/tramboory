@@ -189,7 +189,7 @@ const ProfileForm = () => {
   const fetchUserData = async () => {
     try {
       console.log('Obteniendo datos del usuario...');
-      const response = await axiosInstance.get('/api/auth/me');
+      const response = await axiosInstance.get('/auth/me');
       console.log('Datos recibidos:', response.data);
       
       if (response.data) {
@@ -238,7 +238,7 @@ const ProfileForm = () => {
 
       console.log('Enviando datos de actualización:', updateData);
 
-      const response = await axiosInstance.put('/api/auth/profile', updateData);
+      const response = await axiosInstance.put('/auth/profile', updateData);
       console.log('Respuesta del servidor:', response.data);
 
       toast.success('¡Perfil actualizado exitosamente!');

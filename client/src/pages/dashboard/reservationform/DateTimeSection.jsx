@@ -1,5 +1,5 @@
-import React, { useCallback, useMemo, useState } from 'react';
-import { Controller } from 'react-hook-form';
+import React, { useCallback, useMemo, useState, useEffect } from 'react';
+import { Controller, useWatch } from 'react-hook-form';
 import { FiCalendar, FiClock, FiAlertCircle, FiInfo } from 'react-icons/fi';
 import DatePicker, { registerLocale } from 'react-datepicker';
 import es from 'date-fns/locale/es';
@@ -38,6 +38,34 @@ const DateTimeSection = ({
 }) => {
   const [selectedDate, setSelectedDate] = useState(null);
   const [hasShownTuesdayModal, setHasShownTuesdayModal] = useState(false);
+
+  const selectedPackage = useWatch({
+    control,
+    name: 'id_paquete'
+  });
+
+  useEffect(() => {
+    if (selectedPackage && selectedDate instanceof Date) {
+      const pkg = packages.find((p) => p.id === selectedPackage);
+      if (pkg) {
+        const dayOfWeek = selectedDate.getDay();
+        const newPrice =
+          dayOfWeek >= 1 && dayOfWeek <= 4
+            ? parseFloat(pkg.precio_lunes_jueves)
+            : parseFloat(pkg.precio_viernes_domingo);
+        setValue('packagePrice', newPrice, { shouldValidate: false });
+
+        if (dayOfWeek === 2 && !hasShownTuesdayModal) {
+          setValue('tuesdayFee', 1500, { shouldValidate: false });
+          setShowTuesdayModal(true);
+          setHasShownTuesdayModal(true);
+        } else if (dayOfWeek !== 2) {
+          setValue('tuesdayFee', 0, { shouldValidate: false });
+          setHasShownTuesdayModal(false);
+        }
+      }
+    }
+  }, [selectedPackage, selectedDate, packages, setValue, setShowTuesdayModal, hasShownTuesdayModal]);
 
   const getDateAvailability = useCallback((date) => {
     if (!date) return 'available';
@@ -127,6 +155,23 @@ const DateTimeSection = ({
     })
   };
 
+  const getDatePriceInfo = useCallback((date) => {
+    if (!selectedPackage || !packages.length) return '';
+    
+    const pkg = packages.find((p) => p.id === selectedPackage);
+    if (!pkg) return '';
+
+    const dayOfWeek = date.getDay();
+    const basePrice = dayOfWeek >= 1 && dayOfWeek <= 4
+      ? pkg.precio_lunes_jueves
+      : pkg.precio_viernes_domingo;
+
+    const isTuesdayDate = date.getDay() === 2;
+    const priceInfo = `Precio: $${basePrice}${isTuesdayDate ? ' + $1,500 (Martes)' : ''}`;
+    
+    return priceInfo;
+  }, [selectedPackage, packages]);
+
   const getDayClassName = useCallback((date) => {
     const today = startOfDay(new Date());
     const oneWeekFromNow = addDays(today, 7);
@@ -134,9 +179,12 @@ const DateTimeSection = ({
     const isWeekendDay = isWeekend(date);
     const isPastDate = isBefore(date, today);
     const isWithinFirstWeek = isBefore(date, oneWeekFromNow);
-    let className = 'w-full h-full flex items-center justify-center ';
+    const isToday = date.getTime() === today.getTime();
+    let className = 'w-full h-full flex items-center justify-center hover:bg-opacity-80 transition-all duration-200 ';
 
-    if (isPastDate || isWithinFirstWeek) {
+    if (isToday) {
+      className += 'bg-blue-100 text-blue-800 font-bold ring-2 ring-blue-400 ';
+    } else if (isPastDate || isWithinFirstWeek) {
       className += 'bg-gray-100 text-gray-400 cursor-not-allowed ';
     } else if (availability === 'unavailable') {
       className += 'bg-red-100 text-red-800 cursor-not-allowed ';
@@ -146,7 +194,7 @@ const DateTimeSection = ({
       className += 'bg-green-100 text-green-800 ';
     }
 
-    if (isWeekendDay) {
+    if (isWeekendDay && !isToday) {
       className += 'font-medium';
     }
 
@@ -169,18 +217,31 @@ const DateTimeSection = ({
     return !isBefore(date, oneWeekFromNow) && availability !== 'unavailable';
   }, []);
 
+  // Usar useWatch para observar el valor del horario
+  const currentTimeSlot = useWatch({
+    control,
+    name: 'hora_inicio'
+  });
+
   const handleDateChange = useCallback((date) => {
-    if (isTuesday(date) && !hasShownTuesdayModal) {
-      setShowTuesdayModal(true);
-      setHasShownTuesdayModal(true);
-      setValue('tuesdayFee', 1500);
-    } else {
-      setValue('tuesdayFee', 0);
+    if (!date) {
+      setSelectedDate(null);
+      setValue('fecha_reserva', null);
+      setValue('packagePrice', 0, { shouldValidate: false });
+      setValue('tuesdayFee', 0, { shouldValidate: false });
+      setHasShownTuesdayModal(false);
+      setValue('hora_inicio', null);
+      return;
     }
+
     setSelectedDate(date);
     setValue('fecha_reserva', date);
-    setValue('hora_inicio', null);
-  }, [setValue, setShowTuesdayModal, hasShownTuesdayModal]);
+    
+    // Solo mantener el horario si existe y está disponible
+    if (!currentTimeSlot || !isTimeSlotAvailable(date, currentTimeSlot.data)) {
+      setValue('hora_inicio', null);
+    }
+  }, [setValue, currentTimeSlot, isTimeSlotAvailable]);
 
   return (
     <div className="space-y-6">
@@ -215,8 +276,24 @@ const DateTimeSection = ({
                   minDate={addDays(new Date(), 7)}
                   filterDate={filterDate}
                   renderDayContents={(day, date) => (
-                    <div className={getDayClassName(date)}>
-                      {day}
+                    <div className="relative group">
+                      <div 
+                        className={getDayClassName(date)}
+                        aria-label={
+                          date.getTime() === startOfDay(new Date()).getTime() 
+                            ? "Día actual" 
+                            : getDatePriceInfo(date)
+                        }
+                      >
+                        {day}
+                      </div>
+                      <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-1 hidden group-hover:block">
+                        <div className="bg-gray-900 text-white text-xs rounded py-1 px-2 whitespace-nowrap">
+                          {date.getTime() === startOfDay(new Date()).getTime() 
+                            ? "Día actual" 
+                            : getDatePriceInfo(date)}
+                        </div>
+                      </div>
                     </div>
                   )}
                   renderCustomHeader={({

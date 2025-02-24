@@ -1,5 +1,7 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { FiBox, FiTruck, FiRefreshCw } from 'react-icons/fi';
+import { useAuth } from '../../context/authContext';
+import InventoryLogin from './InventoryLogin';
 import ItemsView from './views/ItemsView';
 import ProvidersView from './views/ProvidersView';
 import MovementsView from './views/MovementsView';
@@ -13,6 +15,21 @@ const MOCK_STATS = {
 
 const InventoryDashboard = () => {
   const [currentView, setCurrentView] = useState('dashboard');
+  const { isAuthenticated, userType, loading } = useAuth();
+
+  const hasInventoryAccess = userType === 'admin' || userType === 'inventario';
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-xl text-gray-600">Cargando...</div>
+      </div>
+    );
+  }
+
+  if (!isAuthenticated || !hasInventoryAccess) {
+    return <InventoryLogin />;
+  }
 
   const renderView = () => {
     switch (currentView) {

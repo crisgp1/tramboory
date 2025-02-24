@@ -5,6 +5,55 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { toast, ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 
+// Componente FinalIcon: Animación de éxito/error
+const FinalIcon = ({ success }) => (
+  <motion.div
+    className="fixed inset-0 flex items-center justify-center bg-gradient-to-br from-blue-50 to-white"
+    initial={{ opacity: 0 }}
+    animate={{ opacity: 1 }}
+    exit={{ opacity: 0 }}
+    transition={{ duration: 0.3 }}
+  >
+    <motion.div
+      className={`w-24 h-24 rounded-full flex items-center justify-center ${
+        success ? 'bg-green-100' : 'bg-red-100'
+      }`}
+      initial={{ scale: 0 }}
+      animate={{ scale: 1 }}
+      exit={{ scale: 0 }}
+      transition={{
+        type: "spring",
+        stiffness: 260,
+        damping: 20
+      }}
+    >
+      <motion.svg
+        xmlns="http://www.w3.org/2000/svg"
+        width="48"
+        height="48"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke={success ? "rgb(22 163 74)" : "rgb(220 38 38)"}
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        initial={{ pathLength: 0, opacity: 0 }}
+        animate={{ pathLength: 1, opacity: 1 }}
+        transition={{ duration: 0.5, ease: "easeInOut" }}
+      >
+        {success ? (
+          <motion.path d="M20 6L9 17l-5-5" />
+        ) : (
+          <>
+            <motion.path d="M18 6L6 18" />
+            <motion.path d="M6 6l12 12" />
+          </>
+        )}
+      </motion.svg>
+    </motion.div>
+  </motion.div>
+);
+
 const ProtectedRoute = ({ redirectPath = '/signin', allowedRoles = [], children }) => {
   const [isLoading, setIsLoading] = useState(true);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -76,112 +125,165 @@ const ProtectedRoute = ({ redirectPath = '/signin', allowedRoles = [], children 
   }, [isLoading, isAllowed, isAuthenticated]);
 
   // Componente Preloader: Barra de Progreso Animada
-  const ProgressBarLoader = () => (
-    <motion.div
-      className="fixed inset-0 flex items-center justify-center bg-white"
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      transition={{ duration: 0.3 }}
-    >
-      <div className="w-80">
-        <div className="w-full h-4 bg-gray-200 rounded-full overflow-hidden shadow-md">
+  // Componente Preloader: Animación mejorada
+const ProgressBarLoader = () => (
+  <motion.div
+    className="fixed inset-0 flex items-center justify-center bg-gradient-to-br from-blue-50 to-white"
+    initial={{ opacity: 0 }}
+    animate={{ opacity: 1 }}
+    transition={{ duration: 0.3 }}
+  >
+    <div className="relative w-80 flex flex-col items-center">
+      {/* Grupo de círculos pulsantes */}
+      <div className="relative mb-8 w-24 h-24 flex items-center justify-center">
+        <motion.div
+          className="absolute rounded-full bg-blue-600/20"
+          initial={{ width: 80, height: 80 }}
+          animate={{ 
+            width: [80, 100, 80], 
+            height: [80, 100, 80],
+            opacity: [0.2, 0.4, 0.2]
+          }}
+          transition={{
+            duration: 1.5,
+            ease: "easeInOut",
+            times: [0, 0.5, 1],
+            repeat: Infinity,
+            repeatType: "loop"
+          }}
+        />
+        <motion.div
+          className="absolute rounded-full bg-blue-500/30"
+          initial={{ width: 60, height: 60 }}
+          animate={{ 
+            width: [60, 75, 60], 
+            height: [60, 75, 60],
+            opacity: [0.3, 0.5, 0.3]
+          }}
+          transition={{
+            duration: 1.5,
+            ease: "easeInOut",
+            times: [0, 0.5, 1],
+            repeat: Infinity,
+            repeatType: "loop",
+            delay: 0.2
+          }}
+        />
+        <motion.div
+          className="absolute rounded-full bg-blue-400/40"
+          initial={{ width: 40, height: 40 }}
+          animate={{ 
+            width: [40, 50, 40], 
+            height: [40, 50, 40],
+            opacity: [0.4, 0.7, 0.4]
+          }}
+          transition={{
+            duration: 1.5,
+            ease: "easeInOut",
+            times: [0, 0.5, 1],
+            repeat: Infinity,
+            repeatType: "loop",
+            delay: 0.4
+          }}
+        />
+        
+        {/* Ícono central giratorio */}
+        <motion.div
+          className="absolute z-10 text-blue-600 flex items-center justify-center bg-white rounded-full shadow-md"
+          initial={{ width: 50, height: 50, rotate: 0 }}
+          animate={{ rotate: 360 }}
+          transition={{
+            duration: 8,
+            ease: "linear",
+            repeat: Infinity
+          }}
+        >
+          <svg 
+            xmlns="http://www.w3.org/2000/svg" 
+            width="24" 
+            height="24" 
+            viewBox="0 0 24 24" 
+            fill="none" 
+            stroke="currentColor" 
+            strokeWidth="2" 
+            strokeLinecap="round" 
+            strokeLinejoin="round"
+          >
+            <path d="M12 2v4m0 12v4M4.93 4.93l2.83 2.83m8.48 8.48l2.83 2.83M2 12h4m12 0h4M4.93 19.07l2.83-2.83m8.48-8.48l2.83-2.83" />
+          </svg>
+        </motion.div>
+      </div>
+      
+      {/* Texto animado */}
+      <motion.div 
+        className="text-blue-600 font-medium mb-4 text-center"
+        animate={{ opacity: [0.5, 1, 0.5] }}
+        transition={{
+          duration: 2,
+          ease: "easeInOut",
+          repeat: Infinity,
+          repeatType: "loop"
+        }}
+      >
+        Cargando
+        <motion.span
+          animate={{ opacity: [0, 1, 0] }}
+          transition={{
+            duration: 1.5,
+            repeat: Infinity,
+            repeatType: "loop"
+          }}
+        >...</motion.span>
+      </motion.div>
+      
+      {/* Barra de progreso mejorada */}
+      <div className="w-full h-2 bg-gray-200 rounded-full overflow-hidden shadow-inner">
+        <motion.div
+          className="h-full bg-gradient-to-r from-blue-400 via-blue-600 to-blue-400"
+          initial={{ x: '-100%' }}
+          animate={{ 
+            x: ['0%', '100%', '0%'],
+            backgroundPosition: ['0% 0%', '100% 0%', '0% 0%'] 
+          }}
+          transition={{
+            duration: 3,
+            ease: "easeInOut",
+            repeat: Infinity,
+            repeatType: "loop"
+          }}
+        />
+      </div>
+      
+      {/* Pequeños círculos flotantes alrededor */}
+      <div className="absolute inset-0 overflow-hidden pointer-events-none">
+        {[...Array(8)].map((_, i) => (
           <motion.div
-            className="h-full bg-gradient-to-r from-blue-400 to-blue-600"
-            initial={{ x: '-100%' }}
-            animate={{ x: '100%' }}
+            key={i}
+            className="absolute rounded-full bg-blue-500/20"
+            style={{
+              width: Math.random() * 15 + 5,
+              height: Math.random() * 15 + 5,
+              top: `${Math.random() * 100}%`,
+              left: `${Math.random() * 100}%`
+            }}
+            animate={{
+              y: [Math.random() * -30, Math.random() * 30, Math.random() * -30],
+              x: [Math.random() * -30, Math.random() * 30, Math.random() * -30],
+              opacity: [0, 0.8, 0]
+            }}
             transition={{
-              duration: 1.5,
-              ease: 'easeInOut',
+              duration: Math.random() * 3 + 3,
+              ease: "easeInOut",
               repeat: Infinity,
-              repeatType: 'loop'
+              repeatType: "loop",
+              delay: Math.random() * 2
             }}
           />
-        </div>
+        ))}
       </div>
-    </motion.div>
-  );
-
-  // Icono de éxito: Check animado
-  const SuccessIcon = () => (
-    <motion.svg
-      xmlns="http://www.w3.org/2000/svg"
-      width="80"
-      height="80"
-      viewBox="0 0 24 24"
-      initial={{ scale: 0, opacity: 0 }}
-      animate={{ scale: 1, opacity: 1 }}
-      transition={{ duration: 0.5, ease: 'easeInOut' }}
-    >
-      <motion.path
-        d="M5 13l4 4L19 7"
-        fill="transparent"
-        stroke="#4CAF50"
-        strokeWidth="2.5"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        initial={{ pathLength: 0 }}
-        animate={{ pathLength: 1 }}
-        transition={{ duration: 0.5, ease: 'easeInOut', delay: 0.2 }}
-      />
-    </motion.svg>
-  );
-
-  // Icono de error: Cruz animada
-  const ErrorIcon = () => (
-    <motion.svg
-      xmlns="http://www.w3.org/2000/svg"
-      width="80"
-      height="80"
-      viewBox="0 0 24 24"
-      initial={{ scale: 0, opacity: 0, rotate: -45 }}
-      animate={{ scale: 1, opacity: 1, rotate: 0 }}
-      transition={{ duration: 0.5, ease: 'easeInOut' }}
-    >
-      <motion.line
-        x1="6"
-        y1="6"
-        x2="18"
-        y2="18"
-        stroke="#F44336"
-        strokeWidth="2.5"
-        strokeLinecap="round"
-        initial={{ pathLength: 0 }}
-        animate={{ pathLength: 1 }}
-        transition={{ duration: 0.5, ease: 'easeInOut', delay: 0.2 }}
-      />
-      <motion.line
-        x1="6"
-        y1="18"
-        x2="18"
-        y2="6"
-        stroke="#F44336"
-        strokeWidth="2.5"
-        strokeLinecap="round"
-        initial={{ pathLength: 0 }}
-        animate={{ pathLength: 1 }}
-        transition={{ duration: 0.5, ease: 'easeInOut', delay: 0.2 }}
-      />
-    </motion.svg>
-  );
-
-  // Componente FinalIcon que decide qué icono mostrar
-  const FinalIcon = ({ success }) => (
-    <motion.div
-      className="fixed inset-0 flex items-center justify-center bg-white"
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      exit={{ opacity: 0 }}
-    >
-      <motion.div
-        initial={{ scale: 0 }}
-        animate={{ scale: 1 }}
-        transition={{ type: 'spring', stiffness: 300, damping: 20 }}
-      >
-        {success ? <SuccessIcon /> : <ErrorIcon />}
-      </motion.div>
-    </motion.div>
-  );
-
+    </div>
+  </motion.div>
+);
   // Lógica de renderizado
   if (isLoading) {
     return (

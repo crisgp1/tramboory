@@ -36,6 +36,21 @@ class Reserva extends Model {
       foreignKey: 'id_reserva',
       as: 'pagos'
     });
+
+    Reserva.belongsTo(models.OpcionAlimento, {
+      foreignKey: 'id_opcion_alimento',
+      as: 'opcionAlimento'
+    });
+
+    Reserva.belongsTo(models.Usuario, {
+      foreignKey: 'id_usuario',
+      as: 'usuario'
+    });
+
+    Reserva.belongsTo(models.Paquete, {
+      foreignKey: 'id_paquete',
+      as: 'paquete'
+    });
   }
 }
 

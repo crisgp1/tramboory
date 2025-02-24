@@ -23,14 +23,14 @@ const FinancialSummary = ({ finances, filterDataByMonth, categories }) => {
     const categoryData = useMemo(() => {
         const cats = {};
         filteredFinances.forEach(f => {
-            const categoryName = categoryMap[f.categoria] || 'Sin categoría';
+            const categoryName = f.categoria ? f.categoria.nombre : 'Sin categoría';
             if (!cats[categoryName]) {
                 cats[categoryName] = { ingreso: 0, gasto: 0 };
             }
             cats[categoryName][f.tipo] += f.monto;
         });
         return cats;
-    }, [filteredFinances, categoryMap]);
+    }, [filteredFinances]);
 
     useEffect(() => {
         setSelectedCategories(Object.keys(categoryData));

@@ -49,6 +49,7 @@ const Dashboard = () => {
   const [extras, setExtras] = useState([])
   const [tematicas, setTematicas] = useState([])
   const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth())
+  const [selectedYear, setSelectedYear] = useState(new Date().getFullYear())
   const [activeTab, setActiveTab] = useState('users');
   const [archivedItems, setArchivedItems] = useState([]);
   const [archivedSearch, setArchivedSearch] = useState('');
@@ -216,11 +217,16 @@ const Dashboard = () => {
   const filterDataByMonth = useCallback(
     (data, dateField) => {
       return data.filter(item => {
-        const itemDate = new Date(item[dateField])
-        return itemDate.getMonth() === selectedMonth
+        if (!item[dateField]) return false;
+        const itemDate = new Date(item[dateField]);
+        // Asegurarse de que la fecha es válida
+        if (isNaN(itemDate.getTime())) return false;
+        // Comparar tanto mes como año
+        return itemDate.getMonth() === selectedMonth && 
+               itemDate.getFullYear() === selectedYear;
       })
     },
-    [selectedMonth]
+    [selectedMonth, selectedYear]
   )
 
   const handleAddItem = useCallback(() => {
@@ -678,7 +684,7 @@ const Dashboard = () => {
         )}
         {activeTab === 'reservations' && (
           <ReservationTable
-            reservations={reservations}
+            reservations={filterDataByMonth(reservations, 'fecha_reserva')}
             reservationSearch={reservationSearch}
             setReservationSearch={setReservationSearch}
             handleViewReservation={handleViewReservation}
@@ -808,6 +814,8 @@ const Dashboard = () => {
       <MonthSelector
         selectedMonth={selectedMonth}
         setSelectedMonth={setSelectedMonth}
+        selectedYear={selectedYear}
+        setSelectedYear={setSelectedYear}
       />
       {isReservationModalOpen && selectedReservation && (
         <ReservationModal
@@ -873,8 +881,10 @@ const Dashboard = () => {
         <MonthlyReportModal
           isOpen={isReportModalOpen}
           onClose={() => setIsReportModalOpen(false)}
-          finances={filterDataByMonth(finances, 'fecha')}
+          finances={finances}
           categories={categories}
+          selectedMonth={selectedMonth}
+          selectedYear={selectedYear}
         />
       )}
     </div>

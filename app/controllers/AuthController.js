@@ -122,3 +122,29 @@ exports.getAuthenticatedUser = async (req, res) => {
       res.status(500).json({ error: 'Error al obtener el usuario autenticado' });
     }
   };
+
+exports.updateProfile = async (req, res) => {
+  const { nombre, telefono, direccion } = req.body;
+  
+  try {
+    const usuario = await Usuario.findByPk(req.userId);
+    
+    if (!usuario) {
+      return res.status(404).json({ message: 'Usuario no encontrado' });
+    }
+
+    await usuario.update({
+      nombre: nombre || usuario.nombre,
+      telefono: telefono || usuario.telefono,
+      direccion: direccion || usuario.direccion
+    });
+
+    res.json({ 
+      message: 'Perfil actualizado exitosamente',
+      user: usuario
+    });
+  } catch (error) {
+    console.error('Error al actualizar el perfil:', error);
+    res.status(500).json({ message: 'Error del servidor al actualizar el perfil' });
+  }
+};

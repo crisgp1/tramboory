@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
+import { toast } from 'react-hot-toast';
 import { 
   FiDollarSign, 
   FiCalendar, 
@@ -45,13 +46,15 @@ export const PaymentForm = ({
   const [searchTerm, setSearchTerm] = useState('');
   const [filteredReservations, setFilteredReservations] = useState(reservations);
   const [showSuggestions, setShowSuggestions] = useState(false);
+  const [selectedReservation, setSelectedReservation] = useState(null);
+  const [reservationPayments, setReservationPayments] = useState({ total: 0, completed: 0 });
 
+
+  // Efecto para filtrar reservas
   useEffect(() => {
-    // Cuando cambie el término de búsqueda, filtramos las reservas
     if (!searchTerm.trim()) {
       setFilteredReservations(reservations);
     } else {
-      // Filtra por nombre del festejado o nombre del usuario
       const filtered = reservations.filter((res) => {
         const nombreFestejado = res.nombre_festejado?.toLowerCase() || '';
         const nombreUsuario = res.usuario?.nombre?.toLowerCase() || '';
@@ -65,6 +68,41 @@ export const PaymentForm = ({
       setFilteredReservations(filtered);
     }
   }, [searchTerm, reservations]);
+
+  // Efecto para cargar los pagos de la reserva seleccionada
+  useEffect(() => {
+    const fetchReservationPayments = async () => {
+      if (formData.id_reserva) {
+        try {
+          const response = await fetch(`/api/pagos/reserva/${formData.id_reserva}`);
+          const data = await response.json();
+          const reservation = reservations.find(r => r.id === formData.id_reserva);
+          
+          if (reservation) {
+            const completedPayments = data.reduce((sum, pago) => 
+              pago.estado === 'completado' ? sum + parseFloat(pago.monto) : sum, 0
+            );
+            
+            setReservationPayments({
+              total: parseFloat(reservation.total),
+              completed: completedPayments
+            });
+            
+            // Actualizar el monto al restante por pagar
+            const remaining = parseFloat(reservation.total) - completedPayments;
+            setFormData(prev => ({
+              ...prev,
+              monto: remaining.toFixed(2)
+            }));
+          }
+        } catch (error) {
+          console.error('Error al cargar los pagos:', error);
+        }
+      }
+    };
+
+    fetchReservationPayments();
+  }, [formData.id_reserva, reservations]);
 
   const getStatusColor = (status) => {
     switch (status) {
@@ -88,13 +126,26 @@ export const PaymentForm = ({
 
   const handleChange = (e) => {
     const { name, value } = e.target;
+    if (name === 'monto') {
+      const monto = parseFloat(value);
+      const remaining = reservationPayments.total - reservationPayments.completed;
+      
+      if (monto > remaining) {
+        toast.error(`El monto máximo permitido es ${remaining.toFixed(2)}`);
+        return;
+      }
+    }
     setFormData({ ...formData, [name]: value });
   };
 
   // Manejador para seleccionar una reserva del "autocompletado"
   const handleSelectReservation = (res) => {
-    setFormData({ ...formData, id_reserva: res.id });
-    // Mostramos en el campo de búsqueda el nombre elegido para mayor claridad
+    setSelectedReservation(res);
+    setFormData({ 
+      ...formData, 
+      id_reserva: res.id,
+      monto: '' // Se actualizará en el useEffect
+    });
     setSearchTerm(res.nombre_festejado || res.usuario?.nombre || `Reserva #${res.id}`);
     setShowSuggestions(false);
   };
@@ -102,7 +153,12 @@ export const PaymentForm = ({
   const handleSubmit = (e) => {
     e.preventDefault();
     if (onSave) {
-      onSave(formData);
+      // Asegurar que el estado sea 'completado' al crear
+      const paymentData = {
+        ...formData,
+        estado: 'completado'
+      };
+      onSave(paymentData);
     }
   };
 
@@ -157,12 +213,39 @@ export const PaymentForm = ({
               )}
             </div>
 
+            {/* Información de la Reserva */}
+            {selectedReservation && (
+              <div className="col-span-2 mb-4 p-4 bg-gray-50 rounded-lg">
+                <h3 className="text-lg font-medium text-gray-900 mb-2">Información de Pagos</h3>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <p className="text-sm text-gray-600">Total de la Reserva:</p>
+                    <p className="text-lg font-semibold text-gray-900">
+                      ${reservationPayments.total.toFixed(2)}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-gray-600">Pagado hasta ahora:</p>
+                    <p className="text-lg font-semibold text-gray-900">
+                      ${reservationPayments.completed.toFixed(2)}
+                    </p>
+                  </div>
+                  <div className="col-span-2">
+                    <p className="text-sm text-gray-600">Restante por pagar:</p>
+                    <p className="text-lg font-semibold text-indigo-600">
+                      ${(reservationPayments.total - reservationPayments.completed).toFixed(2)}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            )}
+
             {/* Campo de Monto */}
             <div className="mb-4">
               <label className="block text-sm font-medium text-gray-700 mb-1">
                 <div className="flex items-center">
                   <FiDollarSign className="mr-2 text-gray-400" />
-                  Monto
+                  Monto a Pagar
                 </div>
               </label>
               <input
@@ -172,7 +255,14 @@ export const PaymentForm = ({
                 onChange={handleChange}
                 className="mt-1 p-2 bg-gray-50 rounded-md w-full"
                 required
+                max={reservationPayments.total - reservationPayments.completed}
+                step="0.01"
               />
+              {selectedReservation && (
+                <p className="text-sm text-gray-500 mt-1">
+                  Monto máximo: ${(reservationPayments.total - reservationPayments.completed).toFixed(2)}
+                </p>
+              )}
             </div>
 
             {/* Campo de Fecha de Pago */}

@@ -155,7 +155,7 @@ const FinanceForm = ({
     <form
       id={activeTab + 'Form'}
       onSubmit={handleSubmit(onSubmit)}
-      className='flex flex-col space-y-3 max-h-[calc(100vh-200px)] overflow-y-auto px-2'
+      className='flex flex-col space-y-4 max-h-[calc(100vh-200px)] overflow-y-auto px-4 py-3'
     >
       {/* Campo oculto para id_usuario */}
       <input type="hidden" {...register('id_usuario')} />
@@ -166,14 +166,14 @@ const FinanceForm = ({
             Tipo
           </label>
           <div className='relative'>
-            <FiDollarSign className='absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400' />
+            <FiDollarSign className='absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500 w-5 h-5 z-10 transition-colors duration-200' />
             <div className="relative">
               <select
               {...register('tipo', { 
                 required: 'Este campo es requerido',
                 validate: value => ['ingreso', 'gasto'].includes(value) || 'Tipo de transacción inválido'
               })}
-              className='pl-10 w-full p-2 border rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500'
+              className='pl-10 w-full p-2.5 border rounded-lg shadow-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 bg-white hover:border-indigo-300 transition-colors duration-200'
             >
               <option value=''>Seleccionar tipo</option>
               <option value='ingreso'>Ingreso</option>
@@ -210,7 +210,7 @@ const FinanceForm = ({
                     onChange(numericValue);
                   }
                 }}
-                className='pl-10 w-full p-2 border rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500'
+                className='pl-10 w-full p-2.5 border rounded-lg shadow-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 bg-white hover:border-indigo-300 transition-colors duration-200'
                 placeholder='Monto'
                 icon={FiDollarSign}
               />
@@ -224,7 +224,7 @@ const FinanceForm = ({
             Fecha
           </label>
           <div className='relative'>
-            <FiCalendar className='absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400' />
+            <FiCalendar className='absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500 w-5 h-5 z-10 transition-colors duration-200' />
             <input
               type='date'
               {...register('fecha', { 
@@ -233,7 +233,7 @@ const FinanceForm = ({
                   validDate: value => !isNaN(Date.parse(value)) || 'Fecha inválida'
                 }
               })}
-              className='pl-10 w-full p-2 border rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500'
+              className='pl-10 w-full p-2.5 border rounded-lg shadow-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 bg-white hover:border-indigo-300 transition-colors duration-200'
             />
           </div>
         </div>
@@ -244,12 +244,12 @@ const FinanceForm = ({
             Categoría
           </label>
           <div className='relative flex items-center'>
-            <FiTag className='absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400' />
+            <FiTag className='absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500 w-5 h-5 z-10 transition-colors duration-200' />
             <select
               {...register('id_categoria', {
                 setValueAs: value => value === '' ? null : parseInt(value, 10)
               })}
-              className='pl-10 w-full p-2 border rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500'
+              className='pl-10 w-full p-2.5 border rounded-lg shadow-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 bg-white hover:border-indigo-300 transition-colors duration-200'
             >
               <option value=''>Seleccionar categoría</option>
               {categories.map(cat => (
@@ -261,7 +261,7 @@ const FinanceForm = ({
             <button
               type='button'
               onClick={() => setShowNewCategoryInput(!showNewCategoryInput)}
-              className='ml-2 p-2 bg-indigo-500 text-white rounded-md hover:bg-indigo-600 focus:outline-none focus:ring-2 focus:ring-indigo-500'
+              className='ml-2 p-2.5 bg-indigo-500 text-white rounded-lg hover:bg-indigo-600 focus:outline-none focus:ring-2 focus:ring-indigo-500 shadow-sm transition-all duration-200 hover:shadow-md'
             >
               {showNewCategoryInput ? <FiMinus /> : <FiPlus />}
             </button>
@@ -277,7 +277,7 @@ const FinanceForm = ({
               value={newCategory}
               onChange={e => setNewCategory(e.target.value)}
               placeholder='Nueva categoría'
-              className='flex-grow p-2 border rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500'
+              className='flex-grow p-2.5 border rounded-lg shadow-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 bg-white hover:border-indigo-300 transition-colors duration-200'
             />
             <div
               className='w-8 h-8 rounded-full cursor-pointer'
@@ -316,10 +316,10 @@ const FinanceForm = ({
           Descripción
         </label>
         <div className='relative'>
-          <FiFileText className='absolute left-3 top-3 text-gray-400' />
+          <FiFileText className='absolute left-3 top-3 text-gray-500 w-5 h-5 z-10 transition-colors duration-200' />
           <textarea
             {...register('descripcion')}
-            className='pl-10 w-full p-2 border rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500'
+            className='pl-10 w-full p-2.5 border rounded-lg shadow-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 bg-white hover:border-indigo-300 transition-colors duration-200'
             rows='3'
             placeholder='Descripción'
           ></textarea>
@@ -343,7 +343,7 @@ const FinanceForm = ({
         {/* Si NO tenemos reserva seleccionada, mostramos el buscador */}
         {!selectedReservation && (
           <div className='relative'>
-            <FiSearch className='absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400' />
+            <FiSearch className='absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500 w-5 h-5 z-10 transition-colors duration-200' />
             <input
               type='text'
               className='pl-10 w-full p-2 border rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500'
@@ -361,7 +361,7 @@ const FinanceForm = ({
                 {filteredReservations.map(res => (
                   <li
                     key={res.id}
-                    className='px-4 py-2 cursor-pointer hover:bg-gray-100'
+              className='px-4 py-2.5 cursor-pointer hover:bg-indigo-50 transition-colors duration-200'
                     onClick={() => handleSelectReservation(res)}
                   >
                     {`Reserva #${res.id} - ${res.nombre_festejado}`}
@@ -380,7 +380,7 @@ const FinanceForm = ({
 
         {/* Si SÍ tenemos reserva seleccionada, mostramos el "chip" con opción de quitar */}
         {selectedReservation && (
-          <div className='flex items-center bg-gray-50 p-2 rounded-md border mt-2'>
+          <div className='flex items-center bg-gray-50 p-2.5 rounded-lg border mt-2 hover:bg-gray-100 transition-colors duration-200'>
             <div className='flex-1 text-sm text-gray-700'>
               <strong>Reserva #{selectedReservation.id}</strong> - {selectedReservation.nombre_festejado}
             </div>
@@ -434,7 +434,7 @@ const FinanceForm = ({
             Factura PDF
           </label>
           <div className='relative'>
-          <FiUpload className='absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400' />
+          <FiUpload className='absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500 w-5 h-5 z-10 transition-colors duration-200' />
           <input
             type='file'
             accept='application/pdf'
@@ -446,7 +446,7 @@ const FinanceForm = ({
                 }
               }
             })}
-            className='pl-10 w-full p-2 border rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500'
+            className='pl-10 w-full p-2.5 border rounded-lg shadow-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 bg-white hover:border-indigo-300 transition-colors duration-200'
           />
         </div>
       </div>
@@ -457,7 +457,7 @@ const FinanceForm = ({
             Factura XML
           </label>
           <div className='relative'>
-          <FiFile className='absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400' />
+          <FiFile className='absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500 w-5 h-5 z-10 transition-colors duration-200' />
           <input
             type='file'
             accept='application/xml,text/xml'
@@ -469,7 +469,7 @@ const FinanceForm = ({
                 }
               }
             })}
-            className='pl-10 w-full p-2 border rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500'
+            className='pl-10 w-full p-2.5 border rounded-lg shadow-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 bg-white hover:border-indigo-300 transition-colors duration-200'
           />
         </div>
       </div>
@@ -490,11 +490,11 @@ const FinanceForm = ({
           Archivo de Prueba (Opcional)
         </label>
         <div className='relative'>
-          <FiUpload className='absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400' />
+          <FiUpload className='absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500 w-5 h-5 z-10 transition-colors duration-200' />
           <input
             type='file'
             {...register('archivo_prueba')}
-            className='pl-10 w-full p-2 border rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500'
+            className='pl-10 w-full p-2.5 border rounded-lg shadow-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 bg-white hover:border-indigo-300 transition-colors duration-200'
           />
         </div>
       </div>

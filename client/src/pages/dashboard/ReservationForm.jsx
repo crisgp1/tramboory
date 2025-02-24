@@ -233,45 +233,79 @@ const ReservationForm = ({
   useEffect(() => {
     if (editingItem) {
       addLog('Inicializando datos de edición');
+      // Formatear los datos sin usar spread operator para evitar conflictos
       const formattedData = {
-        ...editingItem,
+        // Campos básicos
+        id: editingItem.id,
         id_usuario: editingItem.id_usuario,
         id_paquete: editingItem.id_paquete,
+        
+        // Opción de alimento con formato para react-select
         id_opcion_alimento: editingItem.opcionAlimento
           ? {
               value: editingItem.opcionAlimento.id,
               label: editingItem.opcionAlimento.nombre,
+              precio_extra: editingItem.opcionAlimento.precio_extra,
+              turno: editingItem.opcionAlimento.turno,
             }
           : null,
+        
+        // Temática con formato para react-select
         id_tematica: editingItem.tematicaReserva
           ? {
               value: editingItem.tematicaReserva.id,
               label: editingItem.tematicaReserva.nombre,
+              descripcion: editingItem.tematicaReserva.descripcion,
             }
           : null,
+        
+        // Mampara con formato para react-select
         id_mampara: editingItem.mampara
           ? {
               value: editingItem.mampara.id,
-              label: editingItem.mampara.nombre,
+              label: `${editingItem.mampara.piezas} piezas - $${editingItem.mampara.precio}`,
+              piezas: editingItem.mampara.piezas,
+              precio: editingItem.mampara.precio,
             }
           : null,
-        extras:
-          editingItem.extras?.map((extra) => ({
-            id: extra.id,
-            cantidad: extra.ReservaExtra?.cantidad || 1,
-          })) || [],
+        
+        // Extras con su cantidad desde ReservaExtra
+        extras: editingItem.extras?.map((extra) => ({
+          id: extra.id,
+          cantidad: extra.ReservaExtra?.cantidad || 1,
+          nombre: extra.nombre,
+          precio: extra.precio,
+        })) || [],
+        
+        // Fecha y hora con formato apropiado
         fecha_reserva: editingItem.fecha_reserva
-          ? new Date(editingItem.fecha_reserva)
+          ? new Date(editingItem.fecha_reserva + 'T00:00:00')
           : null,
         hora_inicio: editingItem.hora_inicio
           ? {
               value: editingItem.hora_inicio === '11:00:00' ? 'mañana' : 'tarde',
               hora_inicio: editingItem.hora_inicio,
+              hora_fin: editingItem.hora_fin,
             }
           : null,
+        
+        // Datos del festejado y comentarios
+        nombre_festejado: editingItem.nombre_festejado || '',
+        edad_festejado: editingItem.edad_festejado || '',
+        comentarios: editingItem.comentarios || '',
+        
+        // Datos financieros y estado
         total: editingItem.total || '0.00',
         activo: editingItem.activo !== undefined ? editingItem.activo : true,
         tuesdayFee: editingItem.tuesdayFee || 0,
+        estado: editingItem.estado || 'pendiente',
+        
+        // Mantener las relaciones completas para referencia
+        usuario: editingItem.usuario,
+        paquete: editingItem.paquete,
+        opcionAlimento: editingItem.opcionAlimento,
+        tematicaReserva: editingItem.tematicaReserva,
+        mampara: editingItem.mampara,
       };
 
       reset(formattedData);
@@ -357,7 +391,7 @@ const ReservationForm = ({
       edad_festejado: Number(data.edad_festejado),
       comentarios: data.comentarios,
       total: parseFloat(data.total),
-      estado: 'pendiente',
+      estado: editingItem ? editingItem.estado : 'pendiente',
       activo: data.activo,
       tuesdayFee: data.tuesdayFee ? parseFloat(data.tuesdayFee) : 0,
     };
@@ -551,6 +585,7 @@ const ReservationForm = ({
                 control={control}
                 errors={errors}
                 setValue={setValue}
+                getValues={getValues}
                 existingReservations={existingReservations.filter(r => r.estado !== 'cancelada')}
                 packages={packages}
                 showTuesdayModal={showTuesdayModal}
@@ -573,6 +608,7 @@ const ReservationForm = ({
                 errors={errors}
                 filteredMamparas={filteredMamparas}
                 setValue={setValue}
+                getValues={getValues}
               />
             </div>
 
