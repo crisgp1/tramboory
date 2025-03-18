@@ -126,6 +126,34 @@ export const uploadImageToCloudinary = async (file) => {
   }
 };
 
+// Función para subir archivos (PDF, XML, etc.) a Cloudinary
+export const uploadFileToCloudinary = async (file) => {
+  const formData = new FormData();
+  formData.append('file', file);
+  formData.append('upload_preset', import.meta.env.VITE_CLOUDINARY_UPLOAD_PRESET || 'ml_default');
+  
+  try {
+    // Asegurar que el cloud name esté en minúsculas para evitar problemas
+    const cloudName = (import.meta.env.VITE_CLOUDINARY_CLOUD_NAME || 'tramboory').toLowerCase();
+    
+    // Determina si es un archivo PDF o XML para usar el endpoint correcto
+    const resourceType = file.type.includes('pdf') || file.type.includes('xml') ? 'raw' : 'auto';
+    
+    const response = await axios.post(
+      `https://api.cloudinary.com/v1_1/${cloudName}/${resourceType}/upload`,
+      formData
+    );
+    
+    return {
+      url: response.data.secure_url,
+      cloudinary_id: response.data.public_id
+    };
+  } catch (error) {
+    console.error('Error al subir archivo a Cloudinary:', error);
+    throw error;
+  }
+};
+
 // Función para subir múltiples imágenes a Cloudinary
 export const uploadMultipleImagesToCloudinary = async (files) => {
   try {
@@ -149,5 +177,6 @@ export default {
   deleteImagenCarousel,
   purgeImagenCarousel,
   uploadImageToCloudinary,
-  uploadMultipleImagesToCloudinary
+  uploadMultipleImagesToCloudinary,
+  uploadFileToCloudinary
 };

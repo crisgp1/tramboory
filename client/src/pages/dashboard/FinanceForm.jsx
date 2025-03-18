@@ -15,10 +15,13 @@ import {
   FiInfo,
   FiSearch,
   FiChevronDown,
-  FiSave
+  FiSave,
+  FiFileText as FiFilePdf,
+  FiCode
 } from 'react-icons/fi'
 import { TwitterPicker } from 'react-color'
 import CurrencyInput from '../../components/CurrencyInput'
+import CloudinaryFileSelector from '../../components/CloudinaryFileSelector'
 
 const FinanceForm = ({
   editingItem,
@@ -108,16 +111,17 @@ const FinanceForm = ({
       return;
     }
 
-    const formattedData = {
-      ...data,
-      id_categoria: data.id_categoria,
-      id_reserva: data.id_reserva || null,
-      id_usuario: currentUser.id,
-      monto: parseFloat(data.monto || '0'),
-      factura_pdf: null,
-      factura_xml: null,
-      archivo_prueba: null
-    };
+  const formattedData = {
+    ...data,
+    id_categoria: data.id_categoria,
+    id_reserva: data.id_reserva || null,
+    id_usuario: currentUser.id,
+    monto: parseFloat(data.monto || '0'),
+    // Las URLs de Cloudinary ya están en los campos
+    factura_pdf: data.factura_pdf || null,
+    factura_xml: data.factura_xml || null,
+    archivo_prueba: data.archivo_prueba || null
+  };
 
     if (isNaN(formattedData.monto) || formattedData.monto <= 0) {
       toast.error('El monto debe ser mayor que 0');
@@ -433,71 +437,66 @@ const FinanceForm = ({
           <label className='block text-sm font-medium text-gray-700 mb-1'>
             Factura PDF
           </label>
-          <div className='relative'>
-          <FiUpload className='absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500 w-5 h-5 z-10 transition-colors duration-200' />
-          <input
-            type='file'
-            accept='application/pdf'
-            {...register('factura_pdf', {
-              validate: {
-                fileType: (value) => {
-                  if (!value || !value[0]) return true;
-                  return value[0].type === 'application/pdf' || 'Solo se permiten archivos PDF';
-                }
-              }
-            })}
-            className='pl-10 w-full p-2.5 border rounded-lg shadow-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 bg-white hover:border-indigo-300 transition-colors duration-200'
+          <Controller
+            name="factura_pdf"
+            control={control}
+            defaultValue=""
+            render={({ field }) => (
+              <CloudinaryFileSelector
+                value={field.value}
+                onChange={field.onChange}
+                placeholder="Selecciona o sube un archivo PDF"
+                acceptTypes="application/pdf"
+                label="Factura PDF"
+                icon={FiFilePdf}
+              />
+            )}
           />
         </div>
-      </div>
 
         {/* Factura XML */}
         <div className='lg:col-span-2'>
           <label className='block text-sm font-medium text-gray-700 mb-1'>
             Factura XML
           </label>
-          <div className='relative'>
-          <FiFile className='absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500 w-5 h-5 z-10 transition-colors duration-200' />
-          <input
-            type='file'
-            accept='application/xml,text/xml'
-            {...register('factura_xml', {
-              validate: {
-                fileType: (value) => {
-                  if (!value || !value[0]) return true;
-                  return ['application/xml', 'text/xml'].includes(value[0].type) || 'Solo se permiten archivos XML';
-                }
-              }
-            })}
-            className='pl-10 w-full p-2.5 border rounded-lg shadow-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 bg-white hover:border-indigo-300 transition-colors duration-200'
+          <Controller
+            name="factura_xml"
+            control={control}
+            defaultValue=""
+            render={({ field }) => (
+              <CloudinaryFileSelector
+                value={field.value}
+                onChange={field.onChange}
+                placeholder="Selecciona o sube un archivo XML"
+                acceptTypes="application/xml,text/xml"
+                label="Factura XML"
+                icon={FiCode}
+              />
+            )}
           />
         </div>
-      </div>
 
         {/* Archivo de prueba */}
-        {editingItem && editingItem.archivo_prueba && (
-          <div>
-            <label className='block text-sm font-medium text-gray-700 mb-1'>
-              Archivo de prueba actual
-            </label>
-            <div className='text-sm text-gray-500'>
-              {editingItem.archivo_prueba}
-            </div>
-          </div>
-        )}
         <div className='lg:col-span-2'>
-        <label className='block text-sm font-medium text-gray-700 mb-1'>
-          Archivo de Prueba (Opcional)
-        </label>
-        <div className='relative'>
-          <FiUpload className='absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500 w-5 h-5 z-10 transition-colors duration-200' />
-          <input
-            type='file'
-            {...register('archivo_prueba')}
-            className='pl-10 w-full p-2.5 border rounded-lg shadow-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 bg-white hover:border-indigo-300 transition-colors duration-200'
+          <label className='block text-sm font-medium text-gray-700 mb-1'>
+            Archivo de Prueba (Opcional - PNG, JPG o PDF)
+          </label>
+          <Controller
+            name="archivo_prueba"
+            control={control}
+            defaultValue=""
+            render={({ field }) => (
+              <CloudinaryFileSelector
+                value={field.value}
+                onChange={field.onChange}
+                placeholder="Selecciona o sube un archivo (PNG, JPG o PDF)"
+                acceptTypes="image/png,image/jpeg,application/pdf"
+                label="Archivo de Prueba"
+                icon={FiFile}
+              />
+            )}
           />
         </div>
-      </div>
       </div>
     </form>
   )

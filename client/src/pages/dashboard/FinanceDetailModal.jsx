@@ -1,11 +1,12 @@
 import React, { useState } from 'react';
 import PropTypes from 'prop-types';
 import Modal from '../../components/ui/Modal';
-import { FiDollarSign, FiCalendar, FiTag, FiFileText, FiDownload, FiPrinter, FiEye } from 'react-icons/fi';
+import { FiDollarSign, FiCalendar, FiTag, FiFileText, FiDownload, FiPrinter, FiEye, FiCode, FiFile } from 'react-icons/fi';
 import ReservationPreviewModal from './ReservationPreviewModal';
 import { formatDate, formatNumber } from '../../utils/formatters';
+import CloudinaryFileSelector from '../../components/CloudinaryFileSelector';
 
-const FinanceDetailModal = ({ finance, onClose, onDownloadFile }) => {
+const FinanceDetailModal = ({ finance, onClose }) => {
     const [showReservationPreview, setShowReservationPreview] = useState(false);
     const IconWrapper = ({ icon: Icon, text, color = "text-gray-700" }) => (
         <div className={`flex items-center mb-3 group hover:scale-[1.02] transition-all duration-200 ${color}`}>
@@ -117,54 +118,62 @@ const FinanceDetailModal = ({ finance, onClose, onDownloadFile }) => {
                         </div>
                     </div>
                 </div>
-                <div className="space-y-6">
+                <div className="space-y-6 overflow-y-auto max-h-[600px] pr-2">
                     <div>
                         <h3 className="text-lg font-medium text-gray-900 mb-3">Archivos Adjuntos</h3>
-                        <div className="bg-white p-4 rounded-xl border border-gray-200 shadow-sm hover:shadow-md transition-all duration-200">
+                        <div className="space-y-4">
                             {finance.factura_pdf && (
-                                <IconWrapper
-                                    icon={FiFileText}
-                                    text={
-                                        <button
-                                            onClick={() => onDownloadFile(finance.id, 'pdf')}
-                            className="text-blue-600 hover:text-blue-800 transition-colors duration-200 flex items-center gap-2 hover:underline"
-                            title="Descargar archivo PDF"
-                                        >
-                                            Descargar Factura PDF
-                                        </button>
-                                    }
-                                />
+                                <div className="bg-white p-4 rounded-xl border border-gray-200 shadow-sm hover:shadow-md transition-all duration-200">
+                                    <h4 className="text-sm font-medium text-gray-900 mb-2 flex items-center">
+                                        <FiFileText className="mr-2 text-indigo-600" />
+                                        Factura PDF
+                                    </h4>
+                                    <CloudinaryFileSelector
+                                        value={finance.factura_pdf}
+                                        readOnly={true}
+                                        icon={FiFileText}
+                                        acceptTypes="application/pdf"
+                                        showPreview={true}
+                                    />
+                                </div>
                             )}
+                            
                             {finance.factura_xml && (
-                                <IconWrapper
-                                    icon={FiFileText}
-                                    text={
-                                        <button
-                                            onClick={() => onDownloadFile(finance.id, 'xml')}
-                            className="text-blue-600 hover:text-blue-800 transition-colors duration-200 flex items-center gap-2 hover:underline"
-                            title="Descargar archivo XML"
-                                        >
-                                            Descargar Factura XML
-                                        </button>
-                                    }
-                                />
+                                <div className="bg-white p-4 rounded-xl border border-gray-200 shadow-sm hover:shadow-md transition-all duration-200">
+                                    <h4 className="text-sm font-medium text-gray-900 mb-2 flex items-center">
+                                        <FiCode className="mr-2 text-indigo-600" />
+                                        Factura XML
+                                    </h4>
+                                    <CloudinaryFileSelector
+                                        value={finance.factura_xml}
+                                        readOnly={true}
+                                        icon={FiCode}
+                                        acceptTypes="application/xml"
+                                        showPreview={true}
+                                    />
+                                </div>
                             )}
+                            
                             {finance.archivo_prueba && (
-                                <IconWrapper
-                                    icon={FiFileText}
-                                    text={
-                                        <button
-                                            onClick={() => onDownloadFile(finance.id, 'prueba')}
-                            className="text-blue-600 hover:text-blue-800 transition-colors duration-200 flex items-center gap-2 hover:underline"
-                            title="Descargar archivo de prueba"
-                                        >
-                                            Descargar Archivo de Prueba
-                                        </button>
-                                    }
-                                />
+                                <div className="bg-white p-4 rounded-xl border border-gray-200 shadow-sm hover:shadow-md transition-all duration-200">
+                                    <h4 className="text-sm font-medium text-gray-900 mb-2 flex items-center">
+                                        <FiFile className="mr-2 text-indigo-600" />
+                                        Archivo de Prueba
+                                    </h4>
+                                    <CloudinaryFileSelector
+                                        value={finance.archivo_prueba}
+                                        readOnly={true}
+                                        icon={FiFile}
+                                        acceptTypes="application/pdf,image/jpeg,image/png"
+                                        showPreview={true}
+                                    />
+                                </div>
                             )}
+                            
                             {!finance.factura_pdf && !finance.factura_xml && !finance.archivo_prueba && (
-                                <p className="text-gray-500 text-sm">No hay archivos adjuntos</p>
+                                <div className="bg-white p-4 rounded-xl border border-gray-200 shadow-sm hover:shadow-md transition-all duration-200">
+                                    <p className="text-gray-500 text-sm">No hay archivos adjuntos</p>
+                                </div>
                             )}
                         </div>
                     </div>
@@ -211,8 +220,7 @@ FinanceDetailModal.propTypes = {
         archivo_prueba: PropTypes.string,
         comentarios: PropTypes.string
     }).isRequired,
-    onClose: PropTypes.func.isRequired,
-    onDownloadFile: PropTypes.func.isRequired
+    onClose: PropTypes.func.isRequired
 };
 
 export default FinanceDetailModal;

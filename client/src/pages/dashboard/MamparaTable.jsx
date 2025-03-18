@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import { FiEdit2, FiTrash2, FiEye, FiX, FiMaximize } from 'react-icons/fi';
+import { FiEdit2, FiTrash2, FiEye, FiX, FiMaximize, FiImage, FiPlus } from 'react-icons/fi';
 import { formatNumber } from '../../utils/formatters';
 
 // Componente para mostrar imágenes a pantalla completa
@@ -77,73 +77,92 @@ const MamparaTable = ({ mamparas, tematicas, handleEditItem, handleDeleteItem })
         <thead>
           <tr className="bg-gray-100">
             <th className="px-4 py-2 text-left">ID</th>
-            <th className="px-4 py-2 text-left">Imagen</th>
+            <th className="px-4 py-2 text-center">Imagen</th>
             <th className="px-4 py-2 text-left">Piezas</th>
             <th className="px-4 py-2 text-left">Precio</th>
             <th className="px-4 py-2 text-left">Temática</th>
-            <th className="px-4 py-2 text-left">Acciones</th>
+            <th className="px-4 py-2 text-center">Acciones</th>
           </tr>
         </thead>
         <tbody>
-          {activeMamparas.map((mampara) => (
-            <tr key={mampara.id} className="border-b border-gray-200 hover:bg-gray-50">
-              <td className="px-4 py-2">{mampara.id}</td>
-              <td className="px-4 py-2">
-                {mampara.foto ? (
-                  <div className="relative group w-14 h-14">
-                    <img
-                      src={mampara.foto}
-                      alt={`Mampara de ${mampara.piezas} piezas`}
-                      className="w-14 h-14 object-cover rounded-md border border-gray-200 cursor-pointer"
-                      onClick={() => openLightbox(mampara.foto)}
-                      onError={(e) => {
-                        e.target.onerror = null;
-                        e.target.src = 'https://via.placeholder.com/60x60?text=Error';
-                      }}
-                    />
-                    <div 
-                      className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-30 transition-opacity duration-300 flex items-center justify-center opacity-0 group-hover:opacity-100 cursor-pointer rounded-md"
-                      onClick={() => openLightbox(mampara.foto)}
-                    >
-                      <div className="p-1 bg-white bg-opacity-80 rounded-full">
-                        <FiMaximize className="text-indigo-600" size={14} />
+          {activeMamparas.length > 0 ? (
+            activeMamparas.map((mampara) => (
+              <tr key={mampara.id} className="border-b border-gray-200 hover:bg-gray-50">
+                <td className="px-4 py-2 align-middle">{mampara.id}</td>
+                <td className="px-4 py-2 align-middle text-center">
+                  {mampara.foto ? (
+                    <div className="relative group w-14 h-14">
+                      <img
+                        src={mampara.foto}
+                        alt={`Mampara de ${mampara.piezas} piezas`}
+                        className="w-14 h-14 object-cover rounded-md border border-gray-200 cursor-pointer"
+                        onClick={() => openLightbox(mampara.foto)}
+                        onError={(e) => {
+                          e.target.onerror = null;
+                          e.target.src = 'https://via.placeholder.com/60x60?text=Error';
+                        }}
+                      />
+                      <div 
+                        className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-30 transition-opacity duration-300 flex items-center justify-center opacity-0 group-hover:opacity-100 cursor-pointer rounded-md"
+                        onClick={() => openLightbox(mampara.foto)}
+                      >
+                        <div className="p-1 bg-white bg-opacity-80 rounded-full">
+                          <FiMaximize className="text-indigo-600" size={14} />
+                        </div>
                       </div>
                     </div>
-                  </div>
-                ) : (
-                  <span className="text-gray-400 text-sm">Sin imagen</span>
-                )}
-              </td>
-              <td className="px-4 py-2">{mampara.piezas}</td>
-              <td className="px-4 py-2">{formatNumber(mampara.precio)}</td>
-              <td className="px-4 py-2">{getTematicaNombre(mampara.id_tematica)}</td>
-              <td className="px-4 py-2 flex justify-center space-x-2">
-                <button
-                  onClick={() => handleEditItem(mampara)}
-                  className="p-1 text-blue-500 hover:text-blue-700 hover:bg-blue-50 rounded-full transition-colors"
-                  title="Editar"
-                >
-                  <FiEdit2 size={18} />
-                </button>
-                <button
-                  onClick={() => handleDeleteItem(mampara.id)}
-                  className="p-1 text-red-500 hover:text-red-700 hover:bg-red-50 rounded-full transition-colors"
-                  title="Eliminar"
-                >
-                  <FiTrash2 size={18} />
-                </button>
-                {mampara.foto && (
+                  ) : (
+                    <span className="text-gray-400 text-sm">Sin imagen</span>
+                  )}
+                </td>
+                <td className="px-4 py-2 align-middle">{mampara.piezas}</td>
+                <td className="px-4 py-2 align-middle">{formatNumber(mampara.precio)}</td>
+                <td className="px-4 py-2 align-middle">{getTematicaNombre(mampara.id_tematica)}</td>
+                <td className="px-4 py-2 flex items-center justify-center space-x-2">
                   <button
-                    onClick={() => openLightbox(mampara.foto)}
-                    className="p-1 text-indigo-500 hover:text-indigo-700 hover:bg-indigo-50 rounded-full transition-colors"
-                    title="Ver imagen"
+                    onClick={() => handleEditItem(mampara)}
+                    className="p-1 text-blue-500 hover:text-blue-700 hover:bg-blue-50 rounded-full transition-colors"
+                    title="Editar"
                   >
-                    <FiEye size={18} />
+                    <FiEdit2 size={18} />
                   </button>
-                )}
+                  <button
+                    onClick={() => handleDeleteItem(mampara.id)}
+                    className="p-1 text-red-500 hover:text-red-700 hover:bg-red-50 rounded-full transition-colors"
+                    title="Eliminar"
+                  >
+                    <FiTrash2 size={18} />
+                  </button>
+                  {mampara.foto && (
+                    <button
+                      onClick={() => openLightbox(mampara.foto)}
+                      className="p-1 text-indigo-500 hover:text-indigo-700 hover:bg-indigo-50 rounded-full transition-colors"
+                      title="Ver imagen"
+                    >
+                      <FiEye size={18} />
+                    </button>
+                  )}
+                </td>
+              </tr>
+            ))
+          ) : (
+            <tr>
+              <td colSpan="6" className="px-4 py-8 text-center">
+                <div className="flex flex-col items-center justify-center p-6 border border-dashed border-gray-300 rounded-lg">
+                  <FiImage className="w-12 h-12 mb-3 text-gray-400" />
+                  <p className="text-lg font-semibold text-gray-700 mb-1">No hay mamparas disponibles</p>
+                  <p className="text-sm text-gray-500 mb-4">Añade tu primera mampara para comenzar</p>
+                  <button 
+                    onClick={() => handleEditItem({ id: 0, activo: true, piezas: '', precio: 0, id_tematica: '' })} 
+                    className="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 transition-colors flex items-center"
+                  >
+                    <span className="mr-2">Agregar Mampara</span>
+                    <FiPlus size={16} />
+                  </button>
+                </div>
               </td>
             </tr>
-          ))}
+          )}
         </tbody>
       </table>
 

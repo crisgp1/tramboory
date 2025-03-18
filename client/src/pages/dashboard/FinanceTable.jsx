@@ -1,5 +1,5 @@
 import React, { useMemo } from 'react';
-import { FiEdit2, FiTrash2, FiDownload, FiEye, FiFileText } from 'react-icons/fi';
+import { FiEdit2, FiTrash2, FiEye, FiFileText, FiFile } from 'react-icons/fi';
 import PropTypes from 'prop-types';
 import { formatDate, formatNumber } from '../../utils/formatters';
 
@@ -7,7 +7,6 @@ const FinanceTable = ({
     finances, 
     handleEditItem, 
     handleDeleteItem, 
-    handleDownloadFile, 
     handleViewDetails, 
     categories,  
     generateMonthlyReport 
@@ -98,11 +97,11 @@ const FinanceTable = ({
                         <td className="px-6 py-4 whitespace-nowrap text-center">
                             {finance.factura_pdf || finance.factura_xml || finance.archivo_prueba ? (
                                 <button
-                                    onClick={() => handleDownloadFile(finance.id)}
+                                    onClick={() => handleViewDetails(finance)}
                                     className="text-indigo-600 hover:text-indigo-900"
-                                    title="Descargar archivo"
+                                    title="Ver archivos"
                                 >
-                                    <FiDownload className="h-5 w-5" />
+                                    <FiFile className="h-5 w-5" />
                                 </button>
                             ) : (
                                 <span className="text-gray-400">N/A</span>
@@ -154,7 +153,6 @@ FinanceTable.propTypes = {
     })).isRequired,
     handleEditItem: PropTypes.func.isRequired,
     handleDeleteItem: PropTypes.func.isRequired,
-    handleDownloadFile: PropTypes.func.isRequired,
     handleViewDetails: PropTypes.func.isRequired,
     categories: PropTypes.arrayOf(PropTypes.shape({
         id: PropTypes.number.isRequired,

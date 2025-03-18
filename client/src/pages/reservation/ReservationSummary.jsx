@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import { useWatch } from 'react-hook-form';
 import {
   FiPackage,
@@ -145,7 +146,10 @@ const ImageLightbox = ({ isOpen, onClose, imageUrl, alt, images, currentIndex, s
     
     if (isOpen) {
       window.addEventListener('keydown', handleKeyboardEvents);
-      return () => window.removeEventListener('keydown', handleKeyboardEvents);
+      
+      return () => {
+        window.removeEventListener('keydown', handleKeyboardEvents);
+      }
     }
   }, [isOpen, images, setCurrentIndex, onClose]);
   
@@ -154,15 +158,17 @@ const ImageLightbox = ({ isOpen, onClose, imageUrl, alt, images, currentIndex, s
     ? optimizeCloudinaryUrl(imageUrl, { width: 1200, height: 900, quality: 'auto:best' })
     : imageUrl;
 
-  return (
+  // Renderizar usando Portal directamente en el body del documento
+  return createPortal(
     <div 
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/95 backdrop-blur-sm transition-opacity duration-300"
+      className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/75 backdrop-blur-sm transition-all duration-300 animate-fadeIn"
+      style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0 }}
       onClick={handleBackdropClick} // Cerrar al hacer clic en cualquier parte
       onTouchStart={handleTouchStart}
       onTouchMove={handleTouchMove}
       onTouchEnd={handleTouchEnd}
     >
-      <div className="relative w-full h-full flex flex-col">
+      <div className="relative w-full h-full flex flex-col animate-fadeIn">
         {/* Barra superior con botón de cierre e indicador */}
         <div className="flex justify-between items-center p-4">
           {images && images.length > 1 && (
@@ -181,26 +187,37 @@ const ImageLightbox = ({ isOpen, onClose, imageUrl, alt, images, currentIndex, s
         
         {/* Contenedor de la imagen - evita que los clics en la imagen cierren el lightbox */}
         <div className="flex-1 flex items-center justify-center p-4">
-          <img 
-            src={optimizedImageUrl}
-            alt={alt}
-            className="max-h-full max-w-full object-contain"
-            onClick={handleImageClick}
-          />
+          <div className="max-h-[80vh] max-w-[90vw] relative animate-scaleIn">
+            <img 
+              src={optimizedImageUrl}
+              alt={alt}
+              className="h-auto w-auto max-h-[80vh] max-w-[90vw] object-contain"
+              onClick={handleImageClick}
+              style={{
+                boxShadow: '0 0 20px rgba(0,0,0,0.3)'
+              }}
+            />
+          </div>
         </div>
         
         {/* Controles de navegación para múltiples imágenes */}
         {images && images.length > 1 && (
           <div className="absolute bottom-0 left-0 right-0 p-4 flex justify-between">
             <button
-              onClick={() => setCurrentIndex((prev) => (prev - 1 + images.length) % images.length)}
+              onClick={(e) => {
+                e.stopPropagation();
+                setCurrentIndex((prev) => (prev - 1 + images.length) % images.length);
+              }}
               className="bg-black/50 text-white p-3 rounded-full hover:bg-indigo-600/80 transition-colors"
               aria-label="Imagen anterior"
             >
               <FiArrowLeft size={20} />
             </button>
             <button
-              onClick={() => setCurrentIndex((prev) => (prev + 1) % images.length)}
+              onClick={(e) => {
+                e.stopPropagation();
+                setCurrentIndex((prev) => (prev + 1) % images.length);
+              }}
               className="bg-black/50 text-white p-3 rounded-full hover:bg-indigo-600/80 transition-colors"
               aria-label="Imagen siguiente"
             >
@@ -209,7 +226,8 @@ const ImageLightbox = ({ isOpen, onClose, imageUrl, alt, images, currentIndex, s
           </div>
         )}
       </div>
-    </div>
+    </div>,
+    document.body
   );
 };
 
