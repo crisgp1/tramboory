@@ -3,9 +3,9 @@ const cloudinary = require('cloudinary').v2;
 
 // Configuración de Cloudinary con las credenciales
 cloudinary.config({ 
-  cloud_name: process.env.CLOUDINARY_CLOUD_NAME || 'dswklswqw', 
-  api_key: process.env.CLOUDINARY_API_KEY || '456762825847946', 
-  api_secret: process.env.CLOUDINARY_API_SECRET || 'y4OC6UV8RCnXhGhZI8ITp_VopAs' 
+  cloud_name: process.env.CLOUDINARY_CLOUD_NAME, 
+  api_key: process.env.CLOUDINARY_API_KEY, 
+  api_secret: process.env.CLOUDINARY_API_SECRET
 });
 
 // Obtener todas las imágenes activas ordenadas por el campo 'orden'
