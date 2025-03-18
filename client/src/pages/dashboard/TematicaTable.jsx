@@ -235,7 +235,7 @@ const TematicaTable = ({ tematicas, handleEditItem, handleDeleteItem }) => {
               </td>
               <td className="px-4 py-2">{tematica.nombre}</td>
               <td className="px-4 py-2">{tematica.descripcion}</td>
-              <td className="px-4 py-2 flex space-x-2">
+              <td className="px-4 py-2 flex justify-center space-x-2">
                 <button
                   onClick={() => handleEditItem(tematica)}
                   className="p-1 text-blue-500 hover:text-blue-700 hover:bg-blue-50 rounded-full transition-colors"

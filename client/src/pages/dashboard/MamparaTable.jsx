@@ -117,7 +117,7 @@ const MamparaTable = ({ mamparas, tematicas, handleEditItem, handleDeleteItem })
               <td className="px-4 py-2">{mampara.piezas}</td>
               <td className="px-4 py-2">{formatNumber(mampara.precio)}</td>
               <td className="px-4 py-2">{getTematicaNombre(mampara.id_tematica)}</td>
-              <td className="px-4 py-2 flex space-x-2">
+              <td className="px-4 py-2 flex justify-center space-x-2">
                 <button
                   onClick={() => handleEditItem(mampara)}
                   className="p-1 text-blue-500 hover:text-blue-700 hover:bg-blue-50 rounded-full transition-colors"
