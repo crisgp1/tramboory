@@ -26,6 +26,7 @@ const Dashboard = lazy(() => import('./pages/dashboard/Dashboard.jsx'))
 const Reservation = lazy(() => import('./pages/reservation/index.jsx'))
 const ForgotPassword = lazy(() => import('./pages/ForgotPassword.jsx'))
 const Appointment = lazy(() => import('./pages/Appointment.jsx'))
+const AboutTramboory = lazy(() => import('./pages/AboutTramboory.jsx'))
 const InventoryDashboard = lazy(() => import('./pages/inventory/InventoryDashboard.jsx'))
 const ReservationStatus = lazy(() =>
   import('./pages/reservation/ReservationStatus.jsx')
@@ -228,7 +229,8 @@ function App () {
             {/* Rutas sin Header ni Footer */}
             <Route path='/' element={<Home />} />
             <Route path='/appointments' element={<Appointment />} />
-
+            <Route path='/about' element={<AboutTramboory />} />
+            
             {/* Rutas con Header y Footer */}
             <Route element={<Layout />}>
               <Route
@@ -240,6 +242,7 @@ function App () {
                 }
               />
               <Route path='/signup' element={<Signup />} />
+              
               <Route
                 path='/dashboard'
                 element={

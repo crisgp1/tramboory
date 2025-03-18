@@ -4,6 +4,7 @@
   import { gsap } from 'gsap'
   import { ScrollTrigger } from 'gsap/ScrollTrigger'
   import 'react-responsive-carousel/lib/styles/carousel.min.css'
+  import { getImagenesCarousel, getPromocionesCarousel } from '../services/galeriaService'
   import {
     FiMenu,
     FiX,
@@ -28,10 +29,14 @@
     FiHeart,
     FiMapPin,
     FiCheck,
-    FiMessageCircle
+    FiMessageCircle,
+    FiCamera,
+    FiImage,
+    FiInfo
   } from 'react-icons/fi'
   import Logo from '../img/logo.webp'
   import BackgroundVideo from '../video/background.webm'
+  import CloudinaryCarousel from '../components/CloudinaryCarousel'
 
   // Registrar GSAP ScrollTrigger
   gsap.registerPlugin(ScrollTrigger)
@@ -433,6 +438,60 @@
     // Estados
     const [isMenuOpen, setIsMenuOpen] = useState(false)
     const [isVideoPlaying, setIsVideoPlaying] = useState(true)
+    const [carouselImages, setCarouselImages] = useState([])
+    const [promocionesImages, setPromocionesImages] = useState([])
+    const [isLoadingImages, setIsLoadingImages] = useState(true)
+    const [isLoadingPromociones, setIsLoadingPromociones] = useState(true)
+    
+    // Cargar imágenes del carrusel y promociones desde la API
+    useEffect(() => {
+      // Función para cargar imágenes del carrusel
+      const loadImages = async () => {
+        try {
+          setIsLoadingImages(true);
+          const imagenes = await getImagenesCarousel();
+          
+          // Ordenar por el campo orden y obtener solo las URLs de las imágenes activas
+          const imageUrls = imagenes
+            .filter(img => img.activo)
+            .sort((a, b) => a.orden - b.orden)
+            .map(img => img.imagen_url);
+          
+          // Usar solo las imágenes de la base de datos
+          setCarouselImages(imageUrls);
+        } catch (error) {
+          console.error('Error cargando imágenes del carrusel:', error);
+          // En caso de error, establecer un array vacío
+          setCarouselImages([]);
+        } finally {
+          setIsLoadingImages(false);
+        }
+      };
+      
+      // Función para cargar promociones del mes
+      const loadPromociones = async () => {
+        try {
+          setIsLoadingPromociones(true);
+          const promociones = await getPromocionesCarousel();
+          
+          // Ordenar por el campo orden y obtener solo las URLs de las promociones activas
+          const promoUrls = promociones
+            .filter(promo => promo.activo)
+            .sort((a, b) => a.orden - b.orden)
+            .map(promo => promo.imagen_url);
+          
+          setPromocionesImages(promoUrls);
+        } catch (error) {
+          console.error('Error cargando promociones del mes:', error);
+          setPromocionesImages([]);
+        } finally {
+          setIsLoadingPromociones(false);
+        }
+      };
+      
+      loadImages();
+      loadPromociones();
+    }, []);
     
     // Referencias
     const sectionRefs = {
@@ -444,9 +503,10 @@
     }
 
     // Datos
-    const menuItems = [
+  const menuItems = [
       { icon: <FiCalendar />, text: 'Reservar', link: '/appointments' },
       { icon: <FiPackage />, text: 'Paquetes', link: '/appointments' },
+      { icon: <FiInfo />, text: '¿Qué es Tramboory?', link: '/about' },
       { icon: <FiMail />, text: 'Contacto', link: '/contact' },
       { icon: <FiLogIn />, text: 'Iniciar Sesión', link: '/signin' },
       { icon: <FiUserPlus />, text: 'Registrarse', link: '/signup' }
@@ -716,7 +776,67 @@
           </motion.div>
         </section>
 
-  {/* Sección de Servicios */}
+        {/* Sección de Promociones del Mes */}
+        {promocionesImages.length > 0 && (
+          <section
+            id="promociones"
+            className="relative py-16 bg-gradient-to-br from-purple-800/80 to-pink-800/80 scroll-mt-20"
+          >
+            <div className="container mx-auto px-6">
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                className="text-center mb-10"
+              >
+                <h2 className="text-3xl md:text-4xl font-bold text-white mb-4 font-funhouse">
+                  ¡Promociones del Mes!
+                </h2>
+                <p className="text-lg text-yellow-300 max-w-2xl mx-auto">
+                  No te pierdas nuestras ofertas especiales por tiempo limitado
+                </p>
+              </motion.div>
+
+              <motion.div
+                initial={{ opacity: 0, y: 30 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.6, delay: 0.1 }}
+                viewport={{ once: true }}
+                className="mb-8"
+              >
+                <CloudinaryCarousel 
+                  height="400px"
+                  autoPlaySpeed={3000}
+                  imageWidth={1.2}
+                  images={promocionesImages}
+                />
+              </motion.div>
+
+              <div className="flex justify-center">
+                <motion.div
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                >
+                  <Link
+                    to="/reservations"
+                    className="px-8 py-4 bg-gradient-to-r from-yellow-400 to-yellow-500
+                      text-purple-900 rounded-full font-bold text-lg shadow-xl
+                      hover:from-yellow-500 hover:to-yellow-600 transition-all duration-300"
+                  >
+                    ¡Reserva Ahora!
+                    <FiArrowRight className="inline-block ml-2" />
+                  </Link>
+                </motion.div>
+              </div>
+            </div>
+            
+            {/* Decorative Elements */}
+            <div className="absolute top-0 inset-x-0 h-64 bg-gradient-to-b from-black/20 to-transparent pointer-events-none" />
+            <div className="absolute bottom-0 inset-x-0 h-64 bg-gradient-to-t from-black/20 to-transparent pointer-events-none" />
+          </section>
+        )}
+
+        {/* Sección de Servicios */}
   <section
           id="services"
           className="relative py-24 bg-gradient-to-b from-purple-900/90 to-indigo-900/90
@@ -778,6 +898,64 @@
 
           <div className="absolute top-0 inset-x-0 h-64 bg-gradient-to-b from-purple-900/20 to-transparent pointer-events-none" />
           <div className="absolute bottom-0 inset-x-0 h-64 bg-gradient-to-t from-black/20 to-transparent pointer-events-none" />
+        </section>
+
+        {/* Sección de Galería */}
+        <section
+          id="gallery"
+          className="relative py-24 bg-gradient-to-b from-purple-900/90 to-black/90 scroll-mt-20"
+        >
+          <div className="container mx-auto px-6">
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              className="text-center mb-16"
+            >
+              <h2 className="text-4xl md:text-5xl font-bold text-white mb-6 font-funhouse">
+                Nuestra Galería
+              </h2>
+              <p className="text-xl text-gray-300 max-w-2xl mx-auto">
+                Momentos inolvidables capturados en Tramboory. ¡Descubre la diversión que te espera!
+              </p>
+            </motion.div>
+
+            <motion.div
+              initial={{ opacity: 0, y: 30 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.8, delay: 0.2 }}
+              viewport={{ once: true }}
+              className="mb-16"
+            >
+              {/* Sección de galería usando imágenes dinámicas */}
+              <CloudinaryCarousel 
+                height="450px"
+                autoPlaySpeed={2500}
+                imageWidth={1.6}
+                images={carouselImages}
+              />
+            </motion.div>
+
+            <div className="flex justify-center">
+              <motion.a
+                href="https://www.instagram.com/tramboory/"
+                target="_blank"
+                rel="noopener noreferrer"
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                className="flex items-center px-8 py-4 bg-white/10 backdrop-blur-sm text-white 
+                  rounded-full font-bold text-lg border-2 border-yellow-400/30 hover:bg-white/20
+                  transition-all duration-300"
+              >
+                <FiCamera className="mr-2" />
+                Ver más en Instagram
+              </motion.a>
+            </div>
+          </div>
+          
+          {/* Decorative Elements */}
+          <div className="absolute top-0 inset-x-0 h-64 bg-gradient-to-b from-purple-900/20 to-transparent pointer-events-none" />
+          <div className="absolute bottom-0 inset-x-0 h-64 bg-gradient-to-t from-purple-900/20 to-transparent pointer-events-none" />
         </section>
 
         {/* Sección de Contacto */}

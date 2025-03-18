@@ -15,11 +15,12 @@ const Extra = require('./Extra');
 const Categoria = require('./Categoria');
 const ReservaExtra = require('./ReservaExtra');
 const Auditoria = require('./Auditoria');
+const GaleriaHome = require('./GaleriaHome');
 
 // Agregar hooks de auditoría a todos los modelos
 const modelos = [
   Paquete, PaqueteAlimento, OpcionAlimento, Usuario, Reserva,
-  Finanza, Pago, Mampara, Tematica, Extra, Categoria
+  Finanza, Pago, Mampara, Tematica, Extra, Categoria, GaleriaHome
 ];
 
 modelos.forEach(modelo => {
@@ -88,5 +89,6 @@ module.exports = {
   Extra,
   Categoria,
   ReservaExtra,
-  Auditoria
+  Auditoria,
+  GaleriaHome
 };

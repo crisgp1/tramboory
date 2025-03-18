@@ -17,6 +17,7 @@ const extraRoutes = require('./routes/extraRoutes');
 const mamparaRoutes = require('./routes/mamparaRoutes');
 const pagoRoutes = require('./routes/pagoRoutes');
 const auditoriaRoutes = require('./routes/auditoriaRoutes');
+const galeriaHomeRoutes = require('./routes/galeriaHomeRoutes');
 const errorHandler = require('./middlewares/errorMiddleware');
 const fs = require('fs');
 const cors = require('cors');
@@ -27,10 +28,26 @@ require('dotenv').config();
 
 app.use(express.json());
 
-// Enable CORS with environment variable
+// Enable CORS with multiple origins support
+const allowedOrigins = [
+    process.env.FRONTEND_URL || 'http://localhost:80',
+    'http://localhost:5173', // Vite development server
+    'http://localhost:3000'  // Optional: React default development server
+];
+
 app.use(
     cors({
-        origin: process.env.FRONTEND_URL,
+        origin: function(origin, callback) {
+            // Permitir solicitudes sin origen (como aplicaciones móviles o curl)
+            if (!origin) return callback(null, true);
+            
+            if (allowedOrigins.indexOf(origin) !== -1 || !origin) {
+                callback(null, true);
+            } else {
+                console.log(`Origin ${origin} not allowed by CORS`);
+                callback(null, false);
+            }
+        },
         credentials: true,
     })
 );
@@ -67,6 +84,7 @@ app.use('/api/categorias', auditMiddleware, categoriaRoutes);
 app.use('/api/tematicas', auditMiddleware, tematicaRoutes);
 app.use('/api/extras', auditMiddleware, extraRoutes);
 app.use('/api/mamparas', auditMiddleware, mamparaRoutes);
+app.use('/api/galeria-home', auditMiddleware, galeriaHomeRoutes);
 
 // Manejar solicitudes preflight
 app.options('*', cors());

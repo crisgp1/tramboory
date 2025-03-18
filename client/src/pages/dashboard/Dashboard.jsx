@@ -38,6 +38,7 @@ import PaymentModal from './PaymentModal'
 import PaymentDetails from './PaymentDetails'
 import AuditHistory from './AuditHistory'
 import ArchivedTable from './ArchivedTable'
+import GaleriaManagement from './GaleriaManagement'
 
 const Dashboard = () => {
   const { user: currentUser } = useAuth();
@@ -809,6 +810,9 @@ const Dashboard = () => {
             selectedMonth={selectedMonth}
             type="reservas"
           />
+        )}
+        {activeTab === 'galeria' && (
+          <GaleriaManagement />
         )}
       </div>
       <MonthSelector

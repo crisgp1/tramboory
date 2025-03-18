@@ -1,0 +1,21 @@
+FROM node:18.17.1
+
+WORKDIR /usr/src/app
+
+# Copiar package.json y package-lock.json
+COPY package*.json ./
+
+# Instalar dependencias
+RUN npm install
+
+# Copiar el código fuente
+COPY . ./
+
+# Crear el directorio de uploads si no existe
+RUN mkdir -p uploads
+
+# Puerto que expondrá el contenedor
+EXPOSE 3001
+
+# Comando para iniciar la aplicación
+CMD ["npm", "start"]

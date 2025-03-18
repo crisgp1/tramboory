@@ -14,6 +14,7 @@ const TabNavigation = ({ activeTab, setActiveTab, handleAddItem }) => {
         { id: 'tematicas', label: 'Temáticas' },
         { id: 'mamparas', label: 'Mamparas' },
         { id: 'payments', label: 'Pagos' },
+        { id: 'galeria', label: 'Galería' },
         { id: 'auditoria', label: 'Historial' },
         { id: 'archived', label: 'Archivados' },
     ];

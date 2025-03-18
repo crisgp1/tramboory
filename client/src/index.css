@@ -2,6 +2,12 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Ocultar header en la página About */
+body:has(a[href='/about'].active) header,
+.about-page header {
+  display: none !important;
+}
+
 :root {
   --header-height: 80px;
 }

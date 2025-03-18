@@ -26,6 +26,8 @@ import {
   FiActivity,
   FiRefreshCw,
   FiList,
+  FiMaximize,
+  FiZoomIn,
 } from 'react-icons/fi';
 import {
   Card,
@@ -54,6 +56,52 @@ const formatCurrency = (amount) => {
     style: 'currency',
     currency: 'MXN',
   }).format(amount);
+};
+
+// Componente para mostrar imágenes a pantalla completa
+const ImageLightbox = ({ isOpen, onClose, imageUrl, alt }) => {
+  if (!isOpen) return null;
+
+  // Handler para detectar clics en el fondo
+  const handleBackdropClick = (e) => {
+    // Cerrar el lightbox al hacer clic en cualquier parte
+    onClose();
+  };
+
+  // Handler para evitar que los clics en la imagen cierren el lightbox
+  const handleImageClick = (e) => {
+    e.stopPropagation(); // Evita que el clic se propague al fondo
+  };
+
+  return (
+    <div 
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-90 transition-opacity duration-300"
+      onClick={handleBackdropClick} // Cerrar al hacer clic en cualquier parte
+    >
+      <div className="relative w-full h-full flex flex-col">
+        {/* Barra superior con botón de cierre */}
+        <div className="flex justify-end p-4">
+          <button 
+            onClick={onClose}
+            className="text-white p-2 rounded-full hover:bg-white/10 transition-colors"
+            aria-label="Cerrar"
+          >
+            <FiX size={24} />
+          </button>
+        </div>
+        
+        {/* Contenedor de la imagen */}
+        <div className="flex-1 flex items-center justify-center p-4">
+          <img 
+            src={imageUrl}
+            alt={alt}
+            className="max-h-full max-w-full object-contain"
+            onClick={handleImageClick}
+          />
+        </div>
+      </div>
+    </div>
+  );
 };
 
 // Components
@@ -138,6 +186,7 @@ const ReservationCard = ({ reservation, isActive, onClick }) => {
   );
 };
 
+// Componente estándar para detalles sin imágenes
 const DetailSection = ({ icon: Icon, label, value, className = '' }) => (
   <div className={`flex items-start space-x-3 ${className}`}>
     <div className="flex-shrink-0 p-2 bg-indigo-100 rounded-lg">
@@ -147,6 +196,53 @@ const DetailSection = ({ icon: Icon, label, value, className = '' }) => (
       <p className="text-sm font-medium text-gray-500">{label}</p>
       <p className="mt-1 text-lg font-medium text-gray-900">{value}</p>
     </div>
+  </div>
+);
+
+// Componente para detalles con imágenes (temáticas, mamparas)
+const DetailSectionWithImage = ({ icon: Icon, label, value, imageUrl, alt, onImageClick, imageError = false, className = '' }) => (
+  <div className={`flex flex-col ${className}`}>
+    <div className="flex items-start space-x-3">
+      <div className="flex-shrink-0 p-2 bg-indigo-100 rounded-lg">
+        <Icon className="w-5 h-5 text-indigo-600" />
+      </div>
+      <div>
+        <p className="text-sm font-medium text-gray-500">{label}</p>
+        <p className="mt-1 text-lg font-medium text-gray-900">{value}</p>
+      </div>
+    </div>
+    
+    {imageUrl && !imageError ? (
+      <div className="mt-3 ml-10 relative">
+        <div className="relative overflow-hidden rounded-lg group">
+          <img
+            src={imageUrl}
+            alt={alt}
+            className="w-full max-w-xs rounded-lg shadow-sm group-hover:shadow-md transition-all duration-300 object-cover"
+            style={{ maxHeight: '160px' }}
+            onError={(e) => {
+              e.target.onerror = null;
+              e.target.style.display = 'none';
+            }}
+          />
+          <div 
+            className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-30 transition-opacity duration-300 flex items-center justify-center opacity-0 group-hover:opacity-100 cursor-pointer"
+            onClick={onImageClick}
+          >
+            <div className="p-2 bg-white bg-opacity-80 rounded-full">
+              <FiZoomIn size={20} className="text-indigo-600" />
+            </div>
+          </div>
+        </div>
+        <button
+          className="absolute top-2 right-2 p-1 bg-white rounded-full shadow-md hover:bg-indigo-50 transition-colors"
+          onClick={onImageClick}
+          aria-label="Ver imagen ampliada"
+        >
+          <FiMaximize size={16} className="text-indigo-600" />
+        </button>
+      </div>
+    ) : null}
   </div>
 );
 
@@ -277,9 +373,23 @@ const ReservationStatus = () => {
   const [showConfirmCancel, setShowConfirmCancel] = useState(false);
   const [userId, setUserId] = useState(null);
   const [reservationData, setReservationData] = useState(null);
+  
+  // Estados para los lightboxes
+  const [tematicaLightboxOpen, setTematicaLightboxOpen] = useState(false);
+  const [mamparaLightboxOpen, setMamparaLightboxOpen] = useState(false);
+  const [tematicaImageError, setTematicaImageError] = useState(false);
+  const [mamparaImageError, setMamparaImageError] = useState(false);
 
   const { id } = useParams();
   const navigate = useNavigate();
+
+  // Resetear los errores de imagen cuando cambia la reserva activa
+  useEffect(() => {
+    if (activeReservation) {
+      setTematicaImageError(false);
+      setMamparaImageError(false);
+    }
+  }, [activeReservation]);
 
   useEffect(() => {
     const token = localStorage.getItem('token');
@@ -505,14 +615,30 @@ const ReservationStatus = () => {
                           label="Festejado"
                           value={`${activeReservation.nombre_festejado} (${activeReservation.edad_festejado} años)`}
                         />
-                        <DetailSection
+                        
+                        {/* Temática con imagen */}
+                        <DetailSectionWithImage
                           icon={FiImage}
                           label="Temática"
-                          value={
-                            activeReservation.tematicaReserva?.nombre ||
-                            'No especificada'
-                          }
+                          value={activeReservation.tematicaReserva?.nombre || 'No especificada'}
+                          imageUrl={activeReservation.tematicaReserva?.foto}
+                          alt={`Temática ${activeReservation.tematicaReserva?.nombre}`}
+                          onImageClick={() => setTematicaLightboxOpen(true)}
+                          imageError={tematicaImageError}
                         />
+                        
+                        {/* Mampara con imagen */}
+                        {activeReservation.mampara && (
+                          <DetailSectionWithImage
+                            icon={FiImage}
+                            label="Mampara"
+                            value={`${activeReservation.mampara.piezas} piezas`}
+                            imageUrl={activeReservation.mampara?.foto}
+                            alt={`Mampara de ${activeReservation.mampara.piezas} piezas`}
+                            onImageClick={() => setMamparaLightboxOpen(true)}
+                            imageError={mamparaImageError}
+                          />
+                        )}
                         <DetailSection
                           icon={FiDollarSign}
                           label="Total"
@@ -634,6 +760,22 @@ const ReservationStatus = () => {
           </div>
         </div>
       </div>
+
+      {/* Lightbox para imagen de temática - fuera de la card */}
+      <ImageLightbox 
+        isOpen={tematicaLightboxOpen}
+        onClose={() => setTematicaLightboxOpen(false)}
+        imageUrl={activeReservation?.tematicaReserva?.foto || ''}
+        alt={activeReservation?.tematicaReserva?.nombre || 'Imagen de temática'}
+      />
+      
+      {/* Lightbox para imagen de mampara - fuera de la card */}
+      <ImageLightbox 
+        isOpen={mamparaLightboxOpen}
+        onClose={() => setMamparaLightboxOpen(false)}
+        imageUrl={activeReservation?.mampara?.foto || ''}
+        alt={`Mampara de ${activeReservation?.mampara?.piezas || 0} piezas`}
+      />
 
       {/* Cancel Confirmation Modal */}
       <Dialog open={showConfirmCancel} onClose={() => setShowConfirmCancel(false)}>

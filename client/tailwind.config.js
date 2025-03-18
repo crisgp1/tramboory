@@ -24,7 +24,29 @@ export default {
         'sans': ['"travelia"', 'sans-serif'],
       },
       
+      animation: {
+        'carousel': 'carousel 60s linear infinite',
+      },
+      keyframes: {
+        carousel: {
+          '0%': { transform: 'translateX(0)' },
+          '100%': { transform: 'translateX(-50%)' },
+        },
+      },
     },
   },
-  plugins: [],
+  plugins: [
+    function({ addUtilities }) {
+      const newUtilities = {
+        '.no-scrollbar': {
+          '-ms-overflow-style': 'none',
+          'scrollbar-width': 'none',
+          '&::-webkit-scrollbar': {
+            display: 'none',
+          },
+        },
+      }
+      addUtilities(newUtilities)
+    }
+  ],
 }

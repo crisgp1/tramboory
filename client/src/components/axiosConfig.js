@@ -1,7 +1,8 @@
 import axios from 'axios';
 import { toast } from 'react-toastify';
 
-const axiosInstance = axios.create({
+// Exportar como exportación con nombre para ser importado con { axiosInstance }
+export const axiosInstance = axios.create({
   baseURL: '/',
   timeout: 10000,
   headers: {
