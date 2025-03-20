@@ -1,13 +1,103 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { motion } from 'framer-motion';
 import {
     FiUser, FiMail, FiPhone, FiMapPin, FiCalendar,
     FiLock, FiPrinter, FiEdit, FiXCircle, FiPackage,
-    FiDollarSign, FiClock, FiList
+    FiDollarSign, FiClock, FiList, 
 } from 'react-icons/fi';
+
+// Componente para la versión imprimible
+const PrintableUser = ({ user, reservations }) => {
+    // Calcular estadísticas de reservas
+    const totalReservations = reservations.length;
+    const totalSpent = reservations.reduce((sum, res) => sum + res.total, 0);
+    const lastReservation = reservations.length > 0 ? new Date(Math.max(...reservations.map(r => new Date(r.fecha_reserva)))) : null;
+
+    return (
+        <div style={{ fontFamily: 'Arial, sans-serif', padding: '20px', maxWidth: '800px', margin: '0 auto' }}>
+            <h1 style={{ textAlign: 'center', borderBottom: '2px solid #333', paddingBottom: '10px', marginBottom: '20px' }}>
+                Detalles del Usuario
+            </h1>
+            
+            <div style={{ marginBottom: '20px' }}>
+                <h2 style={{ borderBottom: '1px solid #ddd', paddingBottom: '5px' }}>Información Personal</h2>
+                <p><strong>Nombre:</strong> {user.nombre}</p>
+                <p><strong>Email:</strong> {user.email}</p>
+                <p><strong>Teléfono:</strong> {user.telefono || 'No especificado'}</p>
+                <p><strong>Dirección:</strong> {user.direccion || 'No especificada'}</p>
+            </div>
+            
+            <div style={{ marginBottom: '20px' }}>
+                <h2 style={{ borderBottom: '1px solid #ddd', paddingBottom: '5px' }}>Detalles de la Cuenta</h2>
+                <p><strong>Fecha de registro:</strong> {new Date(user.fecha_registro).toLocaleDateString()}</p>
+                <p><strong>Tipo de usuario:</strong> {user.tipo_usuario}</p>
+                <p><strong>ID Personalizado:</strong> {user.id_personalizado || 'No asignado'}</p>
+            </div>
+            
+            <div style={{ marginBottom: '20px' }}>
+                <h2 style={{ borderBottom: '1px solid #ddd', paddingBottom: '5px' }}>Resumen de Reservas</h2>
+                <p><strong>Total de Reservas:</strong> {totalReservations}</p>
+                <p><strong>Total Gastado:</strong> ${totalSpent.toFixed(2)}</p>
+                <p><strong>Última Reserva:</strong> {lastReservation ? lastReservation.toLocaleDateString() : 'N/A'}</p>
+            </div>
+            
+            {reservations.length > 0 && (
+                <div>
+                    <h2 style={{ borderBottom: '1px solid #ddd', paddingBottom: '5px' }}>Últimas Reservas</h2>
+                    <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+                        <thead>
+                            <tr style={{ backgroundColor: '#f3f4f6' }}>
+                                <th style={{ border: '1px solid #ddd', padding: '8px', textAlign: 'left' }}>Reserva #</th>
+                                <th style={{ border: '1px solid #ddd', padding: '8px', textAlign: 'left' }}>Fecha</th>
+                                <th style={{ border: '1px solid #ddd', padding: '8px', textAlign: 'left' }}>Paquete</th>
+                                <th style={{ border: '1px solid #ddd', padding: '8px', textAlign: 'left' }}>Estado</th>
+                                <th style={{ border: '1px solid #ddd', padding: '8px', textAlign: 'left' }}>Total</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {reservations.slice(0, 5).map((reservation) => (
+                                <tr key={reservation.id}>
+                                    <td style={{ border: '1px solid #ddd', padding: '8px' }}>{reservation.id}</td>
+                                    <td style={{ border: '1px solid #ddd', padding: '8px' }}>{new Date(reservation.fecha_reserva).toLocaleDateString()}</td>
+                                    <td style={{ border: '1px solid #ddd', padding: '8px' }}>{reservation.nombre_paquete}</td>
+                                    <td style={{ border: '1px solid #ddd', padding: '8px' }}>{reservation.estado}</td>
+                                    <td style={{ border: '1px solid #ddd', padding: '8px' }}>${reservation.total}</td>
+                                </tr>
+                            ))}
+                        </tbody>
+                    </table>
+                </div>
+            )}
+            
+            <div style={{ marginTop: '30px', textAlign: 'center', fontSize: '12px', color: '#666' }}>
+                <p>Documento generado el {new Date().toLocaleString()}</p>
+                <p>TRAMBOORY - Sistema de Administración</p>
+            </div>
+        </div>
+    );
+};
+
+
 
 const UserModal = ({ user, reservations, onClose, onEdit, onSendEmail }) => {
     if (!user) return null;
+    
+    // Add event listener for escape key
+    useEffect(() => {
+        const handleEscKey = (event) => {
+            if (event.key === 'Escape') {
+                onClose();
+            }
+        };
+
+        // Add event listener
+        document.addEventListener('keydown', handleEscKey);
+
+        // Cleanup function
+        return () => {
+            document.removeEventListener('keydown', handleEscKey);
+        };
+    }, [onClose]);
 
     const handlePrint = () => {
         const printContent = document.getElementById('printable-user');

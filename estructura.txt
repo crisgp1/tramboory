@@ -1,0 +1,288 @@
+.
+├── README.md
+├── app
+│   ├── Dockerfile.backend
+│   ├── app.js
+│   ├── config
+│   │   ├── database.js
+│   │   └── multer.js
+│   ├── controllers
+│   │   ├── AuditoriaController.js
+│   │   ├── AuthController.js
+│   │   ├── CategoriaController.js
+│   │   ├── ExtraController.js
+│   │   ├── FinanzaController.js
+│   │   ├── GaleriaHomeController.js
+│   │   ├── Inventory
+│   │   │   ├── AlertaInventarioController.js
+│   │   │   ├── ConversionMedidaController.js
+│   │   │   ├── ItemController.js
+│   │   │   ├── LoteController.js
+│   │   │   ├── MateriaPrimaController.js
+│   │   │   ├── MovementController.js
+│   │   │   ├── MovimientoInventarioController.js
+│   │   │   ├── ProveedorController.js
+│   │   │   ├── ProviderController.js
+│   │   │   ├── TipoAjusteController.js
+│   │   │   └── UnidadMedidaController.js
+│   │   ├── MamparaController.js
+│   │   ├── OpcionAlimentoController.js
+│   │   ├── PagoController.js
+│   │   ├── PaqueteAlimentoController.js
+│   │   ├── PaqueteController.js
+│   │   ├── ReservaController.js
+│   │   ├── TematicaController.js
+│   │   └── UsuarioController.js
+│   ├── database
+│   │   └── migrations
+│   │       ├── add_audit_triggers.sql
+│   │       ├── add_before_insert_payment_trigger.sql
+│   │       ├── fix_categoria_finanza.sql
+│   │       ├── fix_payment_trigger.sql
+│   │       ├── fix_payment_trigger_v2.sql
+│   │       ├── fix_payment_trigger_v3.sql
+│   │       ├── fix_reservation_extras.sql
+│   │       ├── fix_reservation_flow.sql
+│   │       ├── fix_trigger.sql
+│   │       ├── init.sql
+│   │       ├── inventory
+│   │       └── schema.sql.bak
+│   ├── fix_duplicated_enums.sql
+│   ├── fix_duplicated_triggers.sql
+│   ├── middlewares
+│   │   ├── auditMiddleware.js
+│   │   ├── authMiddleware.js
+│   │   └── errorMiddleware.js
+│   ├── models
+│   │   ├── Auditoria.js
+│   │   ├── Categoria.js
+│   │   ├── Extra.js
+│   │   ├── Finanza.js
+│   │   ├── GaleriaHome.js
+│   │   ├── Inventory
+│   │   │   ├── AlertaInventario.js
+│   │   │   ├── ConversionMedida.js
+│   │   │   ├── DetalleOrdenCompra.js
+│   │   │   ├── Item.js
+│   │   │   ├── Lote.js
+│   │   │   ├── MateriaPrima.js
+│   │   │   ├── Movement.js
+│   │   │   ├── MovimientoInventario.js
+│   │   │   ├── OrdenCompra.js
+│   │   │   ├── Proveedor.js
+│   │   │   ├── Provider.js
+│   │   │   ├── RecetaInsumo.js
+│   │   │   ├── TipoAjuste.js
+│   │   │   └── UnidadMedida.js
+│   │   ├── Mampara.js
+│   │   ├── OpcionAlimento.js
+│   │   ├── Pago.js
+│   │   ├── Paquete.js
+│   │   ├── PaqueteAlimento.js
+│   │   ├── RegistroAuditoria.js
+│   │   ├── Reserva.js
+│   │   ├── ReservaExtra.js
+│   │   ├── Tematica.js
+│   │   ├── Usuario.js
+│   │   └── index.js
+│   ├── package-lock.json
+│   ├── package.json
+│   ├── routes
+│   │   ├── auditoriaRoutes.js
+│   │   ├── authRoutes.js
+│   │   ├── categoriaRoutes.js
+│   │   ├── extraRoutes.js
+│   │   ├── finanzaRoutes.js
+│   │   ├── galeriaHomeRoutes.js
+│   │   ├── inventory
+│   │   │   └── index.js
+│   │   ├── mamparaRoutes.js
+│   │   ├── opcionAlimentoRoutes.js
+│   │   ├── pagoRoutes.js
+│   │   ├── paqueteAlimentoRoutes.js
+│   │   ├── paqueteRoutes.js
+│   │   ├── reservaRoutes.js
+│   │   ├── tematicaRoutes.js
+│   │   └── usuarioRoutes.js
+│   ├── uploads
+│   └── utils
+│       ├── dbMigrations.js
+│       └── modelHooks.js
+├── basededatos.md
+├── client
+│   ├── Dockerfile.frontend
+│   ├── README.md
+│   ├── eslint.config.js
+│   ├── index.html
+│   ├── package-lock.json
+│   ├── package.json
+│   ├── postcss.config.js
+│   ├── public
+│   │   └── favicon.ico
+│   ├── src
+│   │   ├── App.jsx
+│   │   ├── assets
+│   │   │   ├── fonts
+│   │   │   │   ├── FunhouseVF.ttf
+│   │   │   │   └── Vazirmatn[wght].ttf
+│   │   │   └── react.svg
+│   │   ├── components
+│   │   │   ├── AvailabilityAlert.jsx
+│   │   │   ├── CloudinaryCarousel.jsx
+│   │   │   ├── CloudinaryFileSelector.jsx
+│   │   │   ├── CloudinaryImageSelector.jsx
+│   │   │   ├── ColorPicker.jsx
+│   │   │   ├── CurrencyInput.jsx
+│   │   │   ├── PrintableReservation.jsx
+│   │   │   ├── ProtectedRoute.jsx
+│   │   │   ├── PublicRoute.jsx
+│   │   │   ├── ReservationDateTime.jsx
+│   │   │   ├── axiosConfig.js
+│   │   │   ├── inventory
+│   │   │   │   ├── InventoryLoader.jsx
+│   │   │   │   ├── InventoryLoginModal.jsx
+│   │   │   │   └── InventoryMenu.jsx
+│   │   │   ├── ui
+│   │   │   │   ├── Badge.jsx
+│   │   │   │   ├── Button.jsx
+│   │   │   │   ├── Card.jsx
+│   │   │   │   ├── Dialog.jsx
+│   │   │   │   ├── Footer.jsx
+│   │   │   │   ├── Header.jsx
+│   │   │   │   ├── Input.jsx
+│   │   │   │   ├── Label.jsx
+│   │   │   │   ├── Modal.jsx
+│   │   │   │   ├── SelectUi.jsx
+│   │   │   │   ├── Table.jsx
+│   │   │   │   └── index.js
+│   │   │   ├── withTokenValidation.jsx
+│   │   │   └── withValidation.jsx
+│   │   ├── context
+│   │   │   └── authContext.jsx
+│   │   ├── hooks
+│   │   │   ├── useAuth.js
+│   │   │   └── useReservationData.js
+│   │   ├── img
+│   │   │   ├── LogoComplete.webp
+│   │   │   ├── background-noblur.jpeg
+│   │   │   ├── blur.jpeg
+│   │   │   ├── logo.webp
+│   │   │   └── noblur.jpeg
+│   │   ├── index.css
+│   │   ├── main.jsx
+│   │   ├── pages
+│   │   │   ├── AboutTramboory.jsx
+│   │   │   ├── Appointment.jsx
+│   │   │   ├── ForgotPassword.jsx
+│   │   │   ├── Home.jsx
+│   │   │   ├── PaquetesPersonalizaciones.jsx
+│   │   │   ├── RecoverPassword.jsx
+│   │   │   ├── SignIn.jsx
+│   │   │   ├── SignUp.jsx
+│   │   │   ├── dashboard
+│   │   │   │   ├── ArchivedTable.jsx
+│   │   │   │   ├── AuditHistory.jsx
+│   │   │   │   ├── CategoriaForm.jsx
+│   │   │   │   ├── CategoriaTable.jsx
+│   │   │   │   ├── Dashboard.jsx
+│   │   │   │   ├── ExtraForm.jsx
+│   │   │   │   ├── ExtraTable.jsx
+│   │   │   │   ├── FinanceDetailModal.jsx
+│   │   │   │   ├── FinanceForm.jsx
+│   │   │   │   ├── FinanceTable.jsx
+│   │   │   │   ├── FinancialSummary.jsx
+│   │   │   │   ├── GaleriaManagement.jsx
+│   │   │   │   ├── GaleriaModal.jsx
+│   │   │   │   ├── GaleriaTable.jsx
+│   │   │   │   ├── ItemModal.jsx
+│   │   │   │   ├── MamparaForm.jsx
+│   │   │   │   ├── MamparaModal.jsx
+│   │   │   │   ├── MamparaTable.jsx
+│   │   │   │   ├── MonthSelector.jsx
+│   │   │   │   ├── MonthlyReportModal.jsx
+│   │   │   │   ├── OpcionAlimentoForm.jsx
+│   │   │   │   ├── OpcionAlimentoTable.jsx
+│   │   │   │   ├── PackageForm.jsx
+│   │   │   │   ├── PackageTable.jsx
+│   │   │   │   ├── PaymentDetails.jsx
+│   │   │   │   ├── PaymentForm.jsx
+│   │   │   │   ├── PaymentModal.jsx
+│   │   │   │   ├── PaymentTable.jsx
+│   │   │   │   ├── ReservationCalendar.jsx
+│   │   │   │   ├── ReservationForm.jsx
+│   │   │   │   ├── ReservationModal.jsx
+│   │   │   │   ├── ReservationPreviewModal.jsx
+│   │   │   │   ├── ReservationSummary.jsx
+│   │   │   │   ├── ReservationTable.jsx
+│   │   │   │   ├── ScreenSizeAlert.jsx
+│   │   │   │   ├── TabNavigation.jsx
+│   │   │   │   ├── TematicaForm.jsx
+│   │   │   │   ├── TematicaTable.jsx
+│   │   │   │   ├── UserForm.jsx
+│   │   │   │   ├── UserModal.jsx
+│   │   │   │   ├── UserSummary.jsx
+│   │   │   │   ├── UserTable.jsx
+│   │   │   │   └── reservationform
+│   │   │   │       ├── CelebrantSection.jsx
+│   │   │   │       ├── CommentsSection.jsx
+│   │   │   │       ├── DateTimeSection.jsx
+│   │   │   │       ├── ExtrasSection.jsx
+│   │   │   │       ├── FoodOptionsSection.jsx
+│   │   │   │       ├── MamparaSection.jsx
+│   │   │   │       ├── PackageSection.jsx
+│   │   │   │       ├── StatusSection.jsx
+│   │   │   │       ├── ThemeSection.jsx
+│   │   │   │       └── UserSection.jsx
+│   │   │   ├── inventory
+│   │   │   │   ├── InventoryDashboard.jsx
+│   │   │   │   ├── InventoryLogin.jsx
+│   │   │   │   ├── ItemForm.jsx
+│   │   │   │   ├── ItemTable.jsx
+│   │   │   │   ├── MovementForm.jsx
+│   │   │   │   ├── MovementTable.jsx
+│   │   │   │   ├── ProviderForm.jsx
+│   │   │   │   ├── ProviderTable.jsx
+│   │   │   │   └── views
+│   │   │   │       ├── ItemsView.jsx
+│   │   │   │       ├── MovementsView.jsx
+│   │   │   │       └── ProvidersView.jsx
+│   │   │   └── reservation
+│   │   │       ├── ConfirmationModal.jsx
+│   │   │       ├── ContractModal.jsx
+│   │   │       ├── PaymentModal.jsx
+│   │   │       ├── ProfileForm.jsx
+│   │   │       ├── ReservationForm.jsx
+│   │   │       ├── ReservationModal.jsx
+│   │   │       ├── ReservationStatus.jsx
+│   │   │       ├── ReservationSummary.jsx
+│   │   │       ├── SummaryItem.jsx
+│   │   │       ├── TuesdayModal.jsx
+│   │   │       ├── index.jsx
+│   │   │       └── reservationform
+│   │   │           ├── CelebrantSection.jsx
+│   │   │           ├── CommentsSection.jsx
+│   │   │           ├── DateTimeSection.jsx
+│   │   │           ├── ExtrasSection.jsx
+│   │   │           ├── FoodOptionsSection.jsx
+│   │   │           ├── FormSection.jsx
+│   │   │           ├── MamparaSection.jsx
+│   │   │           ├── PackageSection.jsx
+│   │   │           ├── ThemeSection.jsx
+│   │   │           └── styles.js
+│   │   ├── services
+│   │   │   ├── galeriaService.js
+│   │   │   └── inventoryService.js
+│   │   ├── utils
+│   │   │   ├── authUtils.js
+│   │   │   ├── formatters.js
+│   │   │   ├── jwtUtils.js
+│   │   │   └── reservationUtils.js
+│   │   └── video
+│   │       └── background.webm
+│   ├── tailwind.config.js
+│   └── vite.config.js
+├── estructura.txt
+├── http___localhost_5173_dashboard-1742149481354.jpeg
+└── http___localhost_5173_dashboard_galeria-1742149462346.jpeg
+
+36 directories, 250 files

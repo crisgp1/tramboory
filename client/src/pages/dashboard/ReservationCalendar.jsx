@@ -4,8 +4,9 @@ import { Calendar, momentLocalizer } from 'react-big-calendar';
 import moment from 'moment';
 import 'react-big-calendar/lib/css/react-big-calendar.css';
 import { motion, AnimatePresence } from 'framer-motion';
-import { FiChevronLeft, FiChevronRight, FiCalendar, FiX, FiInfo } from 'react-icons/fi';
+import { FiChevronLeft, FiChevronRight, FiCalendar, FiX, FiInfo, FiCheck, FiAlertCircle } from 'react-icons/fi';
 import axios from '../../components/axiosConfig';
+import { toast } from 'react-hot-toast';
 
 const localizer = momentLocalizer(moment);
 
@@ -95,20 +96,121 @@ const ReservationCalendar = ({ reservations }) => {
       });
       
       if (response.status === 201) {
-        alert('Días bloqueados exitosamente');
+        // Toast con animación personalizada
+        toast.custom(
+          (t) => (
+            <motion.div
+              initial={{ opacity: 0, y: -40, scale: 0.6 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: 20, scale: 0.9 }}
+              transition={{
+                type: "spring",
+                stiffness: 500,
+                damping: 30,
+                duration: 0.4
+              }}
+              className={`${
+                t.visible ? 'animate-enter' : 'animate-leave'
+              } max-w-md w-full bg-white shadow-lg rounded-lg pointer-events-auto flex ring-1 ring-black ring-opacity-5`}
+            >
+              <div className="flex-1 w-0 p-4">
+                <div className="flex items-start">
+                  <div className="flex-shrink-0 pt-0.5">
+                    <div className="h-10 w-10 rounded-full bg-green-100 flex items-center justify-center">
+                      <FiCheck className="h-6 w-6 text-green-600" />
+                    </div>
+                  </div>
+                  <div className="ml-3 flex-1">
+                    <p className="text-sm font-medium text-gray-900">
+                      ¡Días bloqueados exitosamente!
+                    </p>
+                    <p className="mt-1 text-sm text-gray-500">
+                      {selectedDates.length} {selectedDates.length === 1 ? 'día administrativo' : 'días administrativos'} bloqueado(s).
+                    </p>
+                  </div>
+                </div>
+              </div>
+              <div className="flex border-l border-gray-200">
+                <button
+                  onClick={() => toast.dismiss(t.id)}
+                  className="w-full border border-transparent rounded-none rounded-r-lg p-4 flex items-center justify-center text-sm font-medium text-indigo-600 hover:text-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                >
+                  Cerrar
+                </button>
+              </div>
+            </motion.div>
+          ),
+          { duration: 5000 }
+        );
+        
         setIsBlockingMode(false);
         setSelectedDates([]);
-        window.location.reload();
+        
+        // Emitir evento para actualizar reservas sin recargar la página
+        window.dispatchEvent(new CustomEvent('reservationsUpdated'));
+        
+        // Cerrar modal de bloqueo si está abierto
+        setShowBlockModal(false);
       }
     } catch (error) {
       let errorMessage = 'Error al bloquear los días';
+      let invalidDatesText = '';
+      
       if (error.response?.data?.error) {
         errorMessage = error.response.data.error;
         if (error.response.data.invalidDates) {
-          errorMessage += '\nFechas inválidas: ' + error.response.data.invalidDates.join(', ');
+          invalidDatesText = 'Fechas inválidas: ' + error.response.data.invalidDates.join(', ');
         }
       }
-      alert(errorMessage);
+      
+      // Toast de error con animación
+      toast.custom(
+        (t) => (
+          <motion.div
+            initial={{ opacity: 0, y: -40, scale: 0.6 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: 20, scale: 0.9 }}
+            transition={{
+              type: "spring",
+              stiffness: 500,
+              damping: 30,
+              duration: 0.4
+            }}
+            className={`${
+              t.visible ? 'animate-enter' : 'animate-leave'
+            } max-w-md w-full bg-white shadow-lg rounded-lg pointer-events-auto flex ring-1 ring-black ring-opacity-5`}
+          >
+            <div className="flex-1 w-0 p-4">
+              <div className="flex items-start">
+                <div className="flex-shrink-0 pt-0.5">
+                  <div className="h-10 w-10 rounded-full bg-red-100 flex items-center justify-center">
+                    <FiAlertCircle className="h-6 w-6 text-red-600" />
+                  </div>
+                </div>
+                <div className="ml-3 flex-1">
+                  <p className="text-sm font-medium text-gray-900">
+                    {errorMessage}
+                  </p>
+                  {invalidDatesText && (
+                    <p className="mt-1 text-sm text-gray-500">
+                      {invalidDatesText}
+                    </p>
+                  )}
+                </div>
+              </div>
+            </div>
+            <div className="flex border-l border-gray-200">
+              <button
+                onClick={() => toast.dismiss(t.id)}
+                className="w-full border border-transparent rounded-none rounded-r-lg p-4 flex items-center justify-center text-sm font-medium text-indigo-600 hover:text-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+              >
+                Cerrar
+              </button>
+            </div>
+          </motion.div>
+        ),
+        { duration: 6000 }
+      );
     }
   };
 
@@ -252,6 +354,10 @@ const ReservationCalendar = ({ reservations }) => {
                 date.setMinutes(date.getMinutes() + date.getTimezoneOffset());
                 const dateStr = moment(date).format('YYYY-MM-DD');
                 
+                // Verificar si la fecha es anterior a hoy
+                const isPastDate = moment(date).isBefore(moment(), 'day');
+                if (isPastDate) return; // No permitir seleccionar fechas pasadas
+                
                 if (action === 'click') {
                   setSelectedDates(prev => {
                     if (prev.includes(dateStr)) {
@@ -277,9 +383,13 @@ const ReservationCalendar = ({ reservations }) => {
                 
                 let current = moment(startDate);
                 const endMoment = moment(endDate);
+                const today = moment().startOf('day');
 
                 while (current.isSameOrBefore(endMoment, 'day')) {
-                  dates.push(current.format('YYYY-MM-DD'));
+                  // Solo incluir fechas desde hoy en adelante
+                  if (!current.isBefore(today)) {
+                    dates.push(current.format('YYYY-MM-DD'));
+                  }
                   current.add(1, 'days');
                 }
 
@@ -296,14 +406,22 @@ const ReservationCalendar = ({ reservations }) => {
               dayPropGetter={date => {
                 const dateStr = moment(date).format('YYYY-MM-DD');
                 const isSelected = selectedDates.includes(dateStr);
+                const isPastDate = moment(date).isBefore(moment(), 'day');
                 
                 return {
-                  className: `text-sm ${isSelected ? 'selected-date' : ''}`,
+                  className: `text-sm ${isSelected ? 'selected-date' : ''} ${isPastDate ? 'past-date' : ''}`,
                   style: {
                     margin: 0,
                     padding: '0.25rem',
-                    backgroundColor: isSelected ? 'rgba(220, 38, 38, 0.1)' : 'transparent',
-                    transition: 'background-color 0.2s ease'
+                    backgroundColor: isPastDate 
+                      ? 'rgba(229, 231, 235, 0.5)' 
+                      : isSelected 
+                        ? 'rgba(220, 38, 38, 0.1)' 
+                        : 'transparent',
+                    opacity: isPastDate ? 0.5 : 1,
+                    cursor: isPastDate ? 'not-allowed' : 'pointer',
+                    transition: 'background-color 0.2s ease, opacity 0.2s ease',
+                    pointerEvents: isPastDate ? 'none' : 'auto'
                   }
                 };
               }}
@@ -559,6 +677,15 @@ const ReservationCalendar = ({ reservations }) => {
         .rbc-date-cell {
           padding: 0.25rem;
           font-size: 0.75rem;
+        }
+        .rbc-day-bg.past-date {
+          background-color: rgba(229, 231, 235, 0.5) !important;
+          cursor: not-allowed;
+          opacity: 0.5;
+        }
+        .rbc-date-cell.past-date {
+          color: #9CA3AF;
+          opacity: 0.7;
         }
         .rbc-event {
           padding: 2px 4px !important;

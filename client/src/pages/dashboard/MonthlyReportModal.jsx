@@ -1,4 +1,4 @@
-import React, { useRef } from 'react';
+import React, { useRef, useEffect } from 'react';
 import { Bar } from 'react-chartjs-2';
 import { FiTrendingUp, FiTrendingDown, FiPrinter, FiDownload, FiX } from 'react-icons/fi';
 import { formatNumber } from '../../utils/formatters';
@@ -7,6 +7,23 @@ import jsPDF from 'jspdf';
 
 const MonthlyReportModal = ({ isOpen, onClose, finances, categories, selectedMonth, selectedYear }) => {
     const reportRef = useRef(null);
+
+    // Add event listener for escape key
+    useEffect(() => {
+        const handleEscKey = (event) => {
+            if (event.key === 'Escape') {
+                onClose();
+            }
+        };
+
+        // Add event listener
+        document.addEventListener('keydown', handleEscKey);
+
+        // Cleanup function
+        return () => {
+            document.removeEventListener('keydown', handleEscKey);
+        };
+    }, [onClose]);
 
     if (!isOpen) return null;
 

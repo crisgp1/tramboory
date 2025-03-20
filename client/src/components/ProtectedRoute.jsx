@@ -4,54 +4,83 @@ import { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { toast, ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
+import { FiCheck, FiX, FiLoader, FiShield } from 'react-icons/fi';
 
-// Componente FinalIcon: Animación de éxito/error
+// Componente FinalIcon: Animación de éxito/error con diseño minimalista
 const FinalIcon = ({ success }) => (
-  <motion.div
-    className="fixed inset-0 flex items-center justify-center bg-gradient-to-br from-blue-50 to-white"
-    initial={{ opacity: 0 }}
-    animate={{ opacity: 1 }}
-    exit={{ opacity: 0 }}
-    transition={{ duration: 0.3 }}
-  >
+  <div className="min-h-screen w-full bg-gradient-to-br from-indigo-50 to-purple-50 flex flex-col items-center justify-center p-4 relative overflow-hidden">
+    {/* Elementos decorativos - formas geométricas sutiles */}
+    <div className="absolute top-0 right-0 w-64 h-64 bg-indigo-100 rounded-full -mr-32 -mt-32 opacity-70"></div>
+    <div className="absolute bottom-0 left-0 w-80 h-80 bg-purple-100 rounded-full -ml-40 -mb-40 opacity-70"></div>
+    <div className="absolute top-1/3 left-1/4 w-12 h-12 bg-indigo-200 rounded-full transform rotate-45 opacity-60"></div>
+    <div className="absolute bottom-1/4 right-1/3 w-20 h-20 bg-purple-200 rounded-full transform rotate-12 opacity-60"></div>
+    
     <motion.div
-      className={`w-24 h-24 rounded-full flex items-center justify-center ${
-        success ? 'bg-green-100' : 'bg-red-100'
-      }`}
-      initial={{ scale: 0 }}
-      animate={{ scale: 1 }}
-      exit={{ scale: 0 }}
-      transition={{
-        type: "spring",
-        stiffness: 260,
-        damping: 20
-      }}
+      initial={{ opacity: 0, scale: 0.9 }}
+      animate={{ opacity: 1, scale: 1 }}
+      exit={{ opacity: 0, scale: 0.9 }}
+      transition={{ type: "spring", stiffness: 300, damping: 20 }}
+      className="relative z-10"
     >
-      <motion.svg
-        xmlns="http://www.w3.org/2000/svg"
-        width="48"
-        height="48"
-        viewBox="0 0 24 24"
-        fill="none"
-        stroke={success ? "rgb(22 163 74)" : "rgb(220 38 38)"}
-        strokeWidth="2"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        initial={{ pathLength: 0, opacity: 0 }}
-        animate={{ pathLength: 1, opacity: 1 }}
-        transition={{ duration: 0.5, ease: "easeInOut" }}
+      <div className="relative mb-6">
+        {/* Círculo pulsante exterior */}
+        <motion.div 
+          className={`absolute inset-0 rounded-full ${success ? 'bg-green-100' : 'bg-red-100'}`}
+          animate={{ 
+            scale: [1, 1.2, 1],
+            opacity: [0.7, 0.5, 0.7] 
+          }}
+          transition={{ 
+            duration: 2, 
+            repeat: Infinity,
+            ease: "easeInOut"
+          }}
+        />
+        
+        {/* Círculo con icono */}
+        <div className="relative w-20 h-20 bg-white rounded-full shadow-md flex items-center justify-center z-10">
+          <motion.div
+            initial={{ scale: 0, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            transition={{ 
+              type: "spring",
+              stiffness: 300,
+              damping: 20
+            }}
+            className={success ? "text-green-500" : "text-red-500"}
+          >
+            {success ? <FiCheck size={32} /> : <FiX size={32} />}
+          </motion.div>
+        </div>
+      </div>
+      
+      <motion.h3
+        className="text-xl font-semibold text-gray-800 mb-2 text-center"
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ delay: 0.2 }}
       >
-        {success ? (
-          <motion.path d="M20 6L9 17l-5-5" />
-        ) : (
-          <>
-            <motion.path d="M18 6L6 18" />
-            <motion.path d="M6 6l12 12" />
-          </>
-        )}
-      </motion.svg>
+        {success ? "¡Acceso verificado!" : "Acceso denegado"}
+      </motion.h3>
+      
+      <motion.div 
+        className="flex space-x-1 items-center justify-center text-gray-500"
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ delay: 0.3 }}
+      >
+        <span>{success ? "Redirigiendo" : "Redirigiendo a inicio de sesión"}</span>
+        <motion.span
+          animate={{ x: [0, 10] }}
+          transition={{ 
+            duration: 0.8, 
+            repeat: Infinity,
+            repeatType: "loop"
+          }}
+        >→</motion.span>
+      </motion.div>
     </motion.div>
-  </motion.div>
+  </div>
 );
 
 const ProtectedRoute = ({ redirectPath = '/signin', allowedRoles = [], children }) => {
@@ -124,171 +153,109 @@ const ProtectedRoute = ({ redirectPath = '/signin', allowedRoles = [], children 
     }
   }, [isLoading, isAllowed, isAuthenticated]);
 
-  // Componente Preloader: Barra de Progreso Animada
-  // Componente Preloader: Animación mejorada
-const ProgressBarLoader = () => (
-  <motion.div
-    className="fixed inset-0 flex items-center justify-center bg-gradient-to-br from-blue-50 to-white"
-    initial={{ opacity: 0 }}
-    animate={{ opacity: 1 }}
-    transition={{ duration: 0.3 }}
-  >
-    <div className="relative w-80 flex flex-col items-center">
-      {/* Grupo de círculos pulsantes */}
-      <div className="relative mb-8 w-24 h-24 flex items-center justify-center">
-        <motion.div
-          className="absolute rounded-full bg-blue-600/20"
-          initial={{ width: 80, height: 80 }}
-          animate={{ 
-            width: [80, 100, 80], 
-            height: [80, 100, 80],
-            opacity: [0.2, 0.4, 0.2]
-          }}
-          transition={{
-            duration: 1.5,
-            ease: "easeInOut",
-            times: [0, 0.5, 1],
-            repeat: Infinity,
-            repeatType: "loop"
-          }}
-        />
-        <motion.div
-          className="absolute rounded-full bg-blue-500/30"
-          initial={{ width: 60, height: 60 }}
-          animate={{ 
-            width: [60, 75, 60], 
-            height: [60, 75, 60],
-            opacity: [0.3, 0.5, 0.3]
-          }}
-          transition={{
-            duration: 1.5,
-            ease: "easeInOut",
-            times: [0, 0.5, 1],
-            repeat: Infinity,
-            repeatType: "loop",
-            delay: 0.2
-          }}
-        />
-        <motion.div
-          className="absolute rounded-full bg-blue-400/40"
-          initial={{ width: 40, height: 40 }}
-          animate={{ 
-            width: [40, 50, 40], 
-            height: [40, 50, 40],
-            opacity: [0.4, 0.7, 0.4]
-          }}
-          transition={{
-            duration: 1.5,
-            ease: "easeInOut",
-            times: [0, 0.5, 1],
-            repeat: Infinity,
-            repeatType: "loop",
-            delay: 0.4
-          }}
-        />
-        
-        {/* Ícono central giratorio */}
-        <motion.div
-          className="absolute z-10 text-blue-600 flex items-center justify-center bg-white rounded-full shadow-md"
-          initial={{ width: 50, height: 50, rotate: 0 }}
-          animate={{ rotate: 360 }}
-          transition={{
-            duration: 8,
-            ease: "linear",
-            repeat: Infinity
-          }}
-        >
-          <svg 
-            xmlns="http://www.w3.org/2000/svg" 
-            width="24" 
-            height="24" 
-            viewBox="0 0 24 24" 
-            fill="none" 
-            stroke="currentColor" 
-            strokeWidth="2" 
-            strokeLinecap="round" 
-            strokeLinejoin="round"
-          >
-            <path d="M12 2v4m0 12v4M4.93 4.93l2.83 2.83m8.48 8.48l2.83 2.83M2 12h4m12 0h4M4.93 19.07l2.83-2.83m8.48-8.48l2.83-2.83" />
-          </svg>
-        </motion.div>
-      </div>
+  // Componente LoadingAnimation: Preloader minimalista y moderno
+  const LoadingAnimation = () => (
+    <div className="min-h-screen w-full bg-gradient-to-br from-indigo-50 to-purple-50 flex flex-col items-center justify-center p-4 relative overflow-hidden">
+      {/* Elementos decorativos - formas geométricas sutiles */}
+      <div className="absolute top-0 right-0 w-64 h-64 bg-indigo-100 rounded-full -mr-32 -mt-32 opacity-70"></div>
+      <div className="absolute bottom-0 left-0 w-80 h-80 bg-purple-100 rounded-full -ml-40 -mb-40 opacity-70"></div>
+      <div className="absolute top-1/3 left-1/4 w-12 h-12 bg-indigo-200 rounded-full transform rotate-45 opacity-60"></div>
+      <div className="absolute bottom-1/4 right-1/3 w-20 h-20 bg-purple-200 rounded-full transform rotate-12 opacity-60"></div>
       
-      {/* Texto animado */}
-      <motion.div 
-        className="text-blue-600 font-medium mb-4 text-center"
-        animate={{ opacity: [0.5, 1, 0.5] }}
-        transition={{
-          duration: 2,
-          ease: "easeInOut",
-          repeat: Infinity,
-          repeatType: "loop"
-        }}
+      <motion.div
+        initial={{ opacity: 0, scale: 0.9 }}
+        animate={{ opacity: 1, scale: 1 }}
+        exit={{ opacity: 0, scale: 0.9 }}
+        transition={{ duration: 0.4 }}
+        className="relative z-10 flex flex-col items-center text-center"
       >
-        Cargando
-        <motion.span
-          animate={{ opacity: [0, 1, 0] }}
-          transition={{
-            duration: 1.5,
-            repeat: Infinity,
-            repeatType: "loop"
-          }}
-        >...</motion.span>
-      </motion.div>
-      
-      {/* Barra de progreso mejorada */}
-      <div className="w-full h-2 bg-gray-200 rounded-full overflow-hidden shadow-inner">
-        <motion.div
-          className="h-full bg-gradient-to-r from-blue-400 via-blue-600 to-blue-400"
-          initial={{ x: '-100%' }}
-          animate={{ 
-            x: ['0%', '100%', '0%'],
-            backgroundPosition: ['0% 0%', '100% 0%', '0% 0%'] 
-          }}
-          transition={{
-            duration: 3,
-            ease: "easeInOut",
-            repeat: Infinity,
-            repeatType: "loop"
-          }}
-        />
-      </div>
-      
-      {/* Pequeños círculos flotantes alrededor */}
-      <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        {[...Array(8)].map((_, i) => (
-          <motion.div
-            key={i}
-            className="absolute rounded-full bg-blue-500/20"
-            style={{
-              width: Math.random() * 15 + 5,
-              height: Math.random() * 15 + 5,
-              top: `${Math.random() * 100}%`,
-              left: `${Math.random() * 100}%`
+        <div className="relative mb-6">
+          {/* Círculo pulsante exterior */}
+          <motion.div 
+            className="absolute inset-0 rounded-full bg-indigo-100"
+            animate={{ 
+              scale: [1, 1.2, 1],
+              opacity: [0.7, 0.5, 0.7] 
             }}
-            animate={{
-              y: [Math.random() * -30, Math.random() * 30, Math.random() * -30],
-              x: [Math.random() * -30, Math.random() * 30, Math.random() * -30],
-              opacity: [0, 0.8, 0]
-            }}
-            transition={{
-              duration: Math.random() * 3 + 3,
-              ease: "easeInOut",
+            transition={{ 
+              duration: 2, 
               repeat: Infinity,
-              repeatType: "loop",
-              delay: Math.random() * 2
+              ease: "easeInOut"
             }}
           />
-        ))}
-      </div>
+          
+          {/* Anillo giratorio */}
+          <motion.div
+            className="absolute inset-0 rounded-full border-4 border-indigo-300 border-t-indigo-500"
+            style={{ borderRightColor: 'transparent', borderBottomColor: 'transparent', borderLeftColor: 'transparent' }}
+            animate={{ rotate: 360 }}
+            transition={{ 
+              duration: 1.5,
+              repeat: Infinity,
+              ease: "linear"
+            }}
+          />
+          
+          {/* Círculo con icono */}
+          <div className="relative w-20 h-20 bg-white rounded-full shadow-md flex items-center justify-center z-10">
+            <FiShield className="text-indigo-500" size={24} />
+          </div>
+        </div>
+        
+        <motion.h3
+          className="text-xl font-semibold text-gray-800 mb-2"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.2 }}
+        >
+          Verificando permisos
+        </motion.h3>
+        
+        <motion.div 
+          className="flex space-x-1 items-center text-gray-500"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.3 }}
+        >
+          <span>Un momento por favor</span>
+          <motion.span
+            animate={{ opacity: [0, 1, 0] }}
+            transition={{ 
+              duration: 1.5, 
+              repeat: Infinity,
+              repeatType: "loop"
+            }}
+          >...</motion.span>
+        </motion.div>
+        
+        {/* Barra de progreso */}
+        <motion.div
+          className="w-60 h-1 bg-gray-200 rounded-full mt-6 overflow-hidden"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.4 }}
+        >
+          <motion.div
+            className="h-full bg-indigo-500"
+            animate={{ 
+              width: ['0%', '100%'],
+            }}
+            transition={{
+              duration: 2,
+              repeat: Infinity,
+              ease: "easeInOut",
+            }}
+          />
+        </motion.div>
+      </motion.div>
     </div>
-  </motion.div>
-);
+  );
+
   // Lógica de renderizado
   if (isLoading) {
     return (
       <>
-        <ProgressBarLoader />
+        <LoadingAnimation />
         <ToastContainer />
       </>
     );

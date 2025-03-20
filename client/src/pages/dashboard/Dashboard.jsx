@@ -20,6 +20,7 @@ import UserForm from './UserForm'
 import ReservationForm from './ReservationForm'
 import FinanceForm from './FinanceForm'
 import PackageForm from './PackageForm'
+import UserModal from './UserModal'
 import ExtraForm from './ExtraForm'
 import ExtraTable from './ExtraTable'
 import OpcionAlimentoForm from './OpcionAlimentoForm'
@@ -72,8 +73,15 @@ const Dashboard = () => {
   const [selectedPayment, setSelectedPayment] = useState(null)
   const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false)
   const [paymentModalMode, setPaymentModalMode] = useState('view')
+  const [selectedUser, setSelectedUser] = useState(null)
+  const [isUserModalOpen, setIsUserModalOpen] = useState(false)
 
   const navigate = useNavigate()
+
+  const handleViewUser = useCallback(user => {
+    setSelectedUser(user)
+    setIsUserModalOpen(true)
+  }, [])
 
   const generateMonthlyReport = () => {
     setIsReportModalOpen(true)
@@ -165,8 +173,9 @@ const Dashboard = () => {
     fetchData();
 
     // Escuchar el evento de actualización de reservaciones
-    const handleReservationsUpdate = (event) => {
-      setReservations(event.detail);
+    const handleReservationsUpdate = () => {
+      // En lugar de intentar extraer datos del evento, hacemos una nueva llamada para obtener datos actualizados
+      fetchData();
     };
 
     window.addEventListener('reservationsUpdated', handleReservationsUpdate);
@@ -681,6 +690,7 @@ const Dashboard = () => {
                 () => setIsModalOpen(false)
               )
             }
+            handleViewUser={handleViewUser}
           />
         )}
         {activeTab === 'reservations' && (
@@ -879,6 +889,18 @@ const Dashboard = () => {
           onSavePayment={handleSavePayment}
           reservations={reservations}
           mode={paymentModalMode}
+        />
+      )}
+      {isUserModalOpen && selectedUser && (
+        <UserModal
+          user={selectedUser}
+          reservations={reservations.filter(res => res.id_usuario === selectedUser.id)}
+          onClose={() => {
+            setSelectedUser(null)
+            setIsUserModalOpen(false)
+          }}
+          onEdit={handleEditItem}
+          onSendEmail={() => toast.info(`Funcionalidad de enviar correo a ${selectedUser.email}`)}
         />
       )}
       {isReportModalOpen && (

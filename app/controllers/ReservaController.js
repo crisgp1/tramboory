@@ -7,7 +7,10 @@ const Mampara = require('../models/Mampara');
 const Extra = require('../models/Extra');
 const Finanza = require('../models/Finanza');
 const ReservaExtra = require('../models/ReservaExtra');
+const Pago = require('../models/Pago');
+const sequelize = require('../config/database');
 const { Op } = require('sequelize');
+const moment = require('moment');
 
 exports.createReserva = async (req, res) => {
   try {
@@ -566,53 +569,108 @@ exports.blockDates = async (req, res) => {
       });
     }
 
+    // Buscar IDs válidos para paquete, temática y mampara
+    const paquete = await Paquete.findOne({ 
+      order: [['id', 'ASC']] 
+    });
+    
+    const tematica = await Tematica.findOne({ 
+      order: [['id', 'ASC']] 
+    });
+    
+    const mampara = await Mampara.findOne({ 
+      order: [['id', 'ASC']] 
+    });
+
+    if (!paquete || !tematica || !mampara) {
+      return res.status(400).json({ 
+        error: 'No se encontraron los datos necesarios para crear bloqueos (paquete, temática o mampara)'
+      });
+    }
+
     // Crear reservas de bloqueo para ambos horarios de cada fecha
     const blockReservations = [];
+    const fechasNoDisponibles = [];
+    const fechasBloqueadas = [];
+
     for (const date of dates) {
-      // Verificar si ya existen reservas para esta fecha
-      const existingReservations = await Reserva.findAll({
+      let fechaDisponible = true;
+      
+      // Verificar disponibilidad del turno mañana
+      const existingMorningReservation = await Reserva.findOne({
         where: {
           fecha_reserva: date,
+          hora_inicio: '11:00:00',
           estado: {
             [Op.in]: ['pendiente', 'confirmada']
           }
         }
       });
 
-      if (existingReservations.length > 0) {
-        continue; // Saltar fechas que ya tienen reservas
-      }
-
-      // Crear bloqueo para horario de mañana
-      blockReservations.push({
-        id_usuario: req.user.id,
-        id_paquete: 1, // Usar un paquete por defecto
-        fecha_reserva: date,
-        hora_inicio: '11:00:00',
-        hora_fin: '16:00:00',
-        estado: 'confirmada',
-        total: 0,
-        nombre_festejado: 'BLOQUEO ADMINISTRATIVO',
-        edad_festejado: 0,
-        comentarios: 'Día bloqueado por administración',
-        id_tematica: 1, // Usar una temática por defecto
-        id_mampara: 1, // Usar una mampara por defecto
+      // Verificar disponibilidad del turno tarde
+      const existingEveningReservation = await Reserva.findOne({
+        where: {
+          fecha_reserva: date,
+          hora_inicio: '17:00:00',
+          estado: {
+            [Op.in]: ['pendiente', 'confirmada']
+          }
+        }
       });
 
-      // Crear bloqueo para horario de tarde
-      blockReservations.push({
-        id_usuario: req.user.id,
-        id_paquete: 1,
-        fecha_reserva: date,
-        hora_inicio: '17:00:00',
-        hora_fin: '22:00:00',
-        estado: 'confirmada',
-        total: 0,
-        nombre_festejado: 'BLOQUEO ADMINISTRATIVO',
-        edad_festejado: 0,
-        comentarios: 'Día bloqueado por administración',
-        id_tematica: 1,
-        id_mampara: 1,
+      // Si el turno mañana está disponible, crear bloqueo
+      if (!existingMorningReservation) {
+        blockReservations.push({
+          id_usuario: req.user.id,
+          id_paquete: paquete.id,
+          fecha_reserva: date,
+          hora_inicio: '11:00:00',
+          hora_fin: '16:00:00',
+          estado: 'confirmada',
+          total: 0,
+          nombre_festejado: 'BLOQUEO ADMINISTRATIVO',
+          edad_festejado: 1, // Cambiado de 0 a 1 para cumplir con la restricción de la base de datos
+          comentarios: 'Día bloqueado por administración',
+          id_tematica: tematica.id,
+          id_mampara: mampara.id,
+        });
+      } else {
+        fechaDisponible = false;
+      }
+
+      // Si el turno tarde está disponible, crear bloqueo
+      if (!existingEveningReservation) {
+        blockReservations.push({
+          id_usuario: req.user.id,
+          id_paquete: paquete.id,
+          fecha_reserva: date,
+          hora_inicio: '17:00:00',
+          hora_fin: '22:00:00',
+          estado: 'confirmada',
+          total: 0,
+          nombre_festejado: 'BLOQUEO ADMINISTRATIVO',
+          edad_festejado: 1, // Cambiado de 0 a 1 para cumplir con la restricción de la base de datos
+          comentarios: 'Día bloqueado por administración',
+          id_tematica: tematica.id,
+          id_mampara: mampara.id,
+        });
+      } else {
+        fechaDisponible = false;
+      }
+
+      // Registrar si la fecha ya tenía reservas o se bloqueó exitosamente
+      if (!fechaDisponible) {
+        fechasNoDisponibles.push(date);
+      } else {
+        fechasBloqueadas.push(date);
+      }
+    }
+
+    // Si no hay reservas para crear, informar al usuario
+    if (blockReservations.length === 0) {
+      return res.status(409).json({
+        error: 'Todas las fechas seleccionadas ya tienen reservas',
+        fechasNoDisponibles
       });
     }
 
@@ -621,10 +679,20 @@ exports.blockDates = async (req, res) => {
       user: req.user // Para los hooks de auditoría
     });
 
-    res.status(201).json({ 
+    // Preparar respuesta con información detallada
+    const respuesta = { 
       message: 'Fechas bloqueadas exitosamente',
-      blockedDates: dates
-    });
+      total: blockReservations.length,
+      fechasBloqueadas
+    };
+
+    // Si algunas fechas no estaban disponibles, incluirlas en la respuesta
+    if (fechasNoDisponibles.length > 0) {
+      respuesta.advertencia = 'Algunas fechas o turnos ya tenían reservas';
+      respuesta.fechasNoDisponibles = fechasNoDisponibles;
+    }
+
+    res.status(201).json(respuesta);
   } catch (error) {
     console.error('Error al bloquear fechas:', error);
     res.status(500).json({ 

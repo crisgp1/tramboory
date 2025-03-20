@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { motion } from 'framer-motion';
@@ -72,161 +72,241 @@ export default function Signup() {
   ];
 
   return (
-    <motion.div 
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      exit={{ opacity: 0 }}
-      className="min-h-screen bg-gradient-to-br from-indigo-100 to-purple-100 flex items-center justify-center p-4 sm:p-6 md:p-8"
-    >
+    <div className="min-h-screen w-full bg-gradient-to-br from-indigo-50 to-purple-50 flex flex-col items-center justify-center p-4 relative overflow-hidden">
+      {/* Elementos decorativos - formas geométricas sutiles */}
+      <div className="absolute top-0 right-0 w-64 h-64 bg-indigo-100 rounded-full -mr-32 -mt-32 opacity-70"></div>
+      <div className="absolute bottom-0 left-0 w-80 h-80 bg-purple-100 rounded-full -ml-40 -mb-40 opacity-70"></div>
+      <div className="absolute top-1/3 left-1/4 w-12 h-12 bg-indigo-200 rounded-full transform rotate-45 opacity-60"></div>
+      <div className="absolute bottom-1/4 right-1/3 w-20 h-20 bg-purple-200 rounded-full transform rotate-12 opacity-60"></div>
+      
       <ToastContainer position="top-right" autoClose={3000} hideProgressBar={false} newestOnTop closeOnClick rtl={false} pauseOnFocusLoss draggable pauseOnHover />
-      <div className="bg-white rounded-2xl shadow-2xl p-6 sm:p-8 md:p-10 w-full max-w-5xl">
-        <h2 className="text-3xl sm:text-4xl font-bold mb-8 text-center text-indigo-800">Crear Cuenta</h2>
-        <form onSubmit={handleSubmit(onSubmit)} className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <InputField
-            icon={<FiUser className="text-indigo-500" />}
-            label="Nombre Completo"
-            name="nombre"
-            type="text"
-            placeholder="Tu nombre completo"
-            register={register}
-            error={errors.nombre}
-          />
-
-          <InputField
-            icon={<FiMail className="text-indigo-500" />}
-            label="Correo Electrónico"
-            name="email"
-            type="email"
-            placeholder="tu@email.com"
-            register={register}
-            error={errors.email}
-          />
-
-          <InputField
-            icon={<FiPhone className="text-indigo-500" />}
-            label="Teléfono"
-            name="telefono"
-            type="tel"
-            placeholder="Tu número de teléfono"
-            register={register}
-          />
-
-          <InputField
-            icon={<FiMapPin className="text-indigo-500" />}
-            label="Dirección"
-            name="direccion"
-            type="text"
-            placeholder="Tu dirección"
-            register={register}
-          />
-
-          <div className="col-span-full">
-            <PasswordField
-              label="Contraseña"
-              name="password"
-              register={register}
-              error={errors.password}
-              showPassword={showPassword}
-              setShowPassword={setShowPassword}
-            />
+      
+      <motion.div 
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5 }}
+        className="relative z-10 w-full max-w-2xl my-8"
+      >
+        <div className="bg-white rounded-3xl shadow-xl overflow-hidden">
+          <div className="px-8 pt-8 pb-4">
+            <div className="flex items-center justify-center mb-6">
+              <div className="p-3 bg-indigo-100 rounded-2xl">
+                <FiUser className="text-indigo-600 text-2xl" />
+              </div>
+            </div>
+            <h1 className="text-3xl font-bold mb-2 text-center text-gray-800">
+              Crear cuenta
+            </h1>
+            <p className="text-center text-gray-500 mb-6">Completa tus datos para registrarte</p>
           </div>
+          
+          <div className="px-6 sm:px-8 pb-8">
+            <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                <InputField
+                  icon={<FiUser className="text-indigo-500" />}
+                  label="Nombre Completo"
+                  name="nombre"
+                  type="text"
+                  placeholder="Tu nombre completo"
+                  register={register}
+                  error={errors.nombre}
+                />
 
-          <div className="col-span-full p-4 bg-indigo-50 rounded-lg text-sm text-indigo-700 leading-relaxed">
-            <h4 className="font-semibold mb-2">Requisitos de la contraseña:</h4>
-            <ul className="space-y-1">
-              {passwordCriteria.map((criterion, index) => (
-                <li key={index} className="flex items-center">
-                  <span className={`w-5 h-5 mr-2 rounded-full ${criterion.regex.test(password) ? 'bg-green-500' : 'bg-gray-300'}`}></span>
-                  {criterion.label}
-                </li>
-              ))}
-            </ul>
+                <InputField
+                  icon={<FiMail className="text-indigo-500" />}
+                  label="Correo Electrónico"
+                  name="email"
+                  type="email"
+                  placeholder="tu@email.com"
+                  register={register}
+                  error={errors.email}
+                />
+
+                <InputField
+                  icon={<FiPhone className="text-indigo-500" />}
+                  label="Teléfono"
+                  name="telefono"
+                  type="tel"
+                  placeholder="Tu número de teléfono"
+                  register={register}
+                  error={errors.telefono}
+                />
+
+                <InputField
+                  icon={<FiMapPin className="text-indigo-500" />}
+                  label="Dirección"
+                  name="direccion"
+                  type="text"
+                  placeholder="Tu dirección"
+                  register={register}
+                  error={errors.direccion}
+                />
+              </div>
+
+              <div className="mt-2">
+                <PasswordField
+                  label="Contraseña"
+                  name="password"
+                  register={register}
+                  error={errors.password}
+                  showPassword={showPassword}
+                  setShowPassword={setShowPassword}
+                />
+              </div>
+
+              <div className="bg-indigo-50 rounded-xl p-4 space-y-3 mt-2">
+                {/* Indicador de fortaleza */}
+                <div className="flex space-x-1">
+                  {[0, 1, 2, 3, 4].map((index) => (
+                    <motion.div
+                      key={index}
+                      initial={{ width: '20%', opacity: 0.3 }}
+                      animate={{ 
+                        opacity: index < getPasswordStrength() ? 1 : 0.3,
+                      }}
+                      transition={{ duration: 0.3 }}
+                      className={`h-1.5 flex-grow rounded-full ${
+                        index < getPasswordStrength() ? strengthColors[getPasswordStrength() - 1] : 'bg-gray-200'
+                      }`}
+                    ></motion.div>
+                  ))}
+                </div>
+                
+                {/* Criterios de contraseña */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                  {passwordCriteria.map((criterion, index) => (
+                    <motion.div 
+                      key={index}
+                      initial={{ opacity: 0.5 }}
+                      animate={{ 
+                        opacity: 1,
+                        scale: criterion.regex.test(password) ? [1, 1.05, 1] : 1
+                      }}
+                      transition={{ duration: 0.2 }}
+                      className="flex items-center text-xs"
+                    >
+                      <div className={`w-4 h-4 mr-2 rounded-full flex items-center justify-center ${
+                        criterion.regex.test(password) ? 'bg-green-100' : 'bg-gray-100'
+                      }`}>
+                        <div className={`w-2 h-2 rounded-full ${
+                          criterion.regex.test(password) ? 'bg-green-500' : 'bg-gray-300'
+                        }`}></div>
+                      </div>
+                      <span className={criterion.regex.test(password) ? 'text-gray-700' : 'text-gray-500'}>
+                        {criterion.label}
+                      </span>
+                    </motion.div>
+                  ))}
+                </div>
+              </div>
+
+              <div className="mt-2">
+                <PasswordField
+                  label="Confirmar Contraseña"
+                  name="confirmPassword"
+                  register={register}
+                  error={errors.confirmPassword}
+                  showPassword={showConfirmPassword}
+                  setShowPassword={setShowConfirmPassword}
+                />
+              </div>
+
+              <motion.button
+                whileHover={{ scale: 1.01 }}
+                whileTap={{ scale: 0.99 }}
+                type="submit"
+                className={`w-full py-3 mt-6 rounded-xl font-semibold text-white shadow-lg transition-all duration-300 ${
+                  loading 
+                    ? 'bg-indigo-400 cursor-not-allowed' 
+                    : 'bg-indigo-600 hover:bg-indigo-700 shadow-indigo-200'
+                }`}
+                disabled={loading}
+              >
+                {loading ? (
+                  <div className="flex items-center justify-center">
+                    <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                    Registrando...
+                  </div>
+                ) : 'Crear Cuenta'}
+              </motion.button>
+            </form>
+            
+            <div className="mt-8 text-center">
+              <p className="text-sm text-gray-600">
+                ¿Ya tienes cuenta?{' '}
+                <Link to="/signin" className="font-medium text-indigo-600 hover:text-indigo-500 transition-all duration-200">
+                  Inicia Sesión
+                </Link>
+              </p>
+            </div>
           </div>
-
-          <div className="col-span-full mt-2 flex space-x-1">
-            {[0, 1, 2, 3, 4].map((index) => (
-              <div
-                key={index}
-                className={`h-2 flex-grow rounded-full ${
-                  index < getPasswordStrength() ? strengthColors[getPasswordStrength() - 1] : 'bg-gray-200'
-                } transition-all duration-300`}
-              ></div>
-            ))}
-          </div>
-
-          <div className="col-span-full">
-            <PasswordField
-              label="Confirmar Contraseña"
-              name="confirmPassword"
-              register={register}
-              error={errors.confirmPassword}
-              showPassword={showConfirmPassword}
-              setShowPassword={setShowConfirmPassword}
-            />
-          </div>
-
-          <motion.button
-            whileHover={{ scale: 1.02 }}
-            whileTap={{ scale: 0.98 }}
-            type="submit"
-            className={`col-span-full w-full bg-indigo-600 text-white p-3 rounded-lg font-semibold text-lg hover:bg-indigo-700 transition duration-300 ${
-              loading ? 'opacity-50 cursor-not-allowed' : ''
-            }`}
-            disabled={loading}
-          >
-            {loading ? 'Registrando...' : 'Registrarse'}
-          </motion.button>
-        </form>
-        <p className="mt-8 text-center text-sm text-gray-600">
-          ¿Ya tienes cuenta?{' '}
-          <Link to="/signin" className="font-medium text-indigo-600 hover:text-indigo-700 transition duration-300">
-            Inicia Sesión
-          </Link>
-        </p>
-      </div>
-    </motion.div>
+        </div>
+      </motion.div>
+    </div>
   );
 }
 
 const InputField = ({ icon, label, name, type, placeholder, register, error }) => (
-  <div className="flex flex-col space-y-1">
-    <label htmlFor={name} className="text-sm font-medium text-gray-700">{label}</label>
+  <div className="space-y-2">
+    <label htmlFor={name} className="text-sm font-medium text-gray-700 block">{label}</label>
     <div className="relative">
-      <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+      <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
         {icon}
       </div>
       <input
         {...register(name)}
         type={type}
-        className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition duration-300"
+        className="w-full pl-11 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all duration-200"
         placeholder={placeholder}
       />
     </div>
-    {error && <p className="mt-1 text-xs text-red-500">{error.message}</p>}
+    {error && (
+      <motion.p 
+        initial={{ opacity: 0, height: 0 }}
+        animate={{ opacity: 1, height: 'auto' }}
+        exit={{ opacity: 0, height: 0 }}
+        className="text-xs text-red-500 mt-1"
+      >
+        {error.message}
+      </motion.p>
+    )}
   </div>
 );
 
 const PasswordField = ({ label, name, register, error, showPassword, setShowPassword }) => (
-  <div className="flex flex-col space-y-1">
-    <label htmlFor={name} className="text-sm font-medium text-gray-700">{label}</label>
+  <div className="space-y-2">
+    <label htmlFor={name} className="text-sm font-medium text-gray-700 block">{label}</label>
     <div className="relative">
-      <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+      <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
         <FiLock className="text-indigo-500" />
       </div>
       <input
         {...register(name)}
         type={showPassword ? 'text' : 'password'}
-        className="w-full pl-10 pr-10 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition duration-300"
+        className="w-full pl-11 pr-11 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all duration-200"
         placeholder="Tu contraseña"
       />
       <button
         type="button"
         onClick={() => setShowPassword(!showPassword)}
-        className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-600 transition duration-300"
+        className="absolute inset-y-0 right-0 pr-4 flex items-center text-gray-400 hover:text-indigo-500 transition-all duration-200"
       >
         {showPassword ? <FiEyeOff size={18} /> : <FiEye size={18} />}
       </button>
     </div>
-    {error && <p className="mt-1 text-xs text-red-500">{error.message}</p>}
+    {error && (
+      <motion.p 
+        initial={{ opacity: 0, height: 0 }}
+        animate={{ opacity: 1, height: 'auto' }}
+        exit={{ opacity: 0, height: 0 }}
+        className="text-xs text-red-500 mt-1"
+      >
+        {error.message}
+      </motion.p>
+    )}
   </div>
 );

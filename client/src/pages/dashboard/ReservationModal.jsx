@@ -75,6 +75,23 @@ const ReservationModal = ({
     return () => window.removeEventListener('resize', updateModalHeight);
   }, []);
 
+  // Add event listener for escape key
+  useEffect(() => {
+    const handleEscKey = (event) => {
+      if (event.key === 'Escape') {
+        onClose();
+      }
+    };
+
+    // Add event listener
+    document.addEventListener('keydown', handleEscKey);
+
+    // Cleanup function
+    return () => {
+      document.removeEventListener('keydown', handleEscKey);
+    };
+  }, [onClose]);
+
   if (!reservation) return null;
 
   const handlePrint = () => {

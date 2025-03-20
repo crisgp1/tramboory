@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import PropTypes from 'prop-types';
 import { FiX } from 'react-icons/fi';
 
@@ -12,6 +12,23 @@ const Modal = ({
   showCloseButton = true,
 }) => {
   if (!isOpen) return null;
+
+  // Add event listener for escape key
+  useEffect(() => {
+    const handleEscKey = (event) => {
+      if (event.key === 'Escape') {
+        onClose();
+      }
+    };
+
+    // Add event listener
+    document.addEventListener('keydown', handleEscKey);
+
+    // Cleanup function
+    return () => {
+      document.removeEventListener('keydown', handleEscKey);
+    };
+  }, [onClose]); // Dependency array with onClose function
 
   return (
     <div className="fixed inset-0 z-50 bg-gray-500 bg-opacity-75 flex items-center justify-center p-2 sm:p-4"

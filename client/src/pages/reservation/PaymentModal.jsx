@@ -36,6 +36,23 @@ const PaymentModal = ({ reservationData, onCancel, onConfirm }) => {
     );
   }, []);
 
+  // Add event listener for escape key
+  useEffect(() => {
+    const handleEscKey = (event) => {
+      if (event.key === 'Escape') {
+        onCancel();
+      }
+    };
+
+    // Add event listener
+    document.addEventListener('keydown', handleEscKey);
+
+    // Cleanup function
+    return () => {
+      document.removeEventListener('keydown', handleEscKey);
+    };
+  }, [onCancel]);
+
   const handleCopyClabe = () => {
     navigator.clipboard.writeText(CLABE);
     setCopiedClabe(true);
