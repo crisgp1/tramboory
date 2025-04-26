@@ -322,6 +322,324 @@ exports.getMovimientosByMateriaPrima = async (req, res) => {
   }
 };
 
+exports.updateMovimiento = async (req, res) => {
+  const transaction = await sequelize.transaction();
+
+  try {
+    const {
+      id_materia_prima,
+      id_lote,
+      id_proveedor,
+      id_tipo_ajuste,
+      tipo_movimiento,
+      cantidad,
+      descripcion
+    } = req.body;
+
+    // Buscar el movimiento actual para verificar cambios en cantidad
+    const movimientoActual = await MovimientoInventario.findOne({
+      where: {
+        id: req.params.id,
+        activo: true
+      },
+      transaction
+    });
+
+    if (!movimientoActual) {
+      await transaction.rollback();
+      return res.status(404).json({ error: 'Movimiento no encontrado' });
+    }
+
+    // Validaciones básicas
+    if (!id_materia_prima || !tipo_movimiento || !cantidad) {
+      await transaction.rollback();
+      return res.status(400).json({
+        error: 'Materia prima, tipo de movimiento y cantidad son requeridos'
+      });
+    }
+
+    if (!['entrada', 'salida'].includes(tipo_movimiento)) {
+      await transaction.rollback();
+      return res.status(400).json({
+        error: 'Tipo de movimiento inválido'
+      });
+    }
+
+    // Revertir el movimiento anterior
+    let materiaPrima = await MateriaPrima.findByPk(movimientoActual.id_materia_prima, { transaction });
+    let loteAnterior = movimientoActual.id_lote ? await Lote.findByPk(movimientoActual.id_lote, { transaction }) : null;
+
+    if (movimientoActual.tipo_movimiento === 'entrada') {
+      if (loteAnterior) {
+        await loteAnterior.decrement('cantidad_actual', {
+          by: movimientoActual.cantidad,
+          transaction
+        });
+      }
+      await materiaPrima.decrement('stock_actual', {
+        by: movimientoActual.cantidad,
+        transaction
+      });
+    } else {
+      if (loteAnterior) {
+        await loteAnterior.increment('cantidad_actual', {
+          by: movimientoActual.cantidad,
+          transaction
+        });
+      }
+      await materiaPrima.increment('stock_actual', {
+        by: movimientoActual.cantidad,
+        transaction
+      });
+    }
+
+    // Verificar materia prima nueva
+    if (id_materia_prima !== movimientoActual.id_materia_prima) {
+      materiaPrima = await MateriaPrima.findOne({
+        where: {
+          id: id_materia_prima,
+          activo: true
+        },
+        transaction
+      });
+
+      if (!materiaPrima) {
+        await transaction.rollback();
+        return res.status(400).json({
+          error: 'Materia prima no válida'
+        });
+      }
+    }
+
+    // Verificar lote si se proporciona
+    let lote;
+    if (id_lote) {
+      lote = await Lote.findOne({
+        where: {
+          id: id_lote,
+          activo: true
+        },
+        transaction
+      });
+
+      if (!lote) {
+        await transaction.rollback();
+        return res.status(400).json({
+          error: 'Lote no válido'
+        });
+      }
+    }
+
+    // Verificar tipo de ajuste si se proporciona
+    if (id_tipo_ajuste) {
+      const tipoAjuste = await TipoAjuste.findOne({
+        where: {
+          id: id_tipo_ajuste,
+          activo: true
+        },
+        transaction
+      });
+
+      if (!tipoAjuste) {
+        await transaction.rollback();
+        return res.status(400).json({
+          error: 'Tipo de ajuste no válido'
+        });
+      }
+    }
+
+    // Verificar stock suficiente para salidas
+    if (tipo_movimiento === 'salida') {
+      if (lote) {
+        if (parseFloat(lote.cantidad_actual) < parseFloat(cantidad)) {
+          await transaction.rollback();
+          return res.status(400).json({
+            error: 'Stock insuficiente en el lote'
+          });
+        }
+      } else if (parseFloat(materiaPrima.stock_actual) < parseFloat(cantidad)) {
+        await transaction.rollback();
+        return res.status(400).json({
+          error: 'Stock insuficiente'
+        });
+      }
+    }
+
+    // Actualizar movimiento
+    const [updated] = await MovimientoInventario.update({
+      id_materia_prima,
+      id_lote,
+      id_proveedor,
+      id_tipo_ajuste,
+      tipo_movimiento,
+      cantidad,
+      descripcion
+    }, {
+      where: {
+        id: req.params.id,
+        activo: true
+      },
+      transaction
+    });
+
+    if (!updated) {
+      await transaction.rollback();
+      return res.status(404).json({ error: 'Movimiento no encontrado' });
+    }
+
+    // Aplicar nuevo movimiento
+    if (tipo_movimiento === 'entrada') {
+      if (lote) {
+        await lote.increment('cantidad_actual', {
+          by: cantidad,
+          transaction
+        });
+      }
+      await materiaPrima.increment('stock_actual', {
+        by: cantidad,
+        transaction
+      });
+    } else {
+      if (lote) {
+        await lote.decrement('cantidad_actual', {
+          by: cantidad,
+          transaction
+        });
+      }
+      await materiaPrima.decrement('stock_actual', {
+        by: cantidad,
+        transaction
+      });
+    }
+
+    await transaction.commit();
+
+    const movimientoActualizado = await MovimientoInventario.findByPk(req.params.id, {
+      include: [
+        {
+          model: MateriaPrima,
+          as: 'materiaPrima',
+          attributes: ['nombre']
+        },
+        {
+          model: Lote,
+          as: 'lote',
+          attributes: ['codigo_lote']
+        },
+        {
+          model: TipoAjuste,
+          as: 'tipoAjuste',
+          attributes: ['nombre']
+        }
+      ]
+    });
+
+    res.json(movimientoActualizado);
+  } catch (error) {
+    await transaction.rollback();
+    console.error('Error al actualizar movimiento:', error);
+    res.status(500).json({
+      error: 'Error al actualizar movimiento',
+      details: error.message
+    });
+  }
+};
+
+exports.deleteMovimiento = async (req, res) => {
+  const transaction = await sequelize.transaction();
+
+  try {
+    // Buscar el movimiento a eliminar
+    const movimiento = await MovimientoInventario.findOne({
+      where: {
+        id: req.params.id,
+        activo: true
+      },
+      transaction
+    });
+
+    if (!movimiento) {
+      await transaction.rollback();
+      return res.status(404).json({ error: 'Movimiento no encontrado' });
+    }
+
+    // Revertir el efecto del movimiento en el stock
+    const materiaPrima = await MateriaPrima.findByPk(movimiento.id_materia_prima, { transaction });
+    const lote = movimiento.id_lote ? await Lote.findByPk(movimiento.id_lote, { transaction }) : null;
+
+    if (movimiento.tipo_movimiento === 'entrada') {
+      // Si era una entrada, reducimos el stock
+      if (lote) {
+        // Verificar que haya suficiente stock en el lote
+        if (parseFloat(lote.cantidad_actual) < parseFloat(movimiento.cantidad)) {
+          await transaction.rollback();
+          return res.status(400).json({
+            error: 'No se puede eliminar el movimiento porque se ha utilizado parte del stock'
+          });
+        }
+        
+        await lote.decrement('cantidad_actual', {
+          by: movimiento.cantidad,
+          transaction
+        });
+      }
+      
+      // Verificar que haya suficiente stock en la materia prima
+      if (parseFloat(materiaPrima.stock_actual) < parseFloat(movimiento.cantidad)) {
+        await transaction.rollback();
+        return res.status(400).json({
+          error: 'No se puede eliminar el movimiento porque se ha utilizado parte del stock'
+        });
+      }
+      
+      await materiaPrima.decrement('stock_actual', {
+        by: movimiento.cantidad,
+        transaction
+      });
+    } else {
+      // Si era una salida, aumentamos el stock
+      if (lote) {
+        await lote.increment('cantidad_actual', {
+          by: movimiento.cantidad,
+          transaction
+        });
+      }
+      
+      await materiaPrima.increment('stock_actual', {
+        by: movimiento.cantidad,
+        transaction
+      });
+    }
+
+    // Marcar como inactivo el movimiento
+    const [deleted] = await MovimientoInventario.update(
+      { activo: false },
+      {
+        where: {
+          id: req.params.id,
+          activo: true
+        },
+        transaction
+      }
+    );
+
+    if (!deleted) {
+      await transaction.rollback();
+      return res.status(404).json({ error: 'Movimiento no encontrado' });
+    }
+
+    await transaction.commit();
+    res.json({ message: 'Movimiento eliminado con éxito' });
+  } catch (error) {
+    await transaction.rollback();
+    console.error('Error al eliminar movimiento:', error);
+    res.status(500).json({
+      error: 'Error al eliminar movimiento',
+      details: error.message
+    });
+  }
+};
+
 exports.getMovimientosByLote = async (req, res) => {
   try {
     const { id_lote } = req.params;

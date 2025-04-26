@@ -1,83 +1,132 @@
-# Tramboory - Aplicación Web de Reservas
+# Tramboory
 
-Tramboory es una aplicación web para la gestión de reservas y eventos en un centro de entretenimiento infantil. Permite a los usuarios realizar reservas, personalizar sus eventos y a los administradores gestionar todos los aspectos del negocio.
+Sistema de gestión para reservas, inventario y finanzas.
 
-## Características
+## Configuración con Docker
 
-- Registro y autenticación de usuarios
-- Creación y gestión de reservas
-- Elección de paquetes, temáticas y extras
-- Calendario de reservas
-- Panel de control del administrador
-- Gestión de usuarios, paquetes, temáticas, extras y pagos
-- Informes financieros
-- Integración con backend en Express y base de datos MySQL
-- Interfaz de usuario receptiva y animada
+Este proyecto está configurado para ejecutarse fácilmente utilizando Docker y Docker Compose, lo que permite un despliegue rápido y consistente en cualquier entorno.
 
-## Tecnologías Utilizadas
+### Requisitos previos
 
-- React.js
-- Tailwind CSS
-- Framer Motion
-- React Hook Form
-- React Router
-- Axios
-- Express.js
-- Sequelize ORM
-- MySQL
+- [Docker](https://docs.docker.com/get-docker/)
+- [Docker Compose](https://docs.docker.com/compose/install/)
 
-## Instalación
+### Servicios incluidos
 
-1. Clona el repositorio
-2. Instala las dependencias del frontend con `npm install`
-3. Instala las dependencias del backend con `cd backend && npm install`
-4. Configura las variables de entorno en un archivo `.env` en el directorio del backend
-5. Ejecuta las migraciones de la base de datos con `npm run db:migrate`
-6. Inicia el servidor de desarrollo con `npm run dev` en el directorio principal
+1. **PostgreSQL** - Base de datos principal
+2. **Backend** - API REST desarrollada en Node.js
+3. **Frontend** - Aplicación web desarrollada en React
 
-## Licencia
+### Iniciar el proyecto
 
-Este proyecto está licenciado bajo la Licencia MIT. Consulta el archivo `LICENSE` para más detalles.
+1. Clona el repositorio:
 
----
+```bash
+git clone <url-del-repositorio>
+cd tramboory
+```
 
-# Tramboory - Event Booking Web Application
+2. Inicia los servicios con Docker Compose:
 
-Tramboory is a web application for managing reservations and events at a children's entertainment center. It allows users to make reservations, customize their events, and allows administrators to manage all aspects of the business.
+```bash
+docker-compose up -d
+```
 
-## Features
+Esto iniciará todos los servicios en segundo plano. La primera vez que ejecutes este comando, Docker descargará las imágenes necesarias y construirá los contenedores, lo que puede tomar unos minutos.
 
-- User registration and authentication
-- Creation and management of reservations
-- Selection of packages, themes, and extras
-- Reservation calendar
-- Admin dashboard
-- Management of users, packages, themes, extras, and payments
-- Financial reports
-- Integration with Express backend and MySQL database
-- Responsive and animated user interface
+3. Para ver los logs de los servicios:
 
-## Technologies Used
+```bash
+# Ver logs de todos los servicios
+docker-compose logs -f
 
-- React.js
-- Tailwind CSS
-- Framer Motion
-- React Hook Form
-- React Router
-- Axios
-- Express.js
-- Sequelize ORM
-- MySQL
+# Ver logs de un servicio específico
+docker-compose logs -f backend
+docker-compose logs -f frontend
+docker-compose logs -f postgres
+```
 
-## Installation
+### Acceder a los servicios
 
-1. Clone the repository
-2. Install frontend dependencies with `npm install`
-3. Install backend dependencies with `cd backend && npm install`
-4. Configure environment variables in a `.env` file in the backend directory
-5. Run database migrations with `npm run db:migrate`
-6. Start the development server with `npm run dev` in the main directory
+- **Frontend**: http://localhost:80
+- **Backend API**: http://localhost:3001/api
+- **Base de datos PostgreSQL**: 
+  - Host: localhost
+  - Puerto: 5432
+  - Usuario: postgres
+  - Contraseña: postgres
+  - Base de datos: tramboory
 
-## License
+### Conexión a la base de datos
 
-This project is licensed under the MIT License. See the `LICENSE` file for more details.
+Para conectarte a la base de datos usando un cliente PostgreSQL como pgAdmin o DBeaver, usa las siguientes credenciales:
+
+- Host: localhost
+- Puerto: 5432
+- Usuario: postgres
+- Contraseña: postgres
+- Base de datos: tramboory
+
+La base de datos está configurada con dos schemas:
+- `main`: Contiene las tablas principales del sistema (usuarios, reservas, pagos, etc.)
+- `inventory`: Contiene las tablas relacionadas con el inventario (materias primas, proveedores, etc.)
+
+### Detener los servicios
+
+Para detener los servicios sin eliminar los contenedores:
+
+```bash
+docker-compose stop
+```
+
+Para detener y eliminar los contenedores, pero mantener los volúmenes de datos:
+
+```bash
+docker-compose down
+```
+
+Para detener, eliminar los contenedores y también eliminar los volúmenes de datos:
+
+```bash
+docker-compose down -v
+```
+
+### Reconstruir los servicios
+
+Si realizas cambios en el código fuente y necesitas reconstruir los contenedores:
+
+```bash
+docker-compose build
+docker-compose up -d
+```
+
+### Persistencia de datos
+
+Los datos de la base de datos PostgreSQL se almacenan en un volumen llamado `tramboory_postgres_data`, lo que garantiza que los datos persistan incluso si los contenedores se detienen o eliminan.
+
+### Solución de problemas comunes
+
+1. **El frontend no puede conectarse al backend**:
+   - Verifica que el backend esté funcionando correctamente con `docker-compose logs backend`
+   - Asegúrate de que la variable de entorno `VITE_API_URL` en `client/.env.docker` apunte a la URL correcta
+
+2. **Errores de conexión a la base de datos**:
+   - Verifica que el servicio de PostgreSQL esté funcionando con `docker-compose logs postgres`
+   - Asegúrate de que las credenciales de la base de datos en `app/.env.docker` sean correctas
+
+3. **Cambios en el código no se reflejan**:
+   - Reconstruye los contenedores con `docker-compose build` seguido de `docker-compose up -d`
+
+4. **Errores al iniciar los servicios**:
+   - Verifica los logs con `docker-compose logs`
+   - Asegúrate de que los puertos necesarios (80, 3001, 5432) no estén siendo utilizados por otras aplicaciones
+
+### Información adicional
+
+Las variables de entorno utilizadas en este proyecto están configuradas en:
+
+- `app/.env.docker` para el backend
+- `client/.env.docker` para el frontend
+- Directamente en el archivo `docker-compose.yml`
+
+Si necesitas personalizar alguna configuración, puedes modificar estos archivos según tus necesidades.

@@ -1,5 +1,6 @@
 const express = require('express');
 const path = require('path');
+const http = require('http');
 const sequelize = require('./config/database');
 const models = require('./models'); // Importar todos los modelos y sus asociaciones
 const paqueteRoutes = require('./routes/paqueteRoutes');
@@ -18,15 +19,16 @@ const mamparaRoutes = require('./routes/mamparaRoutes');
 const pagoRoutes = require('./routes/pagoRoutes');
 const auditoriaRoutes = require('./routes/auditoriaRoutes');
 const galeriaHomeRoutes = require('./routes/galeriaHomeRoutes');
+const inventoryRoutes = require('./routes/inventory');
 const errorHandler = require('./middlewares/errorMiddleware');
 const fs = require('fs');
 const cors = require('cors');
+const { Server } = require('socket.io');
 
 const app = express();
+const server = http.createServer(app);
 
 require('dotenv').config();
-
-app.use(express.json());
 
 // Enable CORS with multiple origins support
 const allowedOrigins = [
@@ -34,6 +36,39 @@ const allowedOrigins = [
     'http://localhost:5173', // Vite development server
     'http://localhost:3000'  // Optional: React default development server
 ];
+
+// Crear instancia de Socket.IO
+const io = new Server(server, {
+    cors: {
+        origin: function(origin, callback) {
+            // Permitir solicitudes sin origen (como aplicaciones móviles o curl)
+            if (!origin) return callback(null, true);
+            
+            if (allowedOrigins.indexOf(origin) !== -1 || !origin) {
+                callback(null, true);
+            } else {
+                console.log(`Origin ${origin} not allowed by CORS for Socket.IO`);
+                callback(null, false);
+            }
+        },
+        methods: ["GET", "POST", "PUT", "DELETE"],
+        credentials: true
+    }
+});
+
+// Exportar io para que pueda ser utilizado en otros archivos
+global.io = io;
+
+// Configurar eventos de Socket.IO
+io.on('connection', (socket) => {
+    console.log('Usuario conectado:', socket.id);
+    
+    socket.on('disconnect', () => {
+        console.log('Usuario desconectado:', socket.id);
+    });
+});
+
+app.use(express.json());
 
 app.use(
     cors({
@@ -85,6 +120,7 @@ app.use('/api/tematicas', auditMiddleware, tematicaRoutes);
 app.use('/api/extras', auditMiddleware, extraRoutes);
 app.use('/api/mamparas', auditMiddleware, mamparaRoutes);
 app.use('/api/galeria-home', auditMiddleware, galeriaHomeRoutes);
+app.use('/api/inventory', protectedRoute(inventoryRoutes));
 
 // Manejar solicitudes preflight
 app.options('*', cors());
@@ -118,8 +154,9 @@ const startServer = async () => {
     await initializeDatabase();
     
     const PORT = process.env.PORT || 3001;
-    app.listen(PORT, () => {
+    server.listen(PORT, () => {
         console.log(`Servidor corriendo en el puerto ${PORT}`);
+        console.log(`Socket.IO configurado y escuchando`);
     });
 };
 

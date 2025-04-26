@@ -1,5 +1,5 @@
 const Usuario = require('../models/Usuario');
-const bcrypt = require('bcryptjs');
+const argon2 = require('argon2');
 const jwt = require('jsonwebtoken');
 require('dotenv').config();
 
@@ -13,7 +13,7 @@ exports.signup = async (req, res) => {
             return res.status(400).json({message: 'El correo electrónico ya está en uso'});
         }
 
-        const hashedPassword = await bcrypt.hash(password, 10);
+        const hashedPassword = await argon2.hash(password);
         const newUser = await Usuario.create({
             nombre, 
             email, 
@@ -44,7 +44,7 @@ exports.login = async (req, res) => {
             return res.status(401).json({message: 'Correo electrónico o contraseña incorrectos'});
         }
 
-        const validPassword = await bcrypt.compare(password, usuario.clave_hash);
+        const validPassword = await argon2.verify(usuario.clave_hash, password);
 
         if (!validPassword) {
             return res.status(401).json({message: 'Correo electrónico o contraseña incorrectos'});

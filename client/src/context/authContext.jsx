@@ -44,7 +44,7 @@ export const AuthProvider = ({ children }) => {
         axiosInstance.defaults.headers.common['Authorization'] = `Bearer ${token}`;
 
         try {
-          const response = await axiosInstance.get('/api/usuarios/me');
+          const response = await axiosInstance.get('/usuarios/me');
           setUser(response.data);
         } catch (error) {
           console.error('Error al obtener datos del usuario:', error);
@@ -67,7 +67,30 @@ export const AuthProvider = ({ children }) => {
     }
   }, []);
 
-  const login = useCallback(async (token, userData) => {
+  const login = useCallback(async (emailOrToken, passwordOrUserData) => {
+    let token, userData;
+
+    // Caso 1: Login con email/password
+    if (typeof passwordOrUserData === 'string' || passwordOrUserData === undefined) {
+      try {
+        const response = await axiosInstance.post('/auth/login', {
+          email: emailOrToken,
+          password: passwordOrUserData
+        });
+        token = response.data.token;
+        userData = null; // Se obtendrá del token o del endpoint /me
+      } catch (error) {
+        console.error('Error en inicio de sesión:', error);
+        throw error; // Propagar el error para que InventoryLoginModal pueda manejarlo
+      }
+    } 
+    // Caso 2: Login directo con token
+    else {
+      token = emailOrToken;
+      userData = passwordOrUserData;
+    }
+
+    // Guardar token en localStorage (fuente principal) y también en cookies para compatibilidad
     localStorage.setItem('token', token);
     axiosInstance.defaults.headers.common['Authorization'] = `Bearer ${token}`;
     
@@ -80,13 +103,14 @@ export const AuthProvider = ({ children }) => {
     } else {
       setUser({
         id: decoded.id,
-        nombre: decoded.nombre,
+        nombre: decoded.nombre || decoded.name,
         email: decoded.email,
         tipo_usuario: decoded.userType
       });
       
+      // Obtener datos de usuario completos
       try {
-        const response = await axiosInstance.get('/api/usuarios/me');
+        const response = await axiosInstance.get('/usuarios/me');
         setUser(response.data);
       } catch (error) {
         console.error('Error al obtener datos del usuario:', error);
@@ -98,7 +122,7 @@ export const AuthProvider = ({ children }) => {
 
   const logout = useCallback(async () => {
     try {
-      await axiosInstance.post('/api/auth/logout');
+      await axiosInstance.post('/auth/logout');
     } catch (error) {
       console.error('Error en logout:', error);
     } finally {

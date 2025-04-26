@@ -4,6 +4,7 @@ const UnidadMedida = require('../../models/Inventory/UnidadMedida');
 const Lote = require('../../models/Inventory/Lote');
 const AlertaInventario = require('../../models/Inventory/AlertaInventario');
 const MovimientoInventario = require('../../models/Inventory/MovimientoInventario');
+const Usuario = require('../../models/Usuario');
 
 exports.getAllMateriasPrimas = async (req, res) => {
   try {

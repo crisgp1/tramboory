@@ -1,4 +1,4 @@
-const { DataTypes } = require('sequelize');
+const { DataTypes, Op } = require('sequelize');
 const sequelize = require('../../config/database');
 
 const MovimientoInventario = sequelize.define('MovimientosInventario', {
@@ -70,11 +70,7 @@ const MovimientoInventario = sequelize.define('MovimientosInventario', {
     allowNull: false,
     defaultValue: sequelize.literal('CURRENT_TIMESTAMP')
   },
-  activo: {
-    type: DataTypes.BOOLEAN,
-    allowNull: false,
-    defaultValue: true
-  },
+  // Campo activo eliminado por no existir en la tabla
   fecha_creacion: {
     type: DataTypes.DATE,
     allowNull: false,
@@ -126,9 +122,9 @@ MovimientoInventario.findByFechas = function(fechaInicio, fechaFin) {
   return this.findAll({
     where: {
       fecha: {
-        [sequelize.Op.between]: [fechaInicio, fechaFin]
-      },
-      activo: true
+        [Op.between]: [fechaInicio, fechaFin]
+      }
+      // Condición activo eliminada por no existir en la tabla
     },
     include: [
       {
@@ -154,8 +150,8 @@ MovimientoInventario.findByFechas = function(fechaInicio, fechaFin) {
 MovimientoInventario.findByMateriaPrima = function(idMateriaPrima) {
   return this.findAll({
     where: {
-      id_materia_prima: idMateriaPrima,
-      activo: true
+      id_materia_prima: idMateriaPrima
+      // Condición activo eliminada por no existir en la tabla
     },
     include: [
       {

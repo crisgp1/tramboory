@@ -11,10 +11,7 @@ const Proveedor = sequelize.define('Proveedores', {
     type: DataTypes.STRING(100),
     allowNull: false
   },
-  razon_social: {
-    type: DataTypes.STRING(200),
-    allowNull: true
-  },
+  // Eliminado campo razon_social que no existe en la base de datos
   rfc: {
     type: DataTypes.STRING(13),
     allowNull: true

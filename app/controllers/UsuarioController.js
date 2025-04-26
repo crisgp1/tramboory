@@ -1,6 +1,6 @@
 const { Op } = require('sequelize')
 const Usuario = require('../models/Usuario')
-const  bcrypt = require('bcrypt')
+const argon2 = require('argon2');
 
 exports.getAllUsuarios = async (req, res) => {
   try {
@@ -60,7 +60,7 @@ exports.createUsuario = async (req, res) => {
     }
 
     // Cifrar la contraseña antes de crear el usuario
-    const hashedPassword = await bcrypt.hash(clave, 10);
+    const hashedPassword = await argon2.hash(clave);
     
     const usuario = await Usuario.create({ ...req.body, clave: hashedPassword });
     res.status(201).json(usuario);

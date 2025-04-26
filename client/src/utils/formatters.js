@@ -13,25 +13,40 @@ export const formatNumber = (number) => {
     return roundedNum.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
   };
   
-  export const formatDate = (dateString) => {
-    if (!dateString) {
-      console.warn('formatDate recibió una fecha vacía');
-      return 'Fecha inválida';
+  export const formatDate = (date) => {
+    if (!date) {
+      // Si es null o undefined, retornamos un mensaje genérico sin advertencia en consola
+      return 'Fecha no seleccionada';
     }
 
-    // Asumimos que dateString viene en formato YYYY-MM-DD
-    const [year, month, day] = dateString.split('-').map(Number);
+    let dateObj;
     
-    // Creamos la fecha en la zona horaria local usando los componentes
-    const date = new Date(year, month - 1, day, 12); // Agregamos hora 12 para evitar problemas con cambios de día
+    if (date instanceof Date) {
+      // Si ya es un objeto Date, lo usamos directamente
+      dateObj = date;
+    } else if (typeof date === 'string') {
+      // Si es un string, intentamos convertirlo
+      // Asumimos que podría venir en formato YYYY-MM-DD
+      if (date.includes('-')) {
+        const [year, month, day] = date.split('-').map(Number);
+        dateObj = new Date(year, month - 1, day, 12); // Agregamos hora 12 para evitar problemas con cambios de día
+      } else {
+        // Si no tiene formato esperado, intentamos crear fecha directamente
+        dateObj = new Date(date);
+      }
+    } else {
+      // Si no es Date ni string, es un tipo no soportado
+      console.warn('formatDate recibió un tipo de dato no soportado:', typeof date);
+      return 'Fecha inválida';
+    }
     
-    if (isNaN(date.getTime())) {
-      console.warn('formatDate recibió una fecha inválida:', dateString);
+    if (isNaN(dateObj.getTime())) {
+      console.warn('formatDate recibió una fecha inválida:', date);
       return 'Fecha inválida';
     }
 
     const options = { year: 'numeric', month: 'long', day: 'numeric' };
-    return date.toLocaleDateString('es-ES', options);
+    return dateObj.toLocaleDateString('es-ES', options);
   };
 
   export const formatTime = (timeString) => {
@@ -59,3 +74,12 @@ export const formatNumber = (number) => {
     
     return `${hour12}:${minutes} ${ampm} (Turno ${turno})`;
   };
+
+// Exportar también un objeto formatters que contenga todas las funciones
+export const formatters = {
+  formatNumber,
+  formatDate,
+  formatTime,
+  // Añadir un alias formatCurrency para formatNumber para mantener compatibilidad
+  formatCurrency: formatNumber
+};

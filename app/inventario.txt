@@ -1,0 +1,4043 @@
+const { Op } = require('sequelize');
+const AlertaInventario = require('../../models/Inventory/AlertaInventario');
+const MateriaPrima = require('../../models/Inventory/MateriaPrima');
+const Usuario = require('../../models/Usuario');
+
+exports.getAllAlertas = async (req, res) => {
+  try {
+    const { tipo, leida } = req.query;
+
+    const where = {
+      activo: true
+    };
+
+    if (tipo) {
+      where.tipo_alerta = tipo;
+    }
+
+    if (leida !== undefined) {
+      where.leida = leida === 'true';
+    }
+
+    const alertas = await AlertaInventario.findAll({
+      where,
+      include: [
+        {
+          model: MateriaPrima,
+          as: 'materiaPrima',
+          attributes: ['nombre']
+        },
+        {
+          model: Usuario,
+          as: 'usuarioDestinatario',
+          attributes: ['nombre']
+        }
+      ],
+      order: [['fecha_alerta', 'DESC']]
+    });
+
+    res.json(alertas);
+  } catch (error) {
+    console.error('Error al obtener alertas:', error);
+    res.status(500).json({
+      error: 'Error al obtener alertas',
+      details: error.message
+    });
+  }
+};
+
+exports.getAlertaById = async (req, res) => {
+  try {
+    const alerta = await AlertaInventario.findOne({
+      where: {
+        id: req.params.id,
+        activo: true
+      },
+      include: [
+        {
+          model: MateriaPrima,
+          as: 'materiaPrima',
+          attributes: ['nombre']
+        },
+        {
+          model: Usuario,
+          as: 'usuarioDestinatario',
+          attributes: ['nombre']
+        }
+      ]
+    });
+
+    if (!alerta) {
+      return res.status(404).json({ error: 'Alerta no encontrada' });
+    }
+
+    res.json(alerta);
+  } catch (error) {
+    console.error('Error al obtener alerta:', error);
+    res.status(500).json({
+      error: 'Error al obtener alerta',
+      details: error.message
+    });
+  }
+};
+
+exports.getAlertasPendientes = async (req, res) => {
+  try {
+    const alertas = await AlertaInventario.findAll({
+      where: {
+        id_usuario_destinatario: req.user.id,
+        leida: false,
+        activo: true
+      },
+      include: [
+        {
+          model: MateriaPrima,
+          as: 'materiaPrima',
+          attributes: ['nombre']
+        }
+      ],
+      order: [['fecha_alerta', 'DESC']]
+    });
+
+    res.json(alertas);
+  } catch (error) {
+    console.error('Error al obtener alertas pendientes:', error);
+    res.status(500).json({
+      error: 'Error al obtener alertas pendientes',
+      details: error.message
+    });
+  }
+};
+
+exports.marcarComoLeida = async (req, res) => {
+  try {
+    const alerta = await AlertaInventario.findOne({
+      where: {
+        id: req.params.id,
+        id_usuario_destinatario: req.user.id,
+        activo: true
+      }
+    });
+
+    if (!alerta) {
+      return res.status(404).json({ error: 'Alerta no encontrada' });
+    }
+
+    await alerta.marcarComoLeida();
+    res.json({ message: 'Alerta marcada como leída' });
+  } catch (error) {
+    console.error('Error al marcar alerta como leída:', error);
+    res.status(500).json({
+      error: 'Error al marcar alerta como leída',
+      details: error.message
+    });
+  }
+};
+
+exports.marcarTodasComoLeidas = async (req, res) => {
+  try {
+    const { tipo } = req.query;
+
+    const where = {
+      id_usuario_destinatario: req.user.id,
+      leida: false,
+      activo: true
+    };
+
+    if (tipo) {
+      where.tipo_alerta = tipo;
+    }
+
+    await AlertaInventario.update(
+      {
+        leida: true,
+        fecha_lectura: new Date()
+      },
+      { where }
+    );
+
+    res.json({ message: 'Alertas marcadas como leídas' });
+  } catch (error) {
+    console.error('Error al marcar alertas como leídas:', error);
+    res.status(500).json({
+      error: 'Error al marcar alertas como leídas',
+      details: error.message
+    });
+  }
+};
+
+exports.getAlertasPorTipo = async (req, res) => {
+  try {
+    const { tipo } = req.params;
+    const { desde, hasta } = req.query;
+
+    const where = {
+      tipo_alerta: tipo,
+      id_usuario_destinatario: req.user.id,
+      activo: true
+    };
+
+    if (desde || hasta) {
+      where.fecha_alerta = {};
+      if (desde) where.fecha_alerta[Op.gte] = desde;
+      if (hasta) where.fecha_alerta[Op.lte] = hasta;
+    }
+
+    const alertas = await AlertaInventario.findAll({
+      where,
+      include: [
+        {
+          model: MateriaPrima,
+          as: 'materiaPrima',
+          attributes: ['nombre']
+        }
+      ],
+      order: [['fecha_alerta', 'DESC']]
+    });
+
+    res.json(alertas);
+  } catch (error) {
+    console.error('Error al obtener alertas por tipo:', error);
+    res.status(500).json({
+      error: 'Error al obtener alertas por tipo',
+      details: error.message
+    });
+  }
+};
+
+exports.getResumenAlertas = async (req, res) => {
+  try {
+    const resumen = await AlertaInventario.findAll({
+      where: {
+        id_usuario_destinatario: req.user.id,
+        activo: true
+      },
+      attributes: [
+        'tipo_alerta',
+        'leida',
+        [sequelize.fn('COUNT', '*'), 'total']
+      ],
+      group: ['tipo_alerta', 'leida']
+    });
+
+    // Reorganizar el resumen por tipo de alerta
+    const resumenPorTipo = {};
+    resumen.forEach(item => {
+      if (!resumenPorTipo[item.tipo_alerta]) {
+        resumenPorTipo[item.tipo_alerta] = {
+          total: 0,
+          leidas: 0,
+          no_leidas: 0
+        };
+      }
+      
+      resumenPorTipo[item.tipo_alerta].total += parseInt(item.dataValues.total);
+      if (item.leida) {
+        resumenPorTipo[item.tipo_alerta].leidas = parseInt(item.dataValues.total);
+      } else {
+        resumenPorTipo[item.tipo_alerta].no_leidas = parseInt(item.dataValues.total);
+      }
+    });
+
+    res.json(resumenPorTipo);
+  } catch (error) {
+    console.error('Error al obtener resumen de alertas:', error);
+    res.status(500).json({
+      error: 'Error al obtener resumen de alertas',
+      details: error.message
+    });
+  }
+};const { Op } = require('sequelize');
+const ConversionMedida = require('../../models/Inventory/ConversionMedida');
+const UnidadMedida = require('../../models/Inventory/UnidadMedida');
+
+exports.getAllConversiones = async (req, res) => {
+  try {
+    const conversiones = await ConversionMedida.findAll({
+      where: { activo: true },
+      include: [
+        {
+          model: UnidadMedida,
+          as: 'unidadOrigen',
+          attributes: ['nombre', 'abreviatura', 'tipo']
+        },
+        {
+          model: UnidadMedida,
+          as: 'unidadDestino',
+          attributes: ['nombre', 'abreviatura', 'tipo']
+        }
+      ],
+      order: [
+        [{ model: UnidadMedida, as: 'unidadOrigen' }, 'nombre', 'ASC'],
+        [{ model: UnidadMedida, as: 'unidadDestino' }, 'nombre', 'ASC']
+      ]
+    });
+    res.json(conversiones);
+  } catch (error) {
+    console.error('Error al obtener conversiones:', error);
+    res.status(500).json({
+      error: 'Error al obtener conversiones',
+      details: error.message
+    });
+  }
+};
+
+exports.getConversionById = async (req, res) => {
+  try {
+    const conversion = await ConversionMedida.findOne({
+      where: {
+        id_unidad_origen: req.params.id_origen,
+        id_unidad_destino: req.params.id_destino,
+        activo: true
+      },
+      include: [
+        {
+          model: UnidadMedida,
+          as: 'unidadOrigen',
+          attributes: ['nombre', 'abreviatura', 'tipo']
+        },
+        {
+          model: UnidadMedida,
+          as: 'unidadDestino',
+          attributes: ['nombre', 'abreviatura', 'tipo']
+        }
+      ]
+    });
+
+    if (!conversion) {
+      return res.status(404).json({ error: 'Conversión no encontrada' });
+    }
+
+    res.json(conversion);
+  } catch (error) {
+    console.error('Error al obtener conversión:', error);
+    res.status(500).json({
+      error: 'Error al obtener conversión',
+      details: error.message
+    });
+  }
+};
+
+exports.createConversion = async (req, res) => {
+  try {
+    const {
+      id_unidad_origen,
+      id_unidad_destino,
+      factor_conversion
+    } = req.body;
+
+    // Validaciones básicas
+    if (!id_unidad_origen || !id_unidad_destino || !factor_conversion) {
+      return res.status(400).json({
+        error: 'Unidad origen, unidad destino y factor de conversión son requeridos'
+      });
+    }
+
+    // Verificar que las unidades existan
+    const [unidadOrigen, unidadDestino] = await Promise.all([
+      UnidadMedida.findOne({
+        where: {
+          id: id_unidad_origen,
+          activo: true
+        }
+      }),
+      UnidadMedida.findOne({
+        where: {
+          id: id_unidad_destino,
+          activo: true
+        }
+      })
+    ]);
+
+    if (!unidadOrigen || !unidadDestino) {
+      return res.status(400).json({
+        error: 'Una o ambas unidades de medida no son válidas'
+      });
+    }
+
+    // Verificar que sean del mismo tipo
+    if (unidadOrigen.tipo !== unidadDestino.tipo) {
+      return res.status(400).json({
+        error: 'Las unidades deben ser del mismo tipo'
+      });
+    }
+
+    // Verificar que no exista la conversión
+    const existente = await ConversionMedida.findOne({
+      where: {
+        id_unidad_origen,
+        id_unidad_destino,
+        activo: true
+      }
+    });
+
+    if (existente) {
+      return res.status(409).json({
+        error: 'Ya existe una conversión entre estas unidades'
+      });
+    }
+
+    const conversion = await ConversionMedida.create({
+      id_unidad_origen,
+      id_unidad_destino,
+      factor_conversion
+    });
+
+    // Crear conversión inversa automáticamente
+    await ConversionMedida.create({
+      id_unidad_origen: id_unidad_destino,
+      id_unidad_destino: id_unidad_origen,
+      factor_conversion: 1 / factor_conversion
+    });
+
+    const conversionCompleta = await ConversionMedida.findOne({
+      where: { 
+        id_unidad_origen,
+        id_unidad_destino
+      },
+      include: [
+        {
+          model: UnidadMedida,
+          as: 'unidadOrigen',
+          attributes: ['nombre', 'abreviatura', 'tipo']
+        },
+        {
+          model: UnidadMedida,
+          as: 'unidadDestino',
+          attributes: ['nombre', 'abreviatura', 'tipo']
+        }
+      ]
+    });
+
+    res.status(201).json(conversionCompleta);
+  } catch (error) {
+    console.error('Error al crear conversión:', error);
+    res.status(500).json({
+      error: 'Error al crear conversión',
+      details: error.message
+    });
+  }
+};
+
+exports.updateConversion = async (req, res) => {
+  try {
+    const { factor_conversion } = req.body;
+    const { id_origen, id_destino } = req.params;
+
+    if (!factor_conversion) {
+      return res.status(400).json({
+        error: 'Factor de conversión es requerido'
+      });
+    }
+
+    const conversion = await ConversionMedida.findOne({
+      where: {
+        id_unidad_origen: id_origen,
+        id_unidad_destino: id_destino,
+        activo: true
+      }
+    });
+
+    if (!conversion) {
+      return res.status(404).json({ error: 'Conversión no encontrada' });
+    }
+
+    // Actualizar conversión directa
+    await conversion.update({ factor_conversion });
+
+    // Actualizar conversión inversa
+    await ConversionMedida.update(
+      { factor_conversion: 1 / factor_conversion },
+      {
+        where: {
+          id_unidad_origen: id_destino,
+          id_unidad_destino: id_origen,
+          activo: true
+        }
+      }
+    );
+
+    const conversionActualizada = await ConversionMedida.findOne({
+      where: {
+        id_unidad_origen: id_origen,
+        id_unidad_destino: id_destino
+      },
+      include: [
+        {
+          model: UnidadMedida,
+          as: 'unidadOrigen',
+          attributes: ['nombre', 'abreviatura', 'tipo']
+        },
+        {
+          model: UnidadMedida,
+          as: 'unidadDestino',
+          attributes: ['nombre', 'abreviatura', 'tipo']
+        }
+      ]
+    });
+
+    res.json(conversionActualizada);
+  } catch (error) {
+    console.error('Error al actualizar conversión:', error);
+    res.status(500).json({
+      error: 'Error al actualizar conversión',
+      details: error.message
+    });
+  }
+};
+
+exports.deleteConversion = async (req, res) => {
+  try {
+    const { id_origen, id_destino } = req.params;
+
+    // Desactivar conversión directa e inversa
+    const [deletedDirecta, deletedInversa] = await Promise.all([
+      ConversionMedida.update(
+        { activo: false },
+        {
+          where: {
+            id_unidad_origen: id_origen,
+            id_unidad_destino: id_destino,
+            activo: true
+          }
+        }
+      ),
+      ConversionMedida.update(
+        { activo: false },
+        {
+          where: {
+            id_unidad_origen: id_destino,
+            id_unidad_destino: id_origen,
+            activo: true
+          }
+        }
+      )
+    ]);
+
+    if (!deletedDirecta[0] && !deletedInversa[0]) {
+      return res.status(404).json({ error: 'Conversión no encontrada' });
+    }
+
+    res.json({ message: 'Conversión eliminada con éxito' });
+  } catch (error) {
+    console.error('Error al eliminar conversión:', error);
+    res.status(500).json({
+      error: 'Error al eliminar conversión',
+      details: error.message
+    });
+  }
+};
+
+exports.getConversionesDisponibles = async (req, res) => {
+  try {
+    const { id_unidad } = req.params;
+
+    const conversiones = await ConversionMedida.findAll({
+      where: {
+        [Op.or]: [
+          { id_unidad_origen: id_unidad },
+          { id_unidad_destino: id_unidad }
+        ],
+        activo: true
+      },
+      include: [
+        {
+          model: UnidadMedida,
+          as: 'unidadOrigen',
+          attributes: ['nombre', 'abreviatura', 'tipo']
+        },
+        {
+          model: UnidadMedida,
+          as: 'unidadDestino',
+          attributes: ['nombre', 'abreviatura', 'tipo']
+        }
+      ]
+    });
+
+    res.json(conversiones);
+  } catch (error) {
+    console.error('Error al obtener conversiones disponibles:', error);
+    res.status(500).json({
+      error: 'Error al obtener conversiones disponibles',
+      details: error.message
+    });
+  }
+};
+
+exports.convertirCantidad = async (req, res) => {
+  try {
+    const { cantidad, id_unidad_origen, id_unidad_destino } = req.body;
+
+    if (!cantidad || !id_unidad_origen || !id_unidad_destino) {
+      return res.status(400).json({
+        error: 'Cantidad y unidades de origen y destino son requeridas'
+      });
+    }
+
+    const resultado = await ConversionMedida.convertir(
+      cantidad,
+      id_unidad_origen,
+      id_unidad_destino
+    );
+
+    res.json({
+      cantidad_original: cantidad,
+      cantidad_convertida: resultado,
+      unidad_origen: id_unidad_origen,
+      unidad_destino: id_unidad_destino
+    });
+  } catch (error) {
+    console.error('Error al convertir cantidad:', error);
+    res.status(500).json({
+      error: 'Error al convertir cantidad',
+      details: error.message
+    });
+  }
+};const { Op } = require('sequelize');
+const Lote = require('../../models/Inventory/Lote');
+const MateriaPrima = require('../../models/Inventory/MateriaPrima');
+const MovimientoInventario = require('../../models/Inventory/MovimientoInventario');
+const AlertaInventario = require('../../models/Inventory/AlertaInventario');
+
+exports.getAllLotes = async (req, res) => {
+  try {
+    const lotes = await Lote.findAll({
+      where: { activo: true },
+      include: [{
+        model: MateriaPrima,
+        as: 'materiaPrima',
+        attributes: ['nombre']
+      }],
+      order: [['fecha_caducidad', 'ASC']]
+    });
+    res.json(lotes);
+  } catch (error) {
+    console.error('Error al obtener lotes:', error);
+    res.status(500).json({
+      error: 'Error al obtener lotes',
+      details: error.message
+    });
+  }
+};
+
+exports.getLoteById = async (req, res) => {
+  try {
+    const lote = await Lote.findOne({
+      where: {
+        id: req.params.id,
+        activo: true
+      },
+      include: [
+        {
+          model: MateriaPrima,
+          as: 'materiaPrima',
+          attributes: ['nombre', 'id_unidad_medida']
+        },
+        {
+          model: MovimientoInventario,
+          as: 'movimientos',
+          where: { activo: true },
+          required: false,
+          limit: 5,
+          order: [['fecha', 'DESC']]
+        }
+      ]
+    });
+
+    if (!lote) {
+      return res.status(404).json({ error: 'Lote no encontrado' });
+    }
+
+    res.json(lote);
+  } catch (error) {
+    console.error('Error al obtener lote:', error);
+    res.status(500).json({
+      error: 'Error al obtener lote',
+      details: error.message
+    });
+  }
+};
+
+exports.createLote = async (req, res) => {
+  try {
+    const {
+      id_materia_prima,
+      codigo_lote,
+      fecha_produccion,
+      fecha_caducidad,
+      cantidad_inicial,
+      costo_unitario
+    } = req.body;
+
+    // Validaciones básicas
+    if (!id_materia_prima || !codigo_lote || !cantidad_inicial || !costo_unitario) {
+      return res.status(400).json({
+        error: 'Materia prima, código de lote, cantidad inicial y costo unitario son requeridos'
+      });
+    }
+
+    // Verificar materia prima
+    const materiaPrima = await MateriaPrima.findOne({
+      where: {
+        id: id_materia_prima,
+        activo: true
+      }
+    });
+
+    if (!materiaPrima) {
+      return res.status(400).json({
+        error: 'Materia prima no válida'
+      });
+    }
+
+    // Verificar código de lote único para la materia prima
+    const loteExistente = await Lote.findOne({
+      where: {
+        id_materia_prima,
+        codigo_lote,
+        activo: true
+      }
+    });
+
+    if (loteExistente) {
+      return res.status(409).json({
+        error: 'Ya existe un lote con ese código para esta materia prima'
+      });
+    }
+
+    // Validar fechas
+    if (fecha_produccion && fecha_caducidad) {
+      if (new Date(fecha_caducidad) <= new Date(fecha_produccion)) {
+        return res.status(400).json({
+          error: 'La fecha de caducidad debe ser posterior a la fecha de producción'
+        });
+      }
+    }
+
+    const lote = await Lote.create({
+      id_materia_prima,
+      codigo_lote,
+      fecha_produccion,
+      fecha_caducidad,
+      cantidad_inicial,
+      cantidad_actual: cantidad_inicial,
+      costo_unitario
+    });
+
+    // Crear movimiento de entrada inicial
+    await MovimientoInventario.create({
+      id_materia_prima,
+      id_lote: lote.id,
+      tipo_movimiento: 'entrada',
+      cantidad: cantidad_inicial,
+      descripcion: 'Entrada inicial de lote',
+      id_usuario: req.user.id
+    });
+
+    // Actualizar stock de materia prima
+    await materiaPrima.increment('stock_actual', { by: cantidad_inicial });
+
+    // Verificar si necesita alerta de caducidad
+    if (fecha_caducidad) {
+      const diasParaCaducar = Math.ceil(
+        (new Date(fecha_caducidad) - new Date()) / (1000 * 60 * 60 * 24)
+      );
+
+      if (diasParaCaducar <= 7) {
+        await AlertaInventario.crearAlertaCaducidad(materiaPrima, [req.user], diasParaCaducar);
+      }
+    }
+
+    const loteConRelaciones = await Lote.findByPk(lote.id, {
+      include: [{
+        model: MateriaPrima,
+        as: 'materiaPrima',
+        attributes: ['nombre']
+      }]
+    });
+
+    res.status(201).json(loteConRelaciones);
+  } catch (error) {
+    console.error('Error al crear lote:', error);
+    res.status(500).json({
+      error: 'Error al crear lote',
+      details: error.message
+    });
+  }
+};
+
+exports.updateLote = async (req, res) => {
+  try {
+    const {
+      codigo_lote,
+      fecha_produccion,
+      fecha_caducidad,
+      costo_unitario
+    } = req.body;
+
+    const lote = await Lote.findOne({
+      where: {
+        id: req.params.id,
+        activo: true
+      }
+    });
+
+    if (!lote) {
+      return res.status(404).json({ error: 'Lote no encontrado' });
+    }
+
+    // Verificar código de lote único
+    if (codigo_lote && codigo_lote !== lote.codigo_lote) {
+      const loteExistente = await Lote.findOne({
+        where: {
+          id_materia_prima: lote.id_materia_prima,
+          codigo_lote,
+          id: { [Op.ne]: lote.id },
+          activo: true
+        }
+      });
+
+      if (loteExistente) {
+        return res.status(409).json({
+          error: 'Ya existe un lote con ese código para esta materia prima'
+        });
+      }
+    }
+
+    // Validar fechas
+    if (fecha_produccion && fecha_caducidad) {
+      if (new Date(fecha_caducidad) <= new Date(fecha_produccion)) {
+        return res.status(400).json({
+          error: 'La fecha de caducidad debe ser posterior a la fecha de producción'
+        });
+      }
+    }
+
+    await lote.update({
+      codigo_lote,
+      fecha_produccion,
+      fecha_caducidad,
+      costo_unitario
+    });
+
+    const loteActualizado = await Lote.findByPk(lote.id, {
+      include: [{
+        model: MateriaPrima,
+        as: 'materiaPrima',
+        attributes: ['nombre']
+      }]
+    });
+
+    res.json(loteActualizado);
+  } catch (error) {
+    console.error('Error al actualizar lote:', error);
+    res.status(500).json({
+      error: 'Error al actualizar lote',
+      details: error.message
+    });
+  }
+};
+
+exports.deleteLote = async (req, res) => {
+  try {
+    const lote = await Lote.findOne({
+      where: {
+        id: req.params.id,
+        activo: true
+      }
+    });
+
+    if (!lote) {
+      return res.status(404).json({ error: 'Lote no encontrado' });
+    }
+
+    if (lote.cantidad_actual > 0) {
+      return res.status(409).json({
+        error: 'No se puede eliminar un lote que aún tiene existencias'
+      });
+    }
+
+    await lote.update({ activo: false });
+
+    res.json({ message: 'Lote eliminado con éxito' });
+  } catch (error) {
+    console.error('Error al eliminar lote:', error);
+    res.status(500).json({
+      error: 'Error al eliminar lote',
+      details: error.message
+    });
+  }
+};
+
+exports.getLotesByMateriaPrima = async (req, res) => {
+  try {
+    const { id_materia_prima } = req.params;
+    const { incluir_sin_stock } = req.query;
+
+    const where = {
+      id_materia_prima,
+      activo: true
+    };
+
+    if (!incluir_sin_stock) {
+      where.cantidad_actual = {
+        [Op.gt]: 0
+      };
+    }
+
+    const lotes = await Lote.findAll({
+      where,
+      order: [['fecha_caducidad', 'ASC']]
+    });
+
+    res.json(lotes);
+  } catch (error) {
+    console.error('Error al obtener lotes por materia prima:', error);
+    res.status(500).json({
+      error: 'Error al obtener lotes por materia prima',
+      details: error.message
+    });
+  }
+};
+
+exports.getProximosACaducar = async (req, res) => {
+  try {
+    const diasLimite = parseInt(req.query.dias) || 7;
+    const lotes = await Lote.findProximosACaducar(diasLimite);
+    res.json(lotes);
+  } catch (error) {
+    console.error('Error al obtener lotes próximos a caducar:', error);
+    res.status(500).json({
+      error: 'Error al obtener lotes próximos a caducar',
+      details: error.message
+    });
+  }
+};const { Op } = require('sequelize');
+const MateriaPrima = require('../../models/Inventory/MateriaPrima');
+const UnidadMedida = require('../../models/Inventory/UnidadMedida');
+const Lote = require('../../models/Inventory/Lote');
+const AlertaInventario = require('../../models/Inventory/AlertaInventario');
+const MovimientoInventario = require('../../models/Inventory/MovimientoInventario');
+
+exports.getAllMateriasPrimas = async (req, res) => {
+  try {
+    const materiasPrimas = await MateriaPrima.findAll({
+      where: { activo: true },
+      include: [{
+        model: UnidadMedida,
+        as: 'unidadMedida',
+        attributes: ['nombre', 'abreviatura']
+      }],
+      order: [['nombre', 'ASC']]
+    });
+    res.json(materiasPrimas);
+  } catch (error) {
+    console.error('Error al obtener materias primas:', error);
+    res.status(500).json({
+      error: 'Error al obtener materias primas',
+      details: error.message
+    });
+  }
+};
+
+exports.getMateriaPrimaById = async (req, res) => {
+  try {
+    const materiaPrima = await MateriaPrima.findOne({
+      where: {
+        id: req.params.id,
+        activo: true
+      },
+      include: [
+        {
+          model: UnidadMedida,
+          as: 'unidadMedida',
+          attributes: ['nombre', 'abreviatura']
+        },
+        {
+          model: Lote,
+          as: 'lotes',
+          where: {
+            activo: true,
+            cantidad_actual: {
+              [Op.gt]: 0
+            }
+          },
+          required: false
+        }
+      ]
+    });
+
+    if (!materiaPrima) {
+      return res.status(404).json({ error: 'Materia prima no encontrada' });
+    }
+
+    res.json(materiaPrima);
+  } catch (error) {
+    console.error('Error al obtener materia prima:', error);
+    res.status(500).json({
+      error: 'Error al obtener materia prima',
+      details: error.message
+    });
+  }
+};
+
+exports.createMateriaPrima = async (req, res) => {
+  try {
+    const {
+      nombre,
+      descripcion,
+      stock_actual,
+      stock_minimo,
+      id_unidad_medida,
+      costo_unitario,
+      fecha_caducidad
+    } = req.body;
+
+    // Validaciones básicas
+    if (!nombre || !id_unidad_medida) {
+      return res.status(400).json({
+        error: 'Nombre y unidad de medida son campos requeridos'
+      });
+    }
+
+    // Verificar unidad de medida
+    const unidadMedida = await UnidadMedida.findOne({
+      where: {
+        id: id_unidad_medida,
+        activo: true
+      }
+    });
+
+    if (!unidadMedida) {
+      return res.status(400).json({
+        error: 'Unidad de medida no válida'
+      });
+    }
+
+    // Crear materia prima
+    const materiaPrima = await MateriaPrima.create({
+      nombre,
+      descripcion,
+      stock_actual: stock_actual || 0,
+      stock_minimo: stock_minimo || 0,
+      id_unidad_medida,
+      costo_unitario: costo_unitario || 0,
+      fecha_caducidad
+    });
+
+    // Si el stock inicial es mayor que 0, crear movimiento de entrada
+    if (stock_actual > 0) {
+      await MovimientoInventario.create({
+        id_materia_prima: materiaPrima.id,
+        tipo_movimiento: 'entrada',
+        cantidad: stock_actual,
+        descripcion: 'Stock inicial',
+        id_usuario: req.user.id
+      });
+    }
+
+    // Verificar si necesita alerta de stock mínimo
+    if (stock_actual <= stock_minimo) {
+      await AlertaInventario.crearAlertaStockBajo(materiaPrima, [req.user]);
+    }
+
+    const materiaConRelaciones = await MateriaPrima.findByPk(materiaPrima.id, {
+      include: [{
+        model: UnidadMedida,
+        as: 'unidadMedida',
+        attributes: ['nombre', 'abreviatura']
+      }]
+    });
+
+    res.status(201).json(materiaConRelaciones);
+  } catch (error) {
+    console.error('Error al crear materia prima:', error);
+    res.status(500).json({
+      error: 'Error al crear materia prima',
+      details: error.message
+    });
+  }
+};
+
+exports.updateMateriaPrima = async (req, res) => {
+  try {
+    const {
+      nombre,
+      descripcion,
+      stock_minimo,
+      id_unidad_medida,
+      costo_unitario,
+      fecha_caducidad
+    } = req.body;
+
+    // Validaciones básicas
+    if (!nombre || !id_unidad_medida) {
+      return res.status(400).json({
+        error: 'Nombre y unidad de medida son campos requeridos'
+      });
+    }
+
+    // Verificar unidad de medida
+    const unidadMedida = await UnidadMedida.findOne({
+      where: {
+        id: id_unidad_medida,
+        activo: true
+      }
+    });
+
+    if (!unidadMedida) {
+      return res.status(400).json({
+        error: 'Unidad de medida no válida'
+      });
+    }
+
+    const [updated] = await MateriaPrima.update(
+      {
+        nombre,
+        descripcion,
+        stock_minimo,
+        id_unidad_medida,
+        costo_unitario,
+        fecha_caducidad
+      },
+      {
+        where: {
+          id: req.params.id,
+          activo: true
+        }
+      }
+    );
+
+    if (!updated) {
+      return res.status(404).json({ error: 'Materia prima no encontrada' });
+    }
+
+    const materiaPrima = await MateriaPrima.findByPk(req.params.id, {
+      include: [{
+        model: UnidadMedida,
+        as: 'unidadMedida',
+        attributes: ['nombre', 'abreviatura']
+      }]
+    });
+
+    res.json(materiaPrima);
+  } catch (error) {
+    console.error('Error al actualizar materia prima:', error);
+    res.status(500).json({
+      error: 'Error al actualizar materia prima',
+      details: error.message
+    });
+  }
+};
+
+exports.deleteMateriaPrima = async (req, res) => {
+  try {
+    // Verificar si tiene lotes o movimientos activos
+    const tieneDependencias = await Promise.all([
+      Lote.findOne({
+        where: {
+          id_materia_prima: req.params.id,
+          activo: true,
+          cantidad_actual: {
+            [Op.gt]: 0
+          }
+        }
+      }),
+      MovimientoInventario.findOne({
+        where: {
+          id_materia_prima: req.params.id,
+          activo: true
+        }
+      })
+    ]);
+
+    if (tieneDependencias.some(dep => dep !== null)) {
+      return res.status(409).json({
+        error: 'No se puede eliminar la materia prima porque tiene lotes o movimientos asociados'
+      });
+    }
+
+    const [deleted] = await MateriaPrima.update(
+      { activo: false },
+      {
+        where: {
+          id: req.params.id,
+          activo: true
+        }
+      }
+    );
+
+    if (!deleted) {
+      return res.status(404).json({ error: 'Materia prima no encontrada' });
+    }
+
+    res.json({ message: 'Materia prima eliminada con éxito' });
+  } catch (error) {
+    console.error('Error al eliminar materia prima:', error);
+    res.status(500).json({
+      error: 'Error al eliminar materia prima',
+      details: error.message
+    });
+  }
+};
+
+exports.getBajoStock = async (req, res) => {
+  try {
+    const materiasPrimas = await MateriaPrima.findBajoStock();
+    res.json(materiasPrimas);
+  } catch (error) {
+    console.error('Error al obtener materias primas con bajo stock:', error);
+    res.status(500).json({
+      error: 'Error al obtener materias primas con bajo stock',
+      details: error.message
+    });
+  }
+};
+
+exports.getProximosACaducar = async (req, res) => {
+  try {
+    const diasLimite = parseInt(req.query.dias) || 7;
+    const materiasPrimas = await MateriaPrima.findProximosCaducar(diasLimite);
+    res.json(materiasPrimas);
+  } catch (error) {
+    console.error('Error al obtener materias primas próximas a caducar:', error);
+    res.status(500).json({
+      error: 'Error al obtener materias primas próximas a caducar',
+      details: error.message
+    });
+  }
+};
+
+exports.getMovimientos = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { fechaInicio, fechaFin } = req.query;
+
+    const where = {
+      id_materia_prima: id,
+      activo: true
+    };
+
+    if (fechaInicio || fechaFin) {
+      where.fecha = {};
+      if (fechaInicio) where.fecha[Op.gte] = fechaInicio;
+      if (fechaFin) where.fecha[Op.lte] = fechaFin;
+    }
+
+    const movimientos = await MovimientoInventario.findAll({
+      where,
+      include: [
+        {
+          model: Usuario,
+          as: 'usuario',
+          attributes: ['nombre']
+        }
+      ],
+      order: [['fecha', 'DESC']]
+    });
+
+    res.json(movimientos);
+  } catch (error) {
+    console.error('Error al obtener movimientos de materia prima:', error);
+    res.status(500).json({
+      error: 'Error al obtener movimientos de materia prima',
+      details: error.message
+    });
+  }
+};const { Op } = require('sequelize');
+const MovimientoInventario = require('../../models/Inventory/MovimientoInventario');
+const MateriaPrima = require('../../models/Inventory/MateriaPrima');
+const Lote = require('../../models/Inventory/Lote');
+const TipoAjuste = require('../../models/Inventory/TipoAjuste');
+const Proveedor = require('../../models/Inventory/Proveedor');
+const sequelize = require('../../config/database');
+
+exports.getAllMovimientos = async (req, res) => {
+  try {
+    const { fechaInicio, fechaFin, tipo } = req.query;
+
+    const where = { activo: true };
+    
+    if (fechaInicio || fechaFin) {
+      where.fecha = {};
+      if (fechaInicio) where.fecha[Op.gte] = fechaInicio;
+      if (fechaFin) where.fecha[Op.lte] = fechaFin;
+    }
+
+    if (tipo) {
+      where.tipo_movimiento = tipo;
+    }
+
+    const movimientos = await MovimientoInventario.findAll({
+      where,
+      include: [
+        {
+          model: MateriaPrima,
+          as: 'materiaPrima',
+          attributes: ['nombre']
+        },
+        {
+          model: Lote,
+          as: 'lote',
+          attributes: ['codigo_lote']
+        },
+        {
+          model: TipoAjuste,
+          as: 'tipoAjuste',
+          attributes: ['nombre']
+        },
+        {
+          model: Proveedor,
+          as: 'proveedor',
+          attributes: ['nombre']
+        }
+      ],
+      order: [['fecha', 'DESC']]
+    });
+
+    res.json(movimientos);
+  } catch (error) {
+    console.error('Error al obtener movimientos:', error);
+    res.status(500).json({
+      error: 'Error al obtener movimientos',
+      details: error.message
+    });
+  }
+};
+
+exports.getMovimientoById = async (req, res) => {
+  try {
+    const movimiento = await MovimientoInventario.findOne({
+      where: {
+        id: req.params.id,
+        activo: true
+      },
+      include: [
+        {
+          model: MateriaPrima,
+          as: 'materiaPrima',
+          attributes: ['nombre', 'id_unidad_medida']
+        },
+        {
+          model: Lote,
+          as: 'lote',
+          attributes: ['codigo_lote', 'fecha_caducidad']
+        },
+        {
+          model: TipoAjuste,
+          as: 'tipoAjuste',
+          attributes: ['nombre', 'requiere_autorizacion']
+        },
+        {
+          model: Proveedor,
+          as: 'proveedor',
+          attributes: ['nombre']
+        }
+      ]
+    });
+
+    if (!movimiento) {
+      return res.status(404).json({ error: 'Movimiento no encontrado' });
+    }
+
+    res.json(movimiento);
+  } catch (error) {
+    console.error('Error al obtener movimiento:', error);
+    res.status(500).json({
+      error: 'Error al obtener movimiento',
+      details: error.message
+    });
+  }
+};
+
+exports.createMovimiento = async (req, res) => {
+  const transaction = await sequelize.transaction();
+
+  try {
+    const {
+      id_materia_prima,
+      id_lote,
+      id_proveedor,
+      id_tipo_ajuste,
+      tipo_movimiento,
+      cantidad,
+      descripcion
+    } = req.body;
+
+    // Validaciones básicas
+    if (!id_materia_prima || !tipo_movimiento || !cantidad) {
+      return res.status(400).json({
+        error: 'Materia prima, tipo de movimiento y cantidad son requeridos'
+      });
+    }
+
+    if (!['entrada', 'salida'].includes(tipo_movimiento)) {
+      return res.status(400).json({
+        error: 'Tipo de movimiento inválido'
+      });
+    }
+
+    // Verificar materia prima
+    const materiaPrima = await MateriaPrima.findOne({
+      where: {
+        id: id_materia_prima,
+        activo: true
+      },
+      transaction
+    });
+
+    if (!materiaPrima) {
+      await transaction.rollback();
+      return res.status(400).json({
+        error: 'Materia prima no válida'
+      });
+    }
+
+    // Verificar lote si se proporciona
+    let lote;
+    if (id_lote) {
+      lote = await Lote.findOne({
+        where: {
+          id: id_lote,
+          activo: true
+        },
+        transaction
+      });
+
+      if (!lote) {
+        await transaction.rollback();
+        return res.status(400).json({
+          error: 'Lote no válido'
+        });
+      }
+    }
+
+    // Verificar tipo de ajuste si se proporciona
+    if (id_tipo_ajuste) {
+      const tipoAjuste = await TipoAjuste.findOne({
+        where: {
+          id: id_tipo_ajuste,
+          activo: true
+        },
+        transaction
+      });
+
+      if (!tipoAjuste) {
+        await transaction.rollback();
+        return res.status(400).json({
+          error: 'Tipo de ajuste no válido'
+        });
+      }
+
+      // Verificar autorización si es requerida
+      if (tipoAjuste.requiere_autorizacion && !req.user.tipo_usuario === 'admin') {
+        await transaction.rollback();
+        return res.status(403).json({
+          error: 'Este tipo de ajuste requiere autorización de un administrador'
+        });
+      }
+    }
+
+    // Verificar stock suficiente para salidas
+    if (tipo_movimiento === 'salida') {
+      if (lote) {
+        if (parseFloat(lote.cantidad_actual) < parseFloat(cantidad)) {
+          await transaction.rollback();
+          return res.status(400).json({
+            error: 'Stock insuficiente en el lote'
+          });
+        }
+      } else if (parseFloat(materiaPrima.stock_actual) < parseFloat(cantidad)) {
+        await transaction.rollback();
+        return res.status(400).json({
+          error: 'Stock insuficiente'
+        });
+      }
+    }
+
+    // Crear movimiento
+    const movimiento = await MovimientoInventario.create({
+      id_materia_prima,
+      id_lote,
+      id_proveedor,
+      id_tipo_ajuste,
+      tipo_movimiento,
+      cantidad,
+      descripcion,
+      id_usuario: req.user.id
+    }, { transaction });
+
+    // Actualizar stock
+    if (tipo_movimiento === 'entrada') {
+      if (lote) {
+        await lote.increment('cantidad_actual', {
+          by: cantidad,
+          transaction
+        });
+      }
+      await materiaPrima.increment('stock_actual', {
+        by: cantidad,
+        transaction
+      });
+    } else {
+      if (lote) {
+        await lote.decrement('cantidad_actual', {
+          by: cantidad,
+          transaction
+        });
+      }
+      await materiaPrima.decrement('stock_actual', {
+        by: cantidad,
+        transaction
+      });
+    }
+
+    await transaction.commit();
+
+    const movimientoCompleto = await MovimientoInventario.findByPk(movimiento.id, {
+      include: [
+        {
+          model: MateriaPrima,
+          as: 'materiaPrima',
+          attributes: ['nombre']
+        },
+        {
+          model: Lote,
+          as: 'lote',
+          attributes: ['codigo_lote']
+        },
+        {
+          model: TipoAjuste,
+          as: 'tipoAjuste',
+          attributes: ['nombre']
+        }
+      ]
+    });
+
+    res.status(201).json(movimientoCompleto);
+  } catch (error) {
+    await transaction.rollback();
+    console.error('Error al crear movimiento:', error);
+    res.status(500).json({
+      error: 'Error al crear movimiento',
+      details: error.message
+    });
+  }
+};
+
+exports.getMovimientosByMateriaPrima = async (req, res) => {
+  try {
+    const { id_materia_prima } = req.params;
+    const { fechaInicio, fechaFin } = req.query;
+
+    const where = {
+      id_materia_prima,
+      activo: true
+    };
+
+    if (fechaInicio || fechaFin) {
+      where.fecha = {};
+      if (fechaInicio) where.fecha[Op.gte] = fechaInicio;
+      if (fechaFin) where.fecha[Op.lte] = fechaFin;
+    }
+
+    const movimientos = await MovimientoInventario.findAll({
+      where,
+      include: [
+        {
+          model: Lote,
+          as: 'lote',
+          attributes: ['codigo_lote']
+        },
+        {
+          model: TipoAjuste,
+          as: 'tipoAjuste',
+          attributes: ['nombre']
+        }
+      ],
+      order: [['fecha', 'DESC']]
+    });
+
+    res.json(movimientos);
+  } catch (error) {
+    console.error('Error al obtener movimientos por materia prima:', error);
+    res.status(500).json({
+      error: 'Error al obtener movimientos por materia prima',
+      details: error.message
+    });
+  }
+};
+
+exports.getMovimientosByLote = async (req, res) => {
+  try {
+    const { id_lote } = req.params;
+    const { fechaInicio, fechaFin } = req.query;
+
+    const where = {
+      id_lote,
+      activo: true
+    };
+
+    if (fechaInicio || fechaFin) {
+      where.fecha = {};
+      if (fechaInicio) where.fecha[Op.gte] = fechaInicio;
+      if (fechaFin) where.fecha[Op.lte] = fechaFin;
+    }
+
+    const movimientos = await MovimientoInventario.findAll({
+      where,
+      include: [
+        {
+          model: MateriaPrima,
+          as: 'materiaPrima',
+          attributes: ['nombre']
+        },
+        {
+          model: TipoAjuste,
+          as: 'tipoAjuste',
+          attributes: ['nombre']
+        }
+      ],
+      order: [['fecha', 'DESC']]
+    });
+
+    res.json(movimientos);
+  } catch (error) {
+    console.error('Error al obtener movimientos por lote:', error);
+    res.status(500).json({
+      error: 'Error al obtener movimientos por lote',
+      details: error.message
+    });
+  }
+};const { Op } = require('sequelize');
+const Proveedor = require('../../models/Inventory/Proveedor');
+const OrdenCompra = require('../../models/Inventory/OrdenCompra');
+
+exports.getAllProveedores = async (req, res) => {
+  try {
+    const proveedores = await Proveedor.findAll({
+      where: { activo: true },
+      order: [['nombre', 'ASC']]
+    });
+    res.json(proveedores);
+  } catch (error) {
+    console.error('Error al obtener proveedores:', error);
+    res.status(500).json({
+      error: 'Error al obtener proveedores',
+      details: error.message
+    });
+  }
+};
+
+exports.getProveedorById = async (req, res) => {
+  try {
+    const proveedor = await Proveedor.findOne({
+      where: {
+        id: req.params.id,
+        activo: true
+      },
+      include: [{
+        model: OrdenCompra,
+        as: 'ordenesCompra',
+        where: {
+          activo: true,
+          estado: {
+            [Op.ne]: 'cancelada'
+          }
+        },
+        required: false,
+        limit: 5,
+        order: [['fecha_solicitud', 'DESC']]
+      }]
+    });
+
+    if (!proveedor) {
+      return res.status(404).json({ error: 'Proveedor no encontrado' });
+    }
+
+    res.json(proveedor);
+  } catch (error) {
+    console.error('Error al obtener proveedor:', error);
+    res.status(500).json({
+      error: 'Error al obtener proveedor',
+      details: error.message
+    });
+  }
+};
+
+exports.createProveedor = async (req, res) => {
+  try {
+    const {
+      nombre,
+      razon_social,
+      rfc,
+      telefono,
+      email,
+      direccion,
+      productos_servicios,
+      condiciones_pago,
+      tiempo_entrega_promedio,
+      notas
+    } = req.body;
+
+    // Validaciones básicas
+    if (!nombre || !productos_servicios) {
+      return res.status(400).json({
+        error: 'Nombre y productos/servicios son campos requeridos'
+      });
+    }
+
+    // Validar email si se proporciona
+    if (email) {
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(email)) {
+        return res.status(400).json({
+          error: 'Formato de email inválido'
+        });
+      }
+    }
+
+    // Validar RFC si se proporciona
+    if (rfc) {
+      const rfcRegex = /^[A-Z&Ñ]{3,4}[0-9]{6}[A-Z0-9]{3}$/;
+      if (!rfcRegex.test(rfc)) {
+        return res.status(400).json({
+          error: 'Formato de RFC inválido'
+        });
+      }
+    }
+
+    // Verificar si ya existe un proveedor con el mismo RFC o razón social
+    if (rfc || razon_social) {
+      const existente = await Proveedor.findOne({
+        where: {
+          activo: true,
+          [Op.or]: [
+            rfc ? { rfc } : null,
+            razon_social ? { razon_social } : null
+          ].filter(Boolean)
+        }
+      });
+
+      if (existente) {
+        return res.status(409).json({
+          error: 'Ya existe un proveedor con el mismo RFC o razón social'
+        });
+      }
+    }
+
+    const proveedor = await Proveedor.create({
+      nombre,
+      razon_social,
+      rfc,
+      telefono,
+      email,
+      direccion,
+      productos_servicios,
+      condiciones_pago,
+      tiempo_entrega_promedio,
+      notas
+    });
+
+    res.status(201).json(proveedor);
+  } catch (error) {
+    console.error('Error al crear proveedor:', error);
+    res.status(500).json({
+      error: 'Error al crear proveedor',
+      details: error.message
+    });
+  }
+};
+
+exports.updateProveedor = async (req, res) => {
+  try {
+    const {
+      nombre,
+      razon_social,
+      rfc,
+      telefono,
+      email,
+      direccion,
+      productos_servicios,
+      condiciones_pago,
+      tiempo_entrega_promedio,
+      notas
+    } = req.body;
+
+    // Validaciones básicas
+    if (!nombre || !productos_servicios) {
+      return res.status(400).json({
+        error: 'Nombre y productos/servicios son campos requeridos'
+      });
+    }
+
+    // Validar email si se proporciona
+    if (email) {
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(email)) {
+        return res.status(400).json({
+          error: 'Formato de email inválido'
+        });
+      }
+    }
+
+    // Validar RFC si se proporciona
+    if (rfc) {
+      const rfcRegex = /^[A-Z&Ñ]{3,4}[0-9]{6}[A-Z0-9]{3}$/;
+      if (!rfcRegex.test(rfc)) {
+        return res.status(400).json({
+          error: 'Formato de RFC inválido'
+        });
+      }
+    }
+
+    // Verificar si ya existe otro proveedor con el mismo RFC o razón social
+    if (rfc || razon_social) {
+      const existente = await Proveedor.findOne({
+        where: {
+          id: { [Op.ne]: req.params.id },
+          activo: true,
+          [Op.or]: [
+            rfc ? { rfc } : null,
+            razon_social ? { razon_social } : null
+          ].filter(Boolean)
+        }
+      });
+
+      if (existente) {
+        return res.status(409).json({
+          error: 'Ya existe otro proveedor con el mismo RFC o razón social'
+        });
+      }
+    }
+
+    const [updated] = await Proveedor.update(req.body, {
+      where: {
+        id: req.params.id,
+        activo: true
+      }
+    });
+
+    if (!updated) {
+      return res.status(404).json({ error: 'Proveedor no encontrado' });
+    }
+
+    const proveedor = await Proveedor.findByPk(req.params.id);
+    res.json(proveedor);
+  } catch (error) {
+    console.error('Error al actualizar proveedor:', error);
+    res.status(500).json({
+      error: 'Error al actualizar proveedor',
+      details: error.message
+    });
+  }
+};
+
+exports.deleteProveedor = async (req, res) => {
+  try {
+    // Verificar si tiene órdenes de compra activas
+    const ordenesActivas = await OrdenCompra.findOne({
+      where: {
+        id_proveedor: req.params.id,
+        activo: true,
+        estado: {
+          [Op.in]: ['pendiente', 'aprobada']
+        }
+      }
+    });
+
+    if (ordenesActivas) {
+      return res.status(409).json({
+        error: 'No se puede eliminar el proveedor porque tiene órdenes de compra activas'
+      });
+    }
+
+    const [deleted] = await Proveedor.update(
+      { activo: false },
+      {
+        where: {
+          id: req.params.id,
+          activo: true
+        }
+      }
+    );
+
+    if (!deleted) {
+      return res.status(404).json({ error: 'Proveedor no encontrado' });
+    }
+
+    res.json({ message: 'Proveedor eliminado con éxito' });
+  } catch (error) {
+    console.error('Error al eliminar proveedor:', error);
+    res.status(500).json({
+      error: 'Error al eliminar proveedor',
+      details: error.message
+    });
+  }
+};
+
+exports.searchProveedores = async (req, res) => {
+  try {
+    const { termino } = req.query;
+
+    if (!termino) {
+      return res.status(400).json({
+        error: 'Se requiere un término de búsqueda'
+      });
+    }
+
+    const proveedores = await Proveedor.findAll({
+      where: {
+        activo: true,
+        [Op.or]: [
+          { nombre: { [Op.iLike]: `%${termino}%` } },
+          { productos_servicios: { [Op.iLike]: `%${termino}%` } },
+          { razon_social: { [Op.iLike]: `%${termino}%` } }
+        ]
+      },
+      order: [['nombre', 'ASC']]
+    });
+
+    res.json(proveedores);
+  } catch (error) {
+    console.error('Error al buscar proveedores:', error);
+    res.status(500).json({
+      error: 'Error al buscar proveedores',
+      details: error.message
+    });
+  }
+};
+
+exports.getOrdenesCompra = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { estado } = req.query;
+
+    const where = {
+      id_proveedor: id,
+      activo: true
+    };
+
+    if (estado) {
+      where.estado = estado;
+    }
+
+    const ordenes = await OrdenCompra.findAll({
+      where,
+      order: [['fecha_solicitud', 'DESC']],
+      include: [{
+        model: Usuario,
+        as: 'usuarioCreador',
+        attributes: ['nombre']
+      }]
+    });
+
+    res.json(ordenes);
+  } catch (error) {
+    console.error('Error al obtener órdenes de compra del proveedor:', error);
+    res.status(500).json({
+      error: 'Error al obtener órdenes de compra del proveedor',
+      details: error.message
+    });
+  }
+};const { Op } = require('sequelize');
+const TipoAjuste = require('../../models/Inventory/TipoAjuste');
+const MovimientoInventario = require('../../models/Inventory/MovimientoInventario');
+
+exports.getAllTiposAjuste = async (req, res) => {
+  try {
+    const tiposAjuste = await TipoAjuste.findAll({
+      where: { activo: true },
+      order: [['nombre', 'ASC']]
+    });
+    res.json(tiposAjuste);
+  } catch (error) {
+    console.error('Error al obtener tipos de ajuste:', error);
+    res.status(500).json({
+      error: 'Error al obtener tipos de ajuste',
+      details: error.message
+    });
+  }
+};
+
+exports.getTipoAjusteById = async (req, res) => {
+  try {
+    const tipoAjuste = await TipoAjuste.findOne({
+      where: {
+        id: req.params.id,
+        activo: true
+      }
+    });
+
+    if (!tipoAjuste) {
+      return res.status(404).json({ error: 'Tipo de ajuste no encontrado' });
+    }
+
+    res.json(tipoAjuste);
+  } catch (error) {
+    console.error('Error al obtener tipo de ajuste:', error);
+    res.status(500).json({
+      error: 'Error al obtener tipo de ajuste',
+      details: error.message
+    });
+  }
+};
+
+exports.createTipoAjuste = async (req, res) => {
+  try {
+    const {
+      nombre,
+      descripcion,
+      afecta_costos,
+      requiere_autorizacion
+    } = req.body;
+
+    // Validaciones básicas
+    if (!nombre) {
+      return res.status(400).json({
+        error: 'El nombre es requerido'
+      });
+    }
+
+    // Verificar si ya existe un tipo de ajuste con el mismo nombre
+    const existente = await TipoAjuste.findOne({
+      where: {
+        nombre,
+        activo: true
+      }
+    });
+
+    if (existente) {
+      return res.status(409).json({
+        error: 'Ya existe un tipo de ajuste con ese nombre'
+      });
+    }
+
+    const tipoAjuste = await TipoAjuste.create({
+      nombre,
+      descripcion,
+      afecta_costos: afecta_costos || false,
+      requiere_autorizacion: requiere_autorizacion || false
+    });
+
+    res.status(201).json(tipoAjuste);
+  } catch (error) {
+    console.error('Error al crear tipo de ajuste:', error);
+    res.status(500).json({
+      error: 'Error al crear tipo de ajuste',
+      details: error.message
+    });
+  }
+};
+
+exports.updateTipoAjuste = async (req, res) => {
+  try {
+    const {
+      nombre,
+      descripcion,
+      afecta_costos,
+      requiere_autorizacion
+    } = req.body;
+
+    // Validaciones básicas
+    if (!nombre) {
+      return res.status(400).json({
+        error: 'El nombre es requerido'
+      });
+    }
+
+    // Verificar si ya existe otro tipo de ajuste con el mismo nombre
+    const existente = await TipoAjuste.findOne({
+      where: {
+        nombre,
+        id: { [Op.ne]: req.params.id },
+        activo: true
+      }
+    });
+
+    if (existente) {
+      return res.status(409).json({
+        error: 'Ya existe otro tipo de ajuste con ese nombre'
+      });
+    }
+
+    const [updated] = await TipoAjuste.update(
+      {
+        nombre,
+        descripcion,
+        afecta_costos,
+        requiere_autorizacion
+      },
+      {
+        where: {
+          id: req.params.id,
+          activo: true
+        }
+      }
+    );
+
+    if (!updated) {
+      return res.status(404).json({ error: 'Tipo de ajuste no encontrado' });
+    }
+
+    const tipoAjuste = await TipoAjuste.findByPk(req.params.id);
+    res.json(tipoAjuste);
+  } catch (error) {
+    console.error('Error al actualizar tipo de ajuste:', error);
+    res.status(500).json({
+      error: 'Error al actualizar tipo de ajuste',
+      details: error.message
+    });
+  }
+};
+
+exports.deleteTipoAjuste = async (req, res) => {
+  try {
+    // Verificar si tiene movimientos asociados
+    const tieneMovimientos = await MovimientoInventario.findOne({
+      where: {
+        id_tipo_ajuste: req.params.id,
+        activo: true
+      }
+    });
+
+    if (tieneMovimientos) {
+      return res.status(409).json({
+        error: 'No se puede eliminar el tipo de ajuste porque tiene movimientos asociados'
+      });
+    }
+
+    const [deleted] = await TipoAjuste.update(
+      { activo: false },
+      {
+        where: {
+          id: req.params.id,
+          activo: true
+        }
+      }
+    );
+
+    if (!deleted) {
+      return res.status(404).json({ error: 'Tipo de ajuste no encontrado' });
+    }
+
+    res.json({ message: 'Tipo de ajuste eliminado con éxito' });
+  } catch (error) {
+    console.error('Error al eliminar tipo de ajuste:', error);
+    res.status(500).json({
+      error: 'Error al eliminar tipo de ajuste',
+      details: error.message
+    });
+  }
+};
+
+exports.getTiposAjusteAutorizacion = async (req, res) => {
+  try {
+    const tiposAjuste = await TipoAjuste.findAll({
+      where: {
+        activo: true,
+        requiere_autorizacion: true
+      },
+      order: [['nombre', 'ASC']]
+    });
+    res.json(tiposAjuste);
+  } catch (error) {
+    console.error('Error al obtener tipos de ajuste que requieren autorización:', error);
+    res.status(500).json({
+      error: 'Error al obtener tipos de ajuste que requieren autorización',
+      details: error.message
+    });
+  }
+};
+
+exports.getTiposAjusteCostos = async (req, res) => {
+  try {
+    const tiposAjuste = await TipoAjuste.findAll({
+      where: {
+        activo: true,
+        afecta_costos: true
+      },
+      order: [['nombre', 'ASC']]
+    });
+    res.json(tiposAjuste);
+  } catch (error) {
+    console.error('Error al obtener tipos de ajuste que afectan costos:', error);
+    res.status(500).json({
+      error: 'Error al obtener tipos de ajuste que afectan costos',
+      details: error.message
+    });
+  }
+};const { Op } = require('sequelize');
+const UnidadMedida = require('../../models/Inventory/UnidadMedida');
+const ConversionMedida = require('../../models/Inventory/ConversionMedida');
+const sequelize = require('../../config/database');
+
+exports.getAllUnidadesMedida = async (req, res) => {
+  try {
+    const unidades = await UnidadMedida.findAll({
+      where: { activo: true },
+      order: [['nombre', 'ASC']]
+    });
+    res.json(unidades);
+  } catch (error) {
+    console.error('Error al obtener unidades de medida:', error);
+    res.status(500).json({
+      error: 'Error al obtener unidades de medida',
+      details: error.message
+    });
+  }
+};
+
+exports.getUnidadMedidaById = async (req, res) => {
+  try {
+    const unidad = await UnidadMedida.findOne({
+      where: {
+        id: req.params.id,
+        activo: true
+      }
+    });
+
+    if (!unidad) {
+      return res.status(404).json({ error: 'Unidad de medida no encontrada' });
+    }
+
+    res.json(unidad);
+  } catch (error) {
+    console.error('Error al obtener unidad de medida:', error);
+    res.status(500).json({
+      error: 'Error al obtener unidad de medida',
+      details: error.message
+    });
+  }
+};
+
+exports.createUnidadMedida = async (req, res) => {
+  try {
+    const { nombre, abreviatura, tipo } = req.body;
+
+    // Validaciones
+    if (!nombre || !abreviatura || !tipo) {
+      return res.status(400).json({
+        error: 'Nombre, abreviatura y tipo son campos requeridos'
+      });
+    }
+
+    // Verificar tipo válido
+    const tiposValidos = ['masa', 'volumen', 'unidad', 'longitud', 'area'];
+    if (!tiposValidos.includes(tipo)) {
+      return res.status(400).json({
+        error: 'Tipo de unidad inválido',
+        tiposValidos
+      });
+    }
+
+    // Verificar si ya existe
+    const existente = await UnidadMedida.findOne({
+      where: {
+        activo: true,
+        [Op.or]: [
+          { nombre },
+          { abreviatura }
+        ]
+      }
+    });
+
+    if (existente) {
+      return res.status(409).json({
+        error: 'Ya existe una unidad de medida con ese nombre o abreviatura'
+      });
+    }
+
+    const unidad = await UnidadMedida.create({
+      nombre,
+      abreviatura,
+      tipo
+    });
+
+    res.status(201).json(unidad);
+  } catch (error) {
+    console.error('Error al crear unidad de medida:', error);
+    res.status(500).json({
+      error: 'Error al crear unidad de medida',
+      details: error.message
+    });
+  }
+};
+
+exports.updateUnidadMedida = async (req, res) => {
+  try {
+    const { nombre, abreviatura, tipo } = req.body;
+
+    // Validaciones
+    if (!nombre || !abreviatura || !tipo) {
+      return res.status(400).json({
+        error: 'Nombre, abreviatura y tipo son campos requeridos'
+      });
+    }
+
+    // Verificar tipo válido
+    const tiposValidos = ['masa', 'volumen', 'unidad', 'longitud', 'area'];
+    if (!tiposValidos.includes(tipo)) {
+      return res.status(400).json({
+        error: 'Tipo de unidad inválido',
+        tiposValidos
+      });
+    }
+
+    // Verificar si existe otro con el mismo nombre o abreviatura
+    const existente = await UnidadMedida.findOne({
+      where: {
+        id: { [Op.ne]: req.params.id },
+        activo: true,
+        [Op.or]: [
+          { nombre },
+          { abreviatura }
+        ]
+      }
+    });
+
+    if (existente) {
+      return res.status(409).json({
+        error: 'Ya existe otra unidad de medida con ese nombre o abreviatura'
+      });
+    }
+
+    const [updated] = await UnidadMedida.update(req.body, {
+      where: {
+        id: req.params.id,
+        activo: true
+      }
+    });
+
+    if (!updated) {
+      return res.status(404).json({ error: 'Unidad de medida no encontrada' });
+    }
+
+    const unidad = await UnidadMedida.findByPk(req.params.id);
+    res.json(unidad);
+  } catch (error) {
+    console.error('Error al actualizar unidad de medida:', error);
+    res.status(500).json({
+      error: 'Error al actualizar unidad de medida',
+      details: error.message
+    });
+  }
+};
+
+exports.deleteUnidadMedida = async (req, res) => {
+  try {
+    // Verificar si tiene conversiones asociadas
+    const tieneDependencias = await ConversionMedida.findOne({
+      where: {
+        [Op.or]: [
+          { id_unidad_origen: req.params.id },
+          { id_unidad_destino: req.params.id }
+        ],
+        activo: true
+      }
+    });
+
+    if (tieneDependencias) {
+      return res.status(409).json({
+        error: 'No se puede eliminar la unidad porque tiene conversiones asociadas'
+      });
+    }
+
+    const [deleted] = await UnidadMedida.update(
+      { activo: false },
+      {
+        where: {
+          id: req.params.id,
+          activo: true
+        }
+      }
+    );
+
+    if (!deleted) {
+      return res.status(404).json({ error: 'Unidad de medida no encontrada' });
+    }
+
+    res.json({ message: 'Unidad de medida eliminada con éxito' });
+  } catch (error) {
+    console.error('Error al eliminar unidad de medida:', error);
+    res.status(500).json({
+      error: 'Error al eliminar unidad de medida',
+      details: error.message
+    });
+  }
+};
+
+exports.getUnidadesByTipo = async (req, res) => {
+  try {
+    const { tipo } = req.params;
+
+    // Verificar tipo válido
+    const tiposValidos = ['masa', 'volumen', 'unidad', 'longitud', 'area'];
+    if (!tiposValidos.includes(tipo)) {
+      return res.status(400).json({
+        error: 'Tipo de unidad inválido',
+        tiposValidos
+      });
+    }
+
+    const unidades = await UnidadMedida.findAll({
+      where: {
+        tipo,
+        activo: true
+      },
+      order: [['nombre', 'ASC']]
+    });
+
+    res.json(unidades);
+  } catch (error) {
+    console.error('Error al obtener unidades por tipo:', error);
+    res.status(500).json({
+      error: 'Error al obtener unidades por tipo',
+      details: error.message
+    });
+  }
+};
+const { DataTypes } = require('sequelize');
+const sequelize = require('../../config/database');
+
+const AlertaInventario = sequelize.define('AlertasInventario', {
+  id: {
+    type: DataTypes.INTEGER,
+    autoIncrement: true,
+    primaryKey: true
+  },
+  id_materia_prima: {
+    type: DataTypes.INTEGER,
+    allowNull: true,
+    references: {
+      model: 'materias_primas',
+      key: 'id'
+    }
+  },
+  tipo_alerta: {
+    type: DataTypes.ENUM('stock_bajo', 'caducidad', 'vencimiento_proveedor', 'ajuste_requerido'),
+    allowNull: false
+  },
+  mensaje: {
+    type: DataTypes.TEXT,
+    allowNull: false
+  },
+  fecha_alerta: {
+    type: DataTypes.DATE,
+    allowNull: false,
+    defaultValue: sequelize.literal('CURRENT_TIMESTAMP')
+  },
+  leida: {
+    type: DataTypes.BOOLEAN,
+    allowNull: false,
+    defaultValue: false
+  },
+  fecha_lectura: {
+    type: DataTypes.DATE,
+    allowNull: true
+  },
+  id_usuario_destinatario: {
+    type: DataTypes.INTEGER,
+    allowNull: true,
+    references: {
+      model: 'usuarios',
+      key: 'id'
+    }
+  },
+  activo: {
+    type: DataTypes.BOOLEAN,
+    allowNull: false,
+    defaultValue: true
+  },
+  fecha_creacion: {
+    type: DataTypes.DATE,
+    allowNull: false,
+    defaultValue: sequelize.literal('CURRENT_TIMESTAMP')
+  },
+  fecha_actualizacion: {
+    type: DataTypes.DATE,
+    allowNull: false,
+    defaultValue: sequelize.literal('CURRENT_TIMESTAMP')
+  }
+}, {
+  tableName: 'alertas_inventario',
+  schema: 'tramboory',
+  timestamps: true,
+  createdAt: 'fecha_creacion',
+  updatedAt: 'fecha_actualizacion'
+});
+
+// Asociaciones
+AlertaInventario.associate = (models) => {
+  AlertaInventario.belongsTo(models.MateriaPrima, {
+    foreignKey: 'id_materia_prima',
+    as: 'materiaPrima'
+  });
+
+  AlertaInventario.belongsTo(models.Usuario, {
+    foreignKey: 'id_usuario_destinatario',
+    as: 'usuarioDestinatario'
+  });
+};
+
+// Métodos de clase
+AlertaInventario.findPendientes = function(idUsuario) {
+  return this.findAll({
+    where: {
+      id_usuario_destinatario: idUsuario,
+      leida: false,
+      activo: true
+    },
+    include: [{
+      model: sequelize.models.MateriaPrima,
+      as: 'materiaPrima',
+      attributes: ['nombre']
+    }],
+    order: [['fecha_alerta', 'DESC']]
+  });
+};
+
+AlertaInventario.findByTipo = function(tipo, idUsuario) {
+  return this.findAll({
+    where: {
+      tipo_alerta: tipo,
+      id_usuario_destinatario: idUsuario,
+      activo: true
+    },
+    include: [{
+      model: sequelize.models.MateriaPrima,
+      as: 'materiaPrima',
+      attributes: ['nombre']
+    }],
+    order: [['fecha_alerta', 'DESC']]
+  });
+};
+
+// Método para crear alerta de stock bajo
+AlertaInventario.crearAlertaStockBajo = async function(materiaPrima, usuariosAdmin) {
+  const alertas = await Promise.all(usuariosAdmin.map(usuario => 
+    this.create({
+      id_materia_prima: materiaPrima.id,
+      tipo_alerta: 'stock_bajo',
+      mensaje: `La materia prima "${materiaPrima.nombre}" ha llegado a su nivel mínimo de stock (${materiaPrima.stock_actual} unidades)`,
+      id_usuario_destinatario: usuario.id
+    })
+  ));
+  return alertas;
+};
+
+// Método para crear alerta de caducidad
+AlertaInventario.crearAlertaCaducidad = async function(materiaPrima, usuariosAdmin, diasRestantes) {
+  const alertas = await Promise.all(usuariosAdmin.map(usuario => 
+    this.create({
+      id_materia_prima: materiaPrima.id,
+      tipo_alerta: 'caducidad',
+      mensaje: `La materia prima "${materiaPrima.nombre}" caducará en ${diasRestantes} días`,
+      id_usuario_destinatario: usuario.id
+    })
+  ));
+  return alertas;
+};
+
+// Métodos de instancia
+AlertaInventario.prototype.marcarComoLeida = async function() {
+  this.leida = true;
+  this.fecha_lectura = new Date();
+  return this.save();
+};
+
+module.exports = AlertaInventario;const { DataTypes } = require('sequelize');
+const sequelize = require('../../config/database');
+
+const ConversionMedida = sequelize.define('ConversionMedida', {
+  id_unidad_origen: {
+    type: DataTypes.INTEGER,
+    allowNull: false,
+    primaryKey: true,
+    references: {
+      model: 'unidades_medida',
+      key: 'id'
+    }
+  },
+  id_unidad_destino: {
+    type: DataTypes.INTEGER,
+    allowNull: false,
+    primaryKey: true,
+    references: {
+      model: 'unidades_medida',
+      key: 'id'
+    }
+  },
+  factor_conversion: {
+    type: DataTypes.DECIMAL(15, 6),
+    allowNull: false,
+    validate: {
+      min: 0,
+      notZero(value) {
+        if (parseFloat(value) === 0) {
+          throw new Error('El factor de conversión no puede ser cero');
+        }
+      }
+    }
+  },
+  activo: {
+    type: DataTypes.BOOLEAN,
+    allowNull: false,
+    defaultValue: true
+  },
+  fecha_creacion: {
+    type: DataTypes.DATE,
+    allowNull: false,
+    defaultValue: sequelize.literal('CURRENT_TIMESTAMP')
+  },
+  fecha_actualizacion: {
+    type: DataTypes.DATE,
+    allowNull: false,
+    defaultValue: sequelize.literal('CURRENT_TIMESTAMP')
+  }
+}, {
+  tableName: 'conversiones_medida',
+  schema: 'tramboory',
+  timestamps: true,
+  createdAt: 'fecha_creacion',
+  updatedAt: 'fecha_actualizacion'
+});
+
+// Asociaciones
+ConversionMedida.associate = (models) => {
+  ConversionMedida.belongsTo(models.UnidadMedida, {
+    foreignKey: 'id_unidad_origen',
+    as: 'unidadOrigen'
+  });
+
+  ConversionMedida.belongsTo(models.UnidadMedida, {
+    foreignKey: 'id_unidad_destino',
+    as: 'unidadDestino'
+  });
+};
+
+// Métodos de clase
+ConversionMedida.findConversion = async function(idUnidadOrigen, idUnidadDestino) {
+  return this.findOne({
+    where: {
+      id_unidad_origen: idUnidadOrigen,
+      id_unidad_destino: idUnidadDestino,
+      activo: true
+    },
+    include: [
+      {
+        model: sequelize.models.UnidadMedida,
+        as: 'unidadOrigen',
+        attributes: ['nombre', 'abreviatura']
+      },
+      {
+        model: sequelize.models.UnidadMedida,
+        as: 'unidadDestino',
+        attributes: ['nombre', 'abreviatura']
+      }
+    ]
+  });
+};
+
+// Método para convertir una cantidad
+ConversionMedida.convertir = async function(cantidad, idUnidadOrigen, idUnidadDestino) {
+  const conversion = await this.findConversion(idUnidadOrigen, idUnidadDestino);
+  
+  if (!conversion) {
+    // Intentar buscar conversión inversa
+    const conversionInversa = await this.findOne({
+      where: {
+        id_unidad_origen: idUnidadDestino,
+        id_unidad_destino: idUnidadOrigen,
+        activo: true
+      }
+    });
+
+    if (conversionInversa) {
+      return cantidad / parseFloat(conversionInversa.factor_conversion);
+    }
+
+    throw new Error('No existe conversión entre estas unidades');
+  }
+
+  return cantidad * parseFloat(conversion.factor_conversion);
+};
+
+// Método para obtener todas las conversiones disponibles para una unidad
+ConversionMedida.findConversionesDisponibles = function(idUnidad) {
+  return this.findAll({
+    where: {
+      [sequelize.Op.or]: [
+        { id_unidad_origen: idUnidad },
+        { id_unidad_destino: idUnidad }
+      ],
+      activo: true
+    },
+    include: [
+      {
+        model: sequelize.models.UnidadMedida,
+        as: 'unidadOrigen',
+        attributes: ['nombre', 'abreviatura']
+      },
+      {
+        model: sequelize.models.UnidadMedida,
+        as: 'unidadDestino',
+        attributes: ['nombre', 'abreviatura']
+      }
+    ]
+  });
+};
+
+module.exports = ConversionMedida;const { DataTypes } = require('sequelize');
+const sequelize = require('../../config/database');
+
+const DetalleOrdenCompra = sequelize.define('DetalleOrdenCompra', {
+  id: {
+    type: DataTypes.INTEGER,
+    autoIncrement: true,
+    primaryKey: true
+  },
+  id_orden_compra: {
+    type: DataTypes.INTEGER,
+    allowNull: false,
+    references: {
+      model: 'ordenes_compra',
+      key: 'id'
+    }
+  },
+  id_materia_prima: {
+    type: DataTypes.INTEGER,
+    allowNull: false,
+    references: {
+      model: 'materias_primas',
+      key: 'id'
+    }
+  },
+  cantidad: {
+    type: DataTypes.DECIMAL(10, 2),
+    allowNull: false,
+    validate: {
+      min: 0,
+      notZero(value) {
+        if (parseFloat(value) === 0) {
+          throw new Error('La cantidad no puede ser cero');
+        }
+      }
+    }
+  },
+  id_unidad_medida: {
+    type: DataTypes.INTEGER,
+    allowNull: false,
+    references: {
+      model: 'unidades_medida',
+      key: 'id'
+    }
+  },
+  precio_unitario: {
+    type: DataTypes.DECIMAL(10, 2),
+    allowNull: false,
+    validate: {
+      min: 0
+    }
+  },
+  subtotal: {
+    type: DataTypes.DECIMAL(12, 2),
+    allowNull: false,
+    validate: {
+      min: 0
+    }
+  },
+  cantidad_recibida: {
+    type: DataTypes.DECIMAL(10, 2),
+    allowNull: false,
+    defaultValue: 0,
+    validate: {
+      min: 0,
+      noMayorQueCantidad(value) {
+        if (parseFloat(value) > parseFloat(this.cantidad)) {
+          throw new Error('La cantidad recibida no puede ser mayor que la cantidad ordenada');
+        }
+      }
+    }
+  },
+  activo: {
+    type: DataTypes.BOOLEAN,
+    allowNull: false,
+    defaultValue: true
+  },
+  fecha_creacion: {
+    type: DataTypes.DATE,
+    allowNull: false,
+    defaultValue: sequelize.literal('CURRENT_TIMESTAMP')
+  },
+  fecha_actualizacion: {
+    type: DataTypes.DATE,
+    allowNull: false,
+    defaultValue: sequelize.literal('CURRENT_TIMESTAMP')
+  }
+}, {
+  tableName: 'detalle_orden_compra',
+  schema: 'tramboory',
+  timestamps: true,
+  createdAt: 'fecha_creacion',
+  updatedAt: 'fecha_actualizacion',
+  hooks: {
+    beforeValidate: (detalle) => {
+      // Calcular subtotal antes de validar
+      if (detalle.cantidad && detalle.precio_unitario) {
+        detalle.subtotal = parseFloat(detalle.cantidad) * parseFloat(detalle.precio_unitario);
+      }
+    }
+  }
+});
+
+// Asociaciones
+DetalleOrdenCompra.associate = (models) => {
+  DetalleOrdenCompra.belongsTo(models.OrdenCompra, {
+    foreignKey: 'id_orden_compra',
+    as: 'ordenCompra'
+  });
+
+  DetalleOrdenCompra.belongsTo(models.MateriaPrima, {
+    foreignKey: 'id_materia_prima',
+    as: 'materiaPrima'
+  });
+
+  DetalleOrdenCompra.belongsTo(models.UnidadMedida, {
+    foreignKey: 'id_unidad_medida',
+    as: 'unidadMedida'
+  });
+};
+
+// Métodos de clase
+DetalleOrdenCompra.findByOrdenCompra = function(idOrdenCompra) {
+  return this.findAll({
+    where: {
+      id_orden_compra: idOrdenCompra,
+      activo: true
+    },
+    include: [
+      {
+        model: sequelize.models.MateriaPrima,
+        as: 'materiaPrima',
+        attributes: ['nombre']
+      },
+      {
+        model: sequelize.models.UnidadMedida,
+        as: 'unidadMedida',
+        attributes: ['nombre', 'abreviatura']
+      }
+    ]
+  });
+};
+
+// Métodos de instancia
+DetalleOrdenCompra.prototype.registrarRecepcion = async function(cantidadRecibida) {
+  const nuevaCantidadRecibida = parseFloat(this.cantidad_recibida) + parseFloat(cantidadRecibida);
+  
+  if (nuevaCantidadRecibida > parseFloat(this.cantidad)) {
+    throw new Error('La cantidad total recibida no puede exceder la cantidad ordenada');
+  }
+
+  await this.update({
+    cantidad_recibida: nuevaCantidadRecibida
+  });
+
+  return {
+    cantidadPendiente: parseFloat(this.cantidad) - nuevaCantidadRecibida,
+    recepcionCompleta: nuevaCantidadRecibida === parseFloat(this.cantidad)
+  };
+};
+
+module.exports = DetalleOrdenCompra;const { DataTypes } = require('sequelize');
+const sequelize = require('../../config/database');
+
+const Lote = sequelize.define('Lotes', {
+  id: {
+    type: DataTypes.INTEGER,
+    autoIncrement: true,
+    primaryKey: true
+  },
+  id_materia_prima: {
+    type: DataTypes.INTEGER,
+    allowNull: false,
+    references: {
+      model: 'materias_primas',
+      key: 'id'
+    }
+  },
+  codigo_lote: {
+    type: DataTypes.STRING(50),
+    allowNull: false,
+    comment: 'Código único del lote'
+  },
+  fecha_produccion: {
+    type: DataTypes.DATEONLY,
+    allowNull: true
+  },
+  fecha_caducidad: {
+    type: DataTypes.DATEONLY,
+    allowNull: true,
+    validate: {
+      isAfterProduccion(value) {
+        if (this.fecha_produccion && value && value <= this.fecha_produccion) {
+          throw new Error('La fecha de caducidad debe ser posterior a la fecha de producción');
+        }
+      }
+    }
+  },
+  cantidad_inicial: {
+    type: DataTypes.DECIMAL(10, 2),
+    allowNull: false,
+    validate: {
+      min: 0
+    }
+  },
+  cantidad_actual: {
+    type: DataTypes.DECIMAL(10, 2),
+    allowNull: false,
+    validate: {
+      min: 0,
+      noMayorQueInicial(value) {
+        if (parseFloat(value) > parseFloat(this.cantidad_inicial)) {
+          throw new Error('La cantidad actual no puede ser mayor que la cantidad inicial');
+        }
+      }
+    }
+  },
+  costo_unitario: {
+    type: DataTypes.DECIMAL(10, 2),
+    allowNull: false,
+    validate: {
+      min: 0
+    }
+  },
+  activo: {
+    type: DataTypes.BOOLEAN,
+    allowNull: false,
+    defaultValue: true
+  },
+  fecha_creacion: {
+    type: DataTypes.DATE,
+    allowNull: false,
+    defaultValue: sequelize.literal('CURRENT_TIMESTAMP')
+  },
+  fecha_actualizacion: {
+    type: DataTypes.DATE,
+    allowNull: false,
+    defaultValue: sequelize.literal('CURRENT_TIMESTAMP')
+  }
+}, {
+  tableName: 'lotes',
+  schema: 'tramboory',
+  timestamps: true,
+  createdAt: 'fecha_creacion',
+  updatedAt: 'fecha_actualizacion',
+  indexes: [
+    {
+      unique: true,
+      fields: ['id_materia_prima', 'codigo_lote'],
+      name: 'uq_lote_materia_codigo'
+    }
+  ]
+});
+
+// Asociaciones
+Lote.associate = (models) => {
+  Lote.belongsTo(models.MateriaPrima, {
+    foreignKey: 'id_materia_prima',
+    as: 'materiaPrima'
+  });
+
+  Lote.hasMany(models.MovimientoInventario, {
+    foreignKey: 'id_lote',
+    as: 'movimientos'
+  });
+};
+
+// Métodos de clase
+Lote.findProximosACaducar = function(diasLimite = 7) {
+  const fechaLimite = new Date();
+  fechaLimite.setDate(fechaLimite.getDate() + diasLimite);
+
+  return this.findAll({
+    where: {
+      activo: true,
+      cantidad_actual: {
+        [sequelize.Op.gt]: 0
+      },
+      fecha_caducidad: {
+        [sequelize.Op.lte]: fechaLimite,
+        [sequelize.Op.gt]: new Date()
+      }
+    },
+    include: [{
+      model: sequelize.models.MateriaPrima,
+      as: 'materiaPrima',
+      attributes: ['nombre', 'id_unidad_medida']
+    }],
+    order: [['fecha_caducidad', 'ASC']]
+  });
+};
+
+// Método para obtener lotes con existencias
+Lote.findConExistencias = function() {
+  return this.findAll({
+    where: {
+      activo: true,
+      cantidad_actual: {
+        [sequelize.Op.gt]: 0
+      }
+    },
+    include: [{
+      model: sequelize.models.MateriaPrima,
+      as: 'materiaPrima',
+      attributes: ['nombre', 'id_unidad_medida']
+    }],
+    order: [['fecha_caducidad', 'ASC']]
+  });
+};
+
+// Métodos de instancia
+Lote.prototype.actualizarCantidad = async function(cantidad, tipo) {
+  if (tipo === 'entrada') {
+    const nuevaCantidad = parseFloat(this.cantidad_actual) + parseFloat(cantidad);
+    if (nuevaCantidad > this.cantidad_inicial) {
+      throw new Error('La cantidad resultante excede la cantidad inicial del lote');
+    }
+    this.cantidad_actual = nuevaCantidad;
+  } else if (tipo === 'salida') {
+    const nuevaCantidad = parseFloat(this.cantidad_actual) - parseFloat(cantidad);
+    if (nuevaCantidad < 0) {
+      throw new Error('Stock insuficiente en el lote');
+    }
+    this.cantidad_actual = nuevaCantidad;
+  }
+  return this.save();
+};
+
+module.exports = Lote;
+const { DataTypes } = require('sequelize');
+const sequelize = require('../../config/database');
+
+const MateriaPrima = sequelize.define('MateriasPrimas', {
+  id: {
+    type: DataTypes.INTEGER,
+    autoIncrement: true,
+    primaryKey: true
+  },
+  nombre: {
+    type: DataTypes.STRING(100),
+    allowNull: false
+  },
+  descripcion: {
+    type: DataTypes.TEXT,
+    allowNull: true
+  },
+  stock_actual: {
+    type: DataTypes.DECIMAL(10, 2),
+    allowNull: false,
+    defaultValue: 0,
+    validate: {
+      min: 0
+    }
+  },
+  stock_minimo: {
+    type: DataTypes.DECIMAL(10, 2),
+    allowNull: false,
+    defaultValue: 0,
+    validate: {
+      min: 0
+    }
+  },
+  id_unidad_medida: {
+    type: DataTypes.INTEGER,
+    allowNull: false,
+    references: {
+      model: 'unidades_medida',
+      key: 'id'
+    }
+  },
+  costo_unitario: {
+    type: DataTypes.DECIMAL(10, 2),
+    allowNull: false,
+    defaultValue: 0,
+    validate: {
+      min: 0
+    }
+  },
+  fecha_caducidad: {
+    type: DataTypes.DATE,
+    allowNull: true
+  },
+  activo: {
+    type: DataTypes.BOOLEAN,
+    allowNull: false,
+    defaultValue: true
+  },
+  fecha_creacion: {
+    type: DataTypes.DATE,
+    allowNull: false,
+    defaultValue: sequelize.literal('CURRENT_TIMESTAMP')
+  },
+  fecha_actualizacion: {
+    type: DataTypes.DATE,
+    allowNull: false,
+    defaultValue: sequelize.literal('CURRENT_TIMESTAMP')
+  }
+}, {
+  tableName: 'materias_primas',
+  schema: 'tramboory',
+  timestamps: true,
+  createdAt: 'fecha_creacion',
+  updatedAt: 'fecha_actualizacion'
+});
+
+// Asociaciones
+MateriaPrima.associate = (models) => {
+  MateriaPrima.belongsTo(models.UnidadMedida, {
+    foreignKey: 'id_unidad_medida',
+    as: 'unidadMedida'
+  });
+
+  MateriaPrima.hasMany(models.MovimientoInventario, {
+    foreignKey: 'id_materia_prima',
+    as: 'movimientos'
+  });
+
+  MateriaPrima.hasMany(models.Lote, {
+    foreignKey: 'id_materia_prima',
+    as: 'lotes'
+  });
+
+  MateriaPrima.hasMany(models.AlertaInventario, {
+    foreignKey: 'id_materia_prima',
+    as: 'alertas'
+  });
+
+  // Relación con OpcionAlimento a través de RecetaInsumo
+  MateriaPrima.belongsToMany(models.OpcionAlimento, {
+    through: 'recetas_insumos',
+    foreignKey: 'id_materia_prima',
+    otherKey: 'id_opcion_alimento',
+    as: 'opcionesAlimento'
+  });
+};
+
+// Métodos de clase
+MateriaPrima.findBajoStock = function() {
+  return this.findAll({
+    where: {
+      activo: true,
+      stock_actual: {
+        [sequelize.Op.lte]: sequelize.col('stock_minimo')
+      }
+    },
+    include: [{
+      model: sequelize.models.UnidadMedida,
+      as: 'unidadMedida'
+    }]
+  });
+};
+
+MateriaPrima.findProximosCaducar = function(diasLimite = 7) {
+  const fechaLimite = new Date();
+  fechaLimite.setDate(fechaLimite.getDate() + diasLimite);
+
+  return this.findAll({
+    where: {
+      activo: true,
+      fecha_caducidad: {
+        [sequelize.Op.lte]: fechaLimite,
+        [sequelize.Op.gt]: new Date()
+      }
+    },
+    include: [{
+      model: sequelize.models.UnidadMedida,
+      as: 'unidadMedida'
+    }]
+  });
+};
+
+// Métodos de instancia
+MateriaPrima.prototype.actualizarStock = async function(cantidad, tipo) {
+  if (tipo === 'entrada') {
+    this.stock_actual = parseFloat(this.stock_actual) + parseFloat(cantidad);
+  } else if (tipo === 'salida') {
+    const nuevoStock = parseFloat(this.stock_actual) - parseFloat(cantidad);
+    if (nuevoStock < 0) {
+      throw new Error('Stock insuficiente');
+    }
+    this.stock_actual = nuevoStock;
+  }
+  return this.save();
+};
+
+module.exports = MateriaPrima;const { DataTypes } = require('sequelize');
+const sequelize = require('../../config/database');
+
+const MovimientoInventario = sequelize.define('MovimientosInventario', {
+  id: {
+    type: DataTypes.INTEGER,
+    autoIncrement: true,
+    primaryKey: true
+  },
+  id_materia_prima: {
+    type: DataTypes.INTEGER,
+    allowNull: false,
+    references: {
+      model: 'materias_primas',
+      key: 'id'
+    }
+  },
+  id_proveedor: {
+    type: DataTypes.INTEGER,
+    allowNull: true,
+    references: {
+      model: 'proveedores',
+      key: 'id'
+    }
+  },
+  id_lote: {
+    type: DataTypes.INTEGER,
+    allowNull: true,
+    references: {
+      model: 'lotes',
+      key: 'id'
+    }
+  },
+  id_tipo_ajuste: {
+    type: DataTypes.INTEGER,
+    allowNull: true,
+    references: {
+      model: 'tipos_ajuste_inventario',
+      key: 'id'
+    }
+  },
+  id_usuario: {
+    type: DataTypes.INTEGER,
+    allowNull: false,
+    references: {
+      model: 'usuarios',
+      key: 'id'
+    }
+  },
+  tipo_movimiento: {
+    type: DataTypes.STRING(10),
+    allowNull: false,
+    validate: {
+      isIn: [['entrada', 'salida']]
+    }
+  },
+  cantidad: {
+    type: DataTypes.DECIMAL(10, 2),
+    allowNull: false,
+    validate: {
+      min: 0
+    }
+  },
+  descripcion: {
+    type: DataTypes.TEXT,
+    allowNull: true
+  },
+  fecha: {
+    type: DataTypes.DATE,
+    allowNull: false,
+    defaultValue: sequelize.literal('CURRENT_TIMESTAMP')
+  },
+  activo: {
+    type: DataTypes.BOOLEAN,
+    allowNull: false,
+    defaultValue: true
+  },
+  fecha_creacion: {
+    type: DataTypes.DATE,
+    allowNull: false,
+    defaultValue: sequelize.literal('CURRENT_TIMESTAMP')
+  },
+  fecha_actualizacion: {
+    type: DataTypes.DATE,
+    allowNull: false,
+    defaultValue: sequelize.literal('CURRENT_TIMESTAMP')
+  }
+}, {
+  tableName: 'movimientos_inventario',
+  schema: 'tramboory',
+  timestamps: true,
+  createdAt: 'fecha_creacion',
+  updatedAt: 'fecha_actualizacion'
+});
+
+// Asociaciones
+MovimientoInventario.associate = (models) => {
+  MovimientoInventario.belongsTo(models.MateriaPrima, {
+    foreignKey: 'id_materia_prima',
+    as: 'materiaPrima'
+  });
+
+  MovimientoInventario.belongsTo(models.Proveedor, {
+    foreignKey: 'id_proveedor',
+    as: 'proveedor'
+  });
+
+  MovimientoInventario.belongsTo(models.Lote, {
+    foreignKey: 'id_lote',
+    as: 'lote'
+  });
+
+  MovimientoInventario.belongsTo(models.TipoAjuste, {
+    foreignKey: 'id_tipo_ajuste',
+    as: 'tipoAjuste'
+  });
+
+  MovimientoInventario.belongsTo(models.Usuario, {
+    foreignKey: 'id_usuario',
+    as: 'usuario'
+  });
+};
+
+// Métodos de clase
+MovimientoInventario.findByFechas = function(fechaInicio, fechaFin) {
+  return this.findAll({
+    where: {
+      fecha: {
+        [sequelize.Op.between]: [fechaInicio, fechaFin]
+      },
+      activo: true
+    },
+    include: [
+      {
+        model: sequelize.models.MateriaPrima,
+        as: 'materiaPrima',
+        attributes: ['nombre']
+      },
+      {
+        model: sequelize.models.Usuario,
+        as: 'usuario',
+        attributes: ['nombre']
+      },
+      {
+        model: sequelize.models.TipoAjuste,
+        as: 'tipoAjuste',
+        attributes: ['nombre']
+      }
+    ],
+    order: [['fecha', 'DESC']]
+  });
+};
+
+MovimientoInventario.findByMateriaPrima = function(idMateriaPrima) {
+  return this.findAll({
+    where: {
+      id_materia_prima: idMateriaPrima,
+      activo: true
+    },
+    include: [
+      {
+        model: sequelize.models.Usuario,
+        as: 'usuario',
+        attributes: ['nombre']
+      },
+      {
+        model: sequelize.models.TipoAjuste,
+        as: 'tipoAjuste',
+        attributes: ['nombre']
+      },
+      {
+        model: sequelize.models.Lote,
+        as: 'lote',
+        attributes: ['codigo_lote']
+      }
+    ],
+    order: [['fecha', 'DESC']]
+  });
+};
+
+module.exports = MovimientoInventario;const { DataTypes } = require('sequelize');
+const sequelize = require('../../config/database');
+
+const OrdenCompra = sequelize.define('OrdenesCompra', {
+  id: {
+    type: DataTypes.INTEGER,
+    autoIncrement: true,
+    primaryKey: true
+  },
+  id_proveedor: {
+    type: DataTypes.INTEGER,
+    allowNull: false,
+    references: {
+      model: 'proveedores',
+      key: 'id'
+    }
+  },
+  numero_orden: {
+    type: DataTypes.STRING(50),
+    allowNull: false,
+    unique: true
+  },
+  fecha_solicitud: {
+    type: DataTypes.DATEONLY,
+    allowNull: false,
+    defaultValue: sequelize.literal('CURRENT_DATE')
+  },
+  fecha_entrega_esperada: {
+    type: DataTypes.DATEONLY,
+    allowNull: true
+  },
+  estado: {
+    type: DataTypes.ENUM('pendiente', 'aprobada', 'recibida', 'cancelada'),
+    allowNull: false,
+    defaultValue: 'pendiente'
+  },
+  total_estimado: {
+    type: DataTypes.DECIMAL(12, 2),
+    allowNull: false,
+    defaultValue: 0,
+    validate: {
+      min: 0
+    }
+  },
+  notas: {
+    type: DataTypes.TEXT,
+    allowNull: true
+  },
+  id_usuario_creador: {
+    type: DataTypes.INTEGER,
+    allowNull: false,
+    references: {
+      model: 'usuarios',
+      key: 'id'
+    }
+  },
+  id_usuario_autorizador: {
+    type: DataTypes.INTEGER,
+    allowNull: true,
+    references: {
+      model: 'usuarios',
+      key: 'id'
+    }
+  },
+  fecha_autorizacion: {
+    type: DataTypes.DATE,
+    allowNull: true
+  },
+  activo: {
+    type: DataTypes.BOOLEAN,
+    allowNull: false,
+    defaultValue: true
+  },
+  fecha_creacion: {
+    type: DataTypes.DATE,
+    allowNull: false,
+    defaultValue: sequelize.literal('CURRENT_TIMESTAMP')
+  },
+  fecha_actualizacion: {
+    type: DataTypes.DATE,
+    allowNull: false,
+    defaultValue: sequelize.literal('CURRENT_TIMESTAMP')
+  }
+}, {
+  tableName: 'ordenes_compra',
+  schema: 'tramboory',
+  timestamps: true,
+  createdAt: 'fecha_creacion',
+  updatedAt: 'fecha_actualizacion'
+});
+
+// Asociaciones
+OrdenCompra.associate = (models) => {
+  OrdenCompra.belongsTo(models.Proveedor, {
+    foreignKey: 'id_proveedor',
+    as: 'proveedor'
+  });
+
+  OrdenCompra.belongsTo(models.Usuario, {
+    foreignKey: 'id_usuario_creador',
+    as: 'usuarioCreador'
+  });
+
+  OrdenCompra.belongsTo(models.Usuario, {
+    foreignKey: 'id_usuario_autorizador',
+    as: 'usuarioAutorizador'
+  });
+
+  OrdenCompra.hasMany(models.DetalleOrdenCompra, {
+    foreignKey: 'id_orden_compra',
+    as: 'detalles'
+  });
+
+  OrdenCompra.hasMany(models.MovimientoInventario, {
+    foreignKey: 'id_orden_compra',
+    as: 'movimientos'
+  });
+};
+
+// Métodos de clase
+OrdenCompra.findPendientes = function() {
+  return this.findAll({
+    where: {
+      estado: 'pendiente',
+      activo: true
+    },
+    include: [
+      {
+        model: sequelize.models.Proveedor,
+        as: 'proveedor',
+        attributes: ['nombre']
+      },
+      {
+        model: sequelize.models.Usuario,
+        as: 'usuarioCreador',
+        attributes: ['nombre']
+      }
+    ],
+    order: [['fecha_solicitud', 'ASC']]
+  });
+};
+
+// Métodos de instancia
+OrdenCompra.prototype.aprobar = async function(idUsuarioAutorizador) {
+  if (this.estado !== 'pendiente') {
+    throw new Error('Solo se pueden aprobar órdenes pendientes');
+  }
+
+  await this.update({
+    estado: 'aprobada',
+    id_usuario_autorizador: idUsuarioAutorizador,
+    fecha_autorizacion: sequelize.literal('CURRENT_TIMESTAMP')
+  });
+};
+
+OrdenCompra.prototype.recibir = async function() {
+  if (this.estado !== 'aprobada') {
+    throw new Error('Solo se pueden recibir órdenes aprobadas');
+  }
+
+  await this.update({
+    estado: 'recibida'
+  });
+};
+
+OrdenCompra.prototype.cancelar = async function() {
+  if (!['pendiente', 'aprobada'].includes(this.estado)) {
+    throw new Error('No se puede cancelar una orden que ya fue recibida');
+  }
+
+  await this.update({
+    estado: 'cancelada'
+  });
+};
+
+module.exports = OrdenCompra;const { DataTypes } = require('sequelize');
+const sequelize = require('../../config/database');
+
+const Proveedor = sequelize.define('Proveedores', {
+  id: {
+    type: DataTypes.INTEGER,
+    autoIncrement: true,
+    primaryKey: true
+  },
+  nombre: {
+    type: DataTypes.STRING(100),
+    allowNull: false
+  },
+  razon_social: {
+    type: DataTypes.STRING(200),
+    allowNull: true
+  },
+  rfc: {
+    type: DataTypes.STRING(13),
+    allowNull: true
+  },
+  telefono: {
+    type: DataTypes.STRING(20),
+    allowNull: true
+  },
+  email: {
+    type: DataTypes.STRING(100),
+    allowNull: true,
+    validate: {
+      isEmail: true
+    }
+  },
+  direccion: {
+    type: DataTypes.TEXT,
+    allowNull: true
+  },
+  productos_servicios: {
+    type: DataTypes.TEXT,
+    allowNull: false,
+    comment: 'Descripción de los productos o servicios que provee'
+  },
+  condiciones_pago: {
+    type: DataTypes.TEXT,
+    allowNull: true,
+    comment: 'Términos y condiciones de pago acordados'
+  },
+  tiempo_entrega_promedio: {
+    type: DataTypes.INTEGER,
+    allowNull: true,
+    comment: 'Tiempo promedio de entrega en días'
+  },
+  notas: {
+    type: DataTypes.TEXT,
+    allowNull: true
+  },
+  activo: {
+    type: DataTypes.BOOLEAN,
+    allowNull: false,
+    defaultValue: true
+  },
+  fecha_creacion: {
+    type: DataTypes.DATE,
+    allowNull: false,
+    defaultValue: sequelize.literal('CURRENT_TIMESTAMP')
+  },
+  fecha_actualizacion: {
+    type: DataTypes.DATE,
+    allowNull: false,
+    defaultValue: sequelize.literal('CURRENT_TIMESTAMP')
+  }
+}, {
+  tableName: 'proveedores',
+  schema: 'tramboory',
+  timestamps: true,
+  createdAt: 'fecha_creacion',
+  updatedAt: 'fecha_actualizacion'
+});
+
+// Asociaciones
+Proveedor.associate = (models) => {
+  Proveedor.hasMany(models.OrdenCompra, {
+    foreignKey: 'id_proveedor',
+    as: 'ordenesCompra'
+  });
+
+  Proveedor.hasMany(models.MovimientoInventario, {
+    foreignKey: 'id_proveedor',
+    as: 'movimientos'
+  });
+};
+
+// Métodos de clase
+Proveedor.findActivos = function() {
+  return this.findAll({
+    where: { activo: true },
+    order: [['nombre', 'ASC']]
+  });
+};
+
+// Método para buscar proveedores por producto/servicio
+Proveedor.findByProducto = function(termino) {
+  return this.findAll({
+    where: {
+      activo: true,
+      productos_servicios: {
+        [sequelize.Op.iLike]: `%${termino}%`
+      }
+    },
+    order: [['nombre', 'ASC']]
+  });
+};
+
+module.exports = Proveedor;const { DataTypes } = require('sequelize');
+const sequelize = require('../../config/database');
+
+const RecetaInsumo = sequelize.define('RecetasInsumos', {
+  id_opcion_alimento: {
+    type: DataTypes.INTEGER,
+    allowNull: false,
+    primaryKey: true,
+    references: {
+      model: 'opciones_alimentos',
+      key: 'id'
+    }
+  },
+  id_materia_prima: {
+    type: DataTypes.INTEGER,
+    allowNull: false,
+    primaryKey: true,
+    references: {
+      model: 'materias_primas',
+      key: 'id'
+    }
+  },
+  cantidad_requerida: {
+    type: DataTypes.DECIMAL(10, 3),
+    allowNull: false,
+    validate: {
+      min: 0,
+      notZero(value) {
+        if (parseFloat(value) === 0) {
+          throw new Error('La cantidad requerida no puede ser cero');
+        }
+      }
+    }
+  },
+  id_unidad_medida: {
+    type: DataTypes.INTEGER,
+    allowNull: false,
+    references: {
+      model: 'unidades_medida',
+      key: 'id'
+    }
+  },
+  activo: {
+    type: DataTypes.BOOLEAN,
+    allowNull: false,
+    defaultValue: true
+  },
+  fecha_creacion: {
+    type: DataTypes.DATE,
+    allowNull: false,
+    defaultValue: sequelize.literal('CURRENT_TIMESTAMP')
+  },
+  fecha_actualizacion: {
+    type: DataTypes.DATE,
+    allowNull: false,
+    defaultValue: sequelize.literal('CURRENT_TIMESTAMP')
+  }
+}, {
+  tableName: 'recetas_insumos',
+  schema: 'tramboory',
+  timestamps: true,
+  createdAt: 'fecha_creacion',
+  updatedAt: 'fecha_actualizacion'
+});
+
+// Asociaciones
+RecetaInsumo.associate = (models) => {
+  RecetaInsumo.belongsTo(models.OpcionAlimento, {
+    foreignKey: 'id_opcion_alimento',
+    as: 'opcionAlimento'
+  });
+
+  RecetaInsumo.belongsTo(models.MateriaPrima, {
+    foreignKey: 'id_materia_prima',
+    as: 'materiaPrima'
+  });
+
+  RecetaInsumo.belongsTo(models.UnidadMedida, {
+    foreignKey: 'id_unidad_medida',
+    as: 'unidadMedida'
+  });
+};
+
+// Métodos de clase
+RecetaInsumo.findByOpcionAlimento = function(idOpcionAlimento) {
+  return this.findAll({
+    where: {
+      id_opcion_alimento: idOpcionAlimento,
+      activo: true
+    },
+    include: [
+      {
+        model: sequelize.models.MateriaPrima,
+        as: 'materiaPrima',
+        attributes: ['nombre', 'stock_actual']
+      },
+      {
+        model: sequelize.models.UnidadMedida,
+        as: 'unidadMedida',
+        attributes: ['nombre', 'abreviatura']
+      }
+    ]
+  });
+};
+
+// Método para verificar disponibilidad de insumos
+RecetaInsumo.verificarDisponibilidad = async function(idOpcionAlimento, cantidad = 1) {
+  const insumos = await this.findAll({
+    where: {
+      id_opcion_alimento: idOpcionAlimento,
+      activo: true
+    },
+    include: [
+      {
+        model: sequelize.models.MateriaPrima,
+        as: 'materiaPrima',
+        attributes: ['id', 'nombre', 'stock_actual']
+      },
+      {
+        model: sequelize.models.UnidadMedida,
+        as: 'unidadMedida',
+        attributes: ['id', 'nombre']
+      }
+    ]
+  });
+
+  const faltantes = [];
+  for (const insumo of insumos) {
+    const cantidadNecesaria = parseFloat(insumo.cantidad_requerida) * cantidad;
+    const stockDisponible = parseFloat(insumo.materiaPrima.stock_actual);
+
+    if (stockDisponible < cantidadNecesaria) {
+      faltantes.push({
+        materiaPrima: insumo.materiaPrima.nombre,
+        cantidadNecesaria,
+        stockDisponible,
+        unidad: insumo.unidadMedida.nombre,
+        faltante: cantidadNecesaria - stockDisponible
+      });
+    }
+  }
+
+  return {
+    disponible: faltantes.length === 0,
+    faltantes
+  };
+};
+
+// Método para calcular costo total de insumos
+RecetaInsumo.calcularCostoTotal = async function(idOpcionAlimento) {
+  const insumos = await this.findAll({
+    where: {
+      id_opcion_alimento: idOpcionAlimento,
+      activo: true
+    },
+    include: [
+      {
+        model: sequelize.models.MateriaPrima,
+        as: 'materiaPrima',
+        attributes: ['nombre', 'costo_unitario']
+      }
+    ]
+  });
+
+  return insumos.reduce((total, insumo) => {
+    const costoInsumo = parseFloat(insumo.cantidad_requerida) * parseFloat(insumo.materiaPrima.costo_unitario);
+    return total + costoInsumo;
+  }, 0);
+};
+
+module.exports = RecetaInsumo;const { DataTypes } = require('sequelize');
+const sequelize = require('../../config/database');
+
+const TipoAjuste = sequelize.define('TiposAjusteInventario', {
+  id: {
+    type: DataTypes.INTEGER,
+    autoIncrement: true,
+    primaryKey: true
+  },
+  nombre: {
+    type: DataTypes.STRING(50),
+    allowNull: false,
+    unique: true
+  },
+  descripcion: {
+    type: DataTypes.TEXT,
+    allowNull: true
+  },
+  afecta_costos: {
+    type: DataTypes.BOOLEAN,
+    allowNull: false,
+    defaultValue: true,
+    comment: 'Indica si el ajuste afecta el costo del inventario'
+  },
+  requiere_autorizacion: {
+    type: DataTypes.BOOLEAN,
+    allowNull: false,
+    defaultValue: false,
+    comment: 'Indica si el ajuste requiere aprobación de un administrador'
+  },
+  activo: {
+    type: DataTypes.BOOLEAN,
+    allowNull: false,
+    defaultValue: true
+  },
+  fecha_creacion: {
+    type: DataTypes.DATE,
+    allowNull: false,
+    defaultValue: sequelize.literal('CURRENT_TIMESTAMP')
+  },
+  fecha_actualizacion: {
+    type: DataTypes.DATE,
+    allowNull: false,
+    defaultValue: sequelize.literal('CURRENT_TIMESTAMP')
+  }
+}, {
+  tableName: 'tipos_ajuste_inventario',
+  schema: 'tramboory',
+  timestamps: true,
+  createdAt: 'fecha_creacion',
+  updatedAt: 'fecha_actualizacion'
+});
+
+// Asociaciones
+TipoAjuste.associate = (models) => {
+  TipoAjuste.hasMany(models.MovimientoInventario, {
+    foreignKey: 'id_tipo_ajuste',
+    as: 'movimientos'
+  });
+};
+
+// Métodos de clase
+TipoAjuste.findActivos = function() {
+  return this.findAll({
+    where: { activo: true },
+    order: [['nombre', 'ASC']]
+  });
+};
+
+TipoAjuste.findRequierenAutorizacion = function() {
+  return this.findAll({
+    where: {
+      activo: true,
+      requiere_autorizacion: true
+    },
+    order: [['nombre', 'ASC']]
+  });
+};
+
+// Método para obtener tipos de ajuste por su efecto en costos
+TipoAjuste.findPorEfectoCostos = function(afectaCostos) {
+  return this.findAll({
+    where: {
+      activo: true,
+      afecta_costos: afectaCostos
+    },
+    order: [['nombre', 'ASC']]
+  });
+};
+
+module.exports = TipoAjuste;const { DataTypes } = require('sequelize');
+const sequelize = require('../../config/database');
+
+const UnidadMedida = sequelize.define('UnidadesMedida', {
+  id: {
+    type: DataTypes.INTEGER,
+    autoIncrement: true,
+    primaryKey: true
+  },
+  nombre: {
+    type: DataTypes.STRING(50),
+    allowNull: false,
+    unique: true
+  },
+  abreviatura: {
+    type: DataTypes.STRING(10),
+    allowNull: false,
+    unique: true
+  },
+  tipo: {
+    type: DataTypes.STRING(20),
+    allowNull: false,
+    validate: {
+      isIn: [['masa', 'volumen', 'unidad', 'longitud', 'area']]
+    }
+  },
+  activo: {
+    type: DataTypes.BOOLEAN,
+    allowNull: false,
+    defaultValue: true
+  },
+  fecha_creacion: {
+    type: DataTypes.DATE,
+    allowNull: false,
+    defaultValue: sequelize.literal('CURRENT_TIMESTAMP')
+  },
+  fecha_actualizacion: {
+    type: DataTypes.DATE,
+    allowNull: false,
+    defaultValue: sequelize.literal('CURRENT_TIMESTAMP')
+  }
+}, {
+  tableName: 'unidades_medida',
+  schema: 'tramboory',
+  timestamps: true,
+  createdAt: 'fecha_creacion',
+  updatedAt: 'fecha_actualizacion'
+});
+
+// Método para obtener unidades de medida por tipo
+UnidadMedida.findByTipo = function(tipo) {
+  return this.findAll({
+    where: {
+      tipo,
+      activo: true
+    },
+    order: [['nombre', 'ASC']]
+  });
+};
+
+module.exports = UnidadMedida;const express = require('express');
+const router = express.Router();
+const authMiddleware = require('../../middlewares/authMiddleware');
+
+// Importar controladores
+const UnidadMedidaController = require('../../controllers/Inventory/UnidadMedidaController');
+const MateriaPrimaController = require('../../controllers/Inventory/MateriaPrimaController');
+const ProveedorController = require('../../controllers/Inventory/ProveedorController');
+const MovimientoInventarioController = require('../../controllers/Inventory/MovimientoInventarioController');
+const LoteController = require('../../controllers/Inventory/LoteController');
+const AlertaInventarioController = require('../../controllers/Inventory/AlertaInventarioController');
+const ConversionMedidaController = require('../../controllers/Inventory/ConversionMedidaController');
+const TipoAjusteController = require('../../controllers/Inventory/TipoAjusteController');
+
+// Middleware de autenticación para todas las rutas de inventario
+router.use(authMiddleware.verifyToken);
+router.use(authMiddleware.isAdmin);
+
+// Rutas para Unidades de Medida
+router.get('/unidades-medida', UnidadMedidaController.getAllUnidadesMedida);
+router.get('/unidades-medida/:id', UnidadMedidaController.getUnidadMedidaById);
+router.post('/unidades-medida', UnidadMedidaController.createUnidadMedida);
+router.put('/unidades-medida/:id', UnidadMedidaController.updateUnidadMedida);
+router.delete('/unidades-medida/:id', UnidadMedidaController.deleteUnidadMedida);
+router.get('/unidades-medida/tipo/:tipo', UnidadMedidaController.getUnidadesByTipo);
+
+// Rutas para Materias Primas
+router.get('/materias-primas', MateriaPrimaController.getAllMateriasPrimas);
+router.get('/materias-primas/:id', MateriaPrimaController.getMateriaPrimaById);
+router.post('/materias-primas', MateriaPrimaController.createMateriaPrima);
+router.put('/materias-primas/:id', MateriaPrimaController.updateMateriaPrima);
+router.delete('/materias-primas/:id', MateriaPrimaController.deleteMateriaPrima);
+
+// Rutas para Proveedores
+router.get('/proveedores', ProveedorController.getAllProveedores);
+router.get('/proveedores/:id', ProveedorController.getProveedorById);
+router.post('/proveedores', ProveedorController.createProveedor);
+router.put('/proveedores/:id', ProveedorController.updateProveedor);
+router.delete('/proveedores/:id', ProveedorController.deleteProveedor);
+
+// Rutas para Movimientos de Inventario
+router.get('/movimientos', MovimientoInventarioController.getAllMovimientos);
+router.get('/movimientos/:id', MovimientoInventarioController.getMovimientoById);
+router.post('/movimientos', MovimientoInventarioController.createMovimiento);
+router.put('/movimientos/:id', MovimientoInventarioController.updateMovimiento);
+router.delete('/movimientos/:id', MovimientoInventarioController.deleteMovimiento);
+router.get('/movimientos/materia-prima/:id', MovimientoInventarioController.getMovimientosByMateriaPrima);
+
+// Rutas para Lotes
+router.get('/lotes', LoteController.getAllLotes);
+router.get('/lotes/:id', LoteController.getLoteById);
+router.post('/lotes', LoteController.createLote);
+router.put('/lotes/:id', LoteController.updateLote);
+router.delete('/lotes/:id', LoteController.deleteLote);
+router.get('/lotes/materia-prima/:id', LoteController.getLotesByMateriaPrima);
+
+// Rutas para Alertas de Inventario
+router.get('/alertas', AlertaInventarioController.getAllAlertas);
+router.get('/alertas/:id', AlertaInventarioController.getAlertaById);
+router.post('/alertas', AlertaInventarioController.createAlerta);
+router.put('/alertas/:id', AlertaInventarioController.updateAlerta);
+router.delete('/alertas/:id', AlertaInventarioController.deleteAlerta);
+router.get('/alertas/activas', AlertaInventarioController.getAlertasActivas);
+
+// Rutas para Conversiones de Medida
+router.get('/conversiones', ConversionMedidaController.getAllConversiones);
+router.get('/conversiones/:id', ConversionMedidaController.getConversionById);
+router.post('/conversiones', ConversionMedidaController.createConversion);
+router.put('/conversiones/:id', ConversionMedidaController.updateConversion);
+router.delete('/conversiones/:id', ConversionMedidaController.deleteConversion);
+router.get('/conversiones/unidad-origen/:id', ConversionMedidaController.getConversionesByUnidadOrigen);
+router.get('/conversiones/unidad-destino/:id', ConversionMedidaController.getConversionesByUnidadDestino);
+
+// Rutas para Tipos de Ajuste
+router.get('/tipos-ajuste', TipoAjusteController.getAllTiposAjuste);
+router.get('/tipos-ajuste/:id', TipoAjusteController.getTipoAjusteById);
+router.post('/tipos-ajuste', TipoAjusteController.createTipoAjuste);
+router.put('/tipos-ajuste/:id', TipoAjusteController.updateTipoAjuste);
+router.delete('/tipos-ajuste/:id', TipoAjusteController.deleteTipoAjuste);
+
+module.exports = router;

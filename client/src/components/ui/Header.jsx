@@ -1,8 +1,7 @@
 import { Link, useNavigate } from 'react-router-dom';
-import { useAuth } from '../../context/authContext';
-import Logo from '../../img/logo.webp';
-import InventoryLoginModal from '../inventory/InventoryLoginModal';
-import InventoryLoader from '../inventory/InventoryLoader';
+import { useAuth } from '@/context/authContext';
+import Logo from '@/img/logo.webp';
+import InventoryLoader from '@/components/inventory/InventoryLoader';
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { toast } from 'react-toastify';
@@ -38,7 +37,6 @@ export const Header = () => {
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
   const [authChecked, setAuthChecked] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
-  const [showInventoryLogin, setShowInventoryLogin] = useState(false);
   const [showLoader, setShowLoader] = useState(false);
   const menuRef = useRef(null);
   
@@ -205,11 +203,7 @@ export const Header = () => {
 
   return (
     <>
-      <InventoryLoginModal 
-        isOpen={showInventoryLogin}
-        onClose={() => setShowInventoryLogin(false)}
-        onLoginSuccess={handleLoginSuccess}
-      />
+   
       <AnimatePresence>
         {showLoader && <InventoryLoader />}
       </AnimatePresence>

@@ -1,8 +1,8 @@
 import axios from 'axios';
-import { axiosInstance } from '../components/axiosConfig';
+import { axiosInstance } from '@/components/axiosConfig';
 
 // Servicio para la gestión del carrusel de imágenes en el Home
-const API_PATH = '/api/galeria-home';
+const API_PATH = '/galeria-home';
 
 // Obtener todas las imágenes activas (para uso público)
 export const getImagenesCarousel = async () => {

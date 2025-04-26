@@ -1,6 +1,7 @@
 const { Op } = require('sequelize');
 const Proveedor = require('../../models/Inventory/Proveedor');
 const OrdenCompra = require('../../models/Inventory/OrdenCompra');
+const Usuario = require('../../models/Usuario');
 
 exports.getAllProveedores = async (req, res) => {
   try {

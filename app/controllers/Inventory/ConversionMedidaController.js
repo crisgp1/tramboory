@@ -279,6 +279,72 @@ exports.deleteConversion = async (req, res) => {
   }
 };
 
+exports.getConversionesByUnidadOrigen = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const conversiones = await ConversionMedida.findAll({
+      where: {
+        id_unidad_origen: id,
+        activo: true
+      },
+      include: [
+        {
+          model: UnidadMedida,
+          as: 'unidadOrigen',
+          attributes: ['nombre', 'abreviatura', 'tipo']
+        },
+        {
+          model: UnidadMedida,
+          as: 'unidadDestino',
+          attributes: ['nombre', 'abreviatura', 'tipo']
+        }
+      ]
+    });
+
+    res.json(conversiones);
+  } catch (error) {
+    console.error('Error al obtener conversiones por unidad de origen:', error);
+    res.status(500).json({
+      error: 'Error al obtener conversiones por unidad de origen',
+      details: error.message
+    });
+  }
+};
+
+exports.getConversionesByUnidadDestino = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const conversiones = await ConversionMedida.findAll({
+      where: {
+        id_unidad_destino: id,
+        activo: true
+      },
+      include: [
+        {
+          model: UnidadMedida,
+          as: 'unidadOrigen',
+          attributes: ['nombre', 'abreviatura', 'tipo']
+        },
+        {
+          model: UnidadMedida,
+          as: 'unidadDestino',
+          attributes: ['nombre', 'abreviatura', 'tipo']
+        }
+      ]
+    });
+
+    res.json(conversiones);
+  } catch (error) {
+    console.error('Error al obtener conversiones por unidad de destino:', error);
+    res.status(500).json({
+      error: 'Error al obtener conversiones por unidad de destino',
+      details: error.message
+    });
+  }
+};
+
 exports.getConversionesDisponibles = async (req, res) => {
   try {
     const { id_unidad } = req.params;

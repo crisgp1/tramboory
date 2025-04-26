@@ -144,6 +144,14 @@ exports.createReserva = async (req, res) => {
       ]
     });
 
+    // Emitir evento Socket.IO para notificar a los clientes sobre la nueva reserva
+    if (global.io) {
+      global.io.emit('reserva_creada', reservaCompleta);
+      console.log('Evento Socket.IO emitido: reserva_creada');
+    } else {
+      console.log('Socket.IO no está disponible para emitir eventos');
+    }
+
     res.status(201).json(reservaCompleta);
   } catch (error) {
     console.error('Error detallado al crear la reserva:', error);
@@ -231,7 +239,39 @@ exports.updateReserva = async (req, res) => {
       user: req.user // Pasar el usuario para los hooks de auditoría
     });
     if (updated) {
-      const updatedReserva = await Reserva.findByPk(req.params.id);
+      const updatedReserva = await Reserva.findByPk(req.params.id, {
+        include: [
+          { model: Usuario, as: 'usuario', attributes: ['id', 'nombre', 'email', 'telefono'] },
+          { model: Paquete, as: 'paquete', attributes: ['id', 'nombre'] },
+          { model: OpcionAlimento, as: 'opcionAlimento', attributes: ['id', 'nombre'] },
+          { model: Tematica, as: 'tematicaReserva', attributes: ['id', 'nombre'] },
+          {
+            model: Mampara,
+            as: 'mampara',
+            attributes: ['id', 'piezas', 'precio'],
+            include: [
+              { model: Tematica, as: 'tematica', attributes: ['id', 'nombre'] }
+            ]
+          },
+          { 
+            model: Extra,
+            as: 'extras',
+            attributes: ['id', 'nombre', 'descripcion', 'precio'],
+            through: {
+              attributes: ['cantidad']
+            }
+          }
+        ]
+      });
+
+      // Emitir evento Socket.IO para notificar a los clientes sobre la actualización
+      if (global.io) {
+        global.io.emit('reserva_actualizada', updatedReserva);
+        console.log('Evento Socket.IO emitido: reserva_actualizada');
+      } else {
+        console.log('Socket.IO no está disponible para emitir eventos');
+      }
+
       res.json(updatedReserva);
     } else {
       res.status(404).json({ error: 'Reserva no encontrada' });
@@ -289,6 +329,14 @@ exports.deleteReserva = async (req, res) => {
         }
       }
     });
+
+    // Emitir evento Socket.IO para notificar a los clientes sobre la eliminación
+    if (global.io) {
+      global.io.emit('reserva_eliminada', { id: req.params.id });
+      console.log('Evento Socket.IO emitido: reserva_eliminada');
+    } else {
+      console.log('Socket.IO no está disponible para emitir eventos');
+    }
 
     res.status(200).json({ message: 'Reserva desactivada con éxito' });
   } catch (error) {
@@ -675,9 +723,20 @@ exports.blockDates = async (req, res) => {
     }
 
     // Crear todas las reservas de bloqueo
-    await Reserva.bulkCreate(blockReservations, {
+    const nuevasReservas = await Reserva.bulkCreate(blockReservations, {
       user: req.user // Para los hooks de auditoría
     });
+
+    // Emitir evento Socket.IO para notificar a los clientes sobre los nuevos bloqueos
+    if (global.io) {
+      global.io.emit('fechas_bloqueadas', {
+        reservas: nuevasReservas,
+        fechasBloqueadas
+      });
+      console.log('Evento Socket.IO emitido: fechas_bloqueadas');
+    } else {
+      console.log('Socket.IO no está disponible para emitir eventos');
+    }
 
     // Preparar respuesta con información detallada
     const respuesta = { 

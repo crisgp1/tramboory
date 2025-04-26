@@ -8,3 +8,4 @@ export * from './SelectUi.jsx';
 export * from './Button.jsx';
 export * from './Header.jsx';
 export * from './Footer.jsx';
+export { default as Breadcrumb } from './Breadcrumb.jsx';

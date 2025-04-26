@@ -20,7 +20,7 @@ export default {
       },
 
       fontFamily: {
-       funhouse : ['"Funhouse"', 'cursive'],
+       funhouse : ['"Funhouse"', 'sans-serif'],
         'sans': ['"travelia"', 'sans-serif'],
       },
       

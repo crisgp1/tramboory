@@ -1,4 +1,4 @@
-const { DataTypes } = require('sequelize');
+const { DataTypes, Op } = require('sequelize');
 const sequelize = require('../../config/database');
 
 const MateriaPrima = sequelize.define('MateriasPrimas', {
@@ -111,7 +111,7 @@ MateriaPrima.findBajoStock = function() {
     where: {
       activo: true,
       stock_actual: {
-        [sequelize.Op.lte]: sequelize.col('stock_minimo')
+        [Op.lte]: sequelize.col('stock_minimo')
       }
     },
     include: [{
@@ -129,8 +129,8 @@ MateriaPrima.findProximosCaducar = function(diasLimite = 7) {
     where: {
       activo: true,
       fecha_caducidad: {
-        [sequelize.Op.lte]: fechaLimite,
-        [sequelize.Op.gt]: new Date()
+        [Op.lte]: fechaLimite,
+        [Op.gt]: new Date()
       }
     },
     include: [{

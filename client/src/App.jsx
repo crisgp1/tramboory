@@ -9,27 +9,28 @@ import { lazy, Suspense, useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { FiWifiOff } from 'react-icons/fi'
 import { FaSadTear } from 'react-icons/fa'
-import { Header, Footer } from './components/ui/'
-import ProtectedRoute from './components/ProtectedRoute'
-import PublicRoute from './components/PublicRoute.jsx'
-import Logo from './img/logo.webp'
-import withTokenValidation from './components/withTokenValidation.jsx'
-import { AuthProvider } from './context/authContext.jsx'
-import ProfileForm from './pages/reservation/ProfileForm.jsx'
+import { Header, Footer } from '@/components/ui/'
+import ProtectedRoute from '@/components/ProtectedRoute'
+import PublicRoute from '@/components/PublicRoute.jsx'
+import Logo from '@/img/logo.webp'
+import withTokenValidation from '@/components/withTokenValidation.jsx'
+import { AuthProvider } from '@/context/authContext.jsx'
+import ProfileForm from '@/pages/customer/profile-service/ProfileForm.jsx'
 import { Toaster } from 'react-hot-toast'
 
 // Importaciones perezosas para mejorar el rendimiento
-const Home = lazy(() => import('./pages/Home'))
-const SignIn = lazy(() => import('./pages/SignIn'))
-const Signup = lazy(() => import('./pages/SignUp'))
-const Dashboard = lazy(() => import('./pages/dashboard/Dashboard.jsx'))
-const Reservation = lazy(() => import('./pages/reservation/index.jsx'))
-const ForgotPassword = lazy(() => import('./pages/ForgotPassword.jsx'))
-const Appointment = lazy(() => import('./pages/Appointment.jsx'))
-const AboutTramboory = lazy(() => import('./pages/AboutTramboory.jsx'))
-const InventoryDashboard = lazy(() => import('./pages/inventory/InventoryDashboard.jsx'))
+const Home = lazy(() => import('@/pages/public/Home'))
+const SignIn = lazy(() => import('@/pages/auth/SignIn'))
+const Signup = lazy(() => import('@/pages/auth/SignUp'))
+const Dashboard = lazy(() => import('@/pages/admin/dashboard/Dashboard.jsx'))
+const Reservation = lazy(() => import('@/pages/customer/reservation/index.jsx'))
+const ForgotPassword = lazy(() => import('@/pages/auth/ForgotPassword.jsx'))
+const Appointment = lazy(() => import('@/pages/customer/reservation/Appointment.jsx'))
+const PublicAppointment = lazy(() => import('@/pages/public/Appointment.jsx'))
+const AboutTramboory = lazy(() => import('@/pages/public/AboutTramboory.jsx'))
+const InventoryDashboard = lazy(() => import('@/pages/admin/inventory/InventoryDashboard.jsx'))
 const ReservationStatus = lazy(() =>
-  import('./pages/reservation/ReservationStatus.jsx')
+  import('@/pages/customer/reservation/ReservationStatus.jsx')
 )
 
 const Layout = () => (
@@ -228,7 +229,7 @@ function App () {
           <Routes>
             {/* Rutas sin Header ni Footer */}
             <Route path='/' element={<Home />} />
-            <Route path='/appointments' element={<Appointment />} />
+            <Route path='/appointments' element={<PublicAppointment />} />
             <Route path='/about' element={<AboutTramboory />} />
             
             {/* Rutas con Header y Footer */}

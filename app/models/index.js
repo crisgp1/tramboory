@@ -2,6 +2,7 @@
 const sequelize = require('../config/database');
 const { agregarHooksAuditoria } = require('../utils/modelHooks');
 
+// Modelos principales
 const Paquete = require('./Paquete');
 const PaqueteAlimento = require('./PaqueteAlimento');
 const OpcionAlimento = require('./OpcionAlimento');
@@ -17,6 +18,9 @@ const ReservaExtra = require('./ReservaExtra');
 const Auditoria = require('./Auditoria');
 const GaleriaHome = require('./GaleriaHome');
 
+// Importar modelos de inventario
+const inventoryModels = require('./Inventory');
+
 // Agregar hooks de auditoría a todos los modelos
 const modelos = [
   Paquete, PaqueteAlimento, OpcionAlimento, Usuario, Reserva,
@@ -26,6 +30,8 @@ const modelos = [
 modelos.forEach(modelo => {
   agregarHooksAuditoria(modelo);
 });
+
+// Los modelos de inventario ya tienen los hooks de auditoría aplicados
 
 // Asociaciones
 Usuario.hasMany(Reserva, { foreignKey: 'id_usuario', as: 'reservas' });
@@ -75,6 +81,17 @@ Extra.belongsToMany(Reserva, {
   as: 'reservas'
 });
 
+// Asociación entre OpcionAlimento y modelos de inventario
+if (inventoryModels.MateriaPrima) {
+  OpcionAlimento.belongsToMany(inventoryModels.MateriaPrima, {
+    through: 'recetas_insumos',
+    foreignKey: 'id_opcion_alimento',
+    otherKey: 'id_materia_prima',
+    as: 'materiasPrimas'
+  });
+}
+
+// Exportamos todos los modelos, incluidos los de inventario
 module.exports = {
   sequelize,
   Paquete,
@@ -90,5 +107,6 @@ module.exports = {
   Categoria,
   ReservaExtra,
   Auditoria,
-  GaleriaHome
+  GaleriaHome,
+  ...inventoryModels // Spread para incluir todos los modelos de inventario
 };

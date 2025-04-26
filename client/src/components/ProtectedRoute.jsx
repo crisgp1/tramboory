@@ -263,21 +263,23 @@ const ProtectedRoute = ({ redirectPath = '/signin', allowedRoles = [], children 
 
   if (showFinalIcon) {
     return (
-      <AnimatePresence>
-        <FinalIcon success={isAllowed} />
-        {setTimeout(() => {
-          setShowFinalIcon(false);
-          if (isAllowed) {
-            return;
-          } else {
-            if (isAuthenticated) {
-              window.location.replace('/reservations');
+      <AnimatePresence mode="wait">
+        <motion.div key="final-icon">
+          <FinalIcon success={isAllowed} />
+          {setTimeout(() => {
+            setShowFinalIcon(false);
+            if (isAllowed) {
+              return;
             } else {
-              window.location.replace(redirectPath);
+              if (isAuthenticated) {
+                window.location.replace('/reservations');
+              } else {
+                window.location.replace(redirectPath);
+              }
             }
-          }
-        }, 800)}
-        <ToastContainer />
+          }, 800)}
+          <ToastContainer />
+        </motion.div>
       </AnimatePresence>
     );
   }
