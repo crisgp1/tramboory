@@ -1,6 +1,7 @@
 const Pago = require('../models/Pago');
 const Reserva = require('../models/Reserva');
 const { Op } = require('sequelize');
+const sequelize = require('../config/database');
 
 exports.getAllPagos = async (req, res, next) => {
   try {
@@ -84,6 +85,50 @@ exports.getPagoById = async (req, res, next) => {
 
 exports.createPago = async (req, res, next) => {
   try {
+    // Validar datos de entrada
+    const { id_reserva, monto, metodo_pago, estado } = req.body;
+    
+    if (!id_reserva) {
+      return res.status(400).json({ error: 'El ID de reserva es requerido' });
+    }
+    
+    if (!monto || isNaN(parseFloat(monto)) || parseFloat(monto) <= 0) {
+      return res.status(400).json({ error: 'El monto debe ser un número positivo' });
+    }
+    
+    // Verificar que la reserva exista
+    const reserva = await sequelize.models.Reserva.findByPk(id_reserva);
+    if (!reserva) {
+      return res.status(404).json({ error: `La reserva con ID ${id_reserva} no existe` });
+    }
+    
+    // Calcular el total de pagos completados para esta reserva
+    const totalPagosCompletados = parseFloat(
+      await Pago.sum('monto', {
+        where: {
+          id_reserva,
+          estado: 'completado'
+        }
+      }) || 0
+    );
+    
+    // Verificar que el nuevo pago no exceda el total de la reserva
+    const nuevoTotal = totalPagosCompletados + parseFloat(monto);
+    const totalReserva = parseFloat(reserva.total);
+    
+    if (nuevoTotal > totalReserva) {
+      return res.status(400).json({
+        error: `El monto total de pagos (${nuevoTotal}) excede el total de la reserva (${totalReserva})`,
+        detalles: {
+          pagosAnteriores: totalPagosCompletados,
+          nuevoPago: parseFloat(monto),
+          totalCalculado: nuevoTotal,
+          totalReserva
+        }
+      });
+    }
+    
+    // Crear el pago
     const pago = await Pago.create(req.body);
     res.status(201).json(pago);
   } catch (error) {
@@ -93,6 +138,21 @@ exports.createPago = async (req, res, next) => {
       requestBody: req.body,
       timestamp: new Date().toISOString()
     });
+    
+    // Manejar diferentes tipos de errores
+    if (error.name === 'SequelizeValidationError') {
+      return res.status(400).json({
+        error: 'Error de validación',
+        detalles: error.errors.map(e => e.message)
+      });
+    }
+    
+    if (error.name === 'SequelizeForeignKeyConstraintError') {
+      return res.status(400).json({
+        error: 'Error de clave foránea. Asegúrate de que todas las referencias existan.'
+      });
+    }
+    
     next(error);
   }
 };

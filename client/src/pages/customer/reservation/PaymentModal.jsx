@@ -68,16 +68,29 @@ const PaymentModal = ({ reservationData, onCancel, onConfirm, isOpen, onClose, o
     setIsProcessing(true);
 
     try {
+      // Validar que tengamos los datos necesarios
+      const id_reserva = formData?.id || (reservationData && reservationData.id);
+      const monto = amount || (reservationData && reservationData.total);
+
+      if (!id_reserva) {
+        throw new Error('ID de reserva no disponible');
+      }
+
+      if (!monto || isNaN(parseFloat(monto)) || parseFloat(monto) <= 0) {
+        throw new Error('Monto de pago inválido');
+      }
+
       // Crear el pago directamente como completado
       const pagoData = {
-        id_reserva: formData?.id || (reservationData && reservationData.id),
-        monto: amount || (reservationData && reservationData.total),
+        id_reserva,
+        monto: parseFloat(monto),
         fecha_pago: new Date().toISOString().split('T')[0],
         metodo_pago: paymentMethod === 'transfer' ? 'transferencia' : 'efectivo',
         estado: 'completado', // Crear directamente como completado
       };
 
-      const response = await axiosInstance.post('/api/pagos', pagoData);
+      console.log('Enviando datos de pago:', pagoData);
+      const response = await axiosInstance.post('/pagos', pagoData);
 
       if (response && response.data) {
         toast.success('¡Pago registrado exitosamente!');
@@ -89,7 +102,15 @@ const PaymentModal = ({ reservationData, onCancel, onConfirm, isOpen, onClose, o
       }
     } catch (error) {
       console.error('Error al procesar el pago:', error);
-      toast.error('Error al procesar el pago');
+      
+      // Mostrar mensaje de error más específico si está disponible
+      if (error.response && error.response.data && error.response.data.error) {
+        toast.error(`Error: ${error.response.data.error}`);
+      } else if (error.message) {
+        toast.error(`Error: ${error.message}`);
+      } else {
+        toast.error('Error al procesar el pago');
+      }
     } finally {
       setIsProcessing(false);
     }
