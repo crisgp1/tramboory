@@ -14,7 +14,12 @@ const useCategoriesStore = create((set, get) => ({
       return response.data
     } catch (error) {
       console.error('Error al cargar categorías:', error)
-      toast.error('Error al cargar las categorías')
+      
+      // No mostrar toast para errores 404 (recurso no encontrado)
+      if (error.response?.status !== 404) {
+        toast.error('Error al cargar las categorías')
+      }
+      
       throw error
     }
   },

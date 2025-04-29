@@ -184,9 +184,9 @@ const Dashboard = () => {
         fetchMamparasZustand().then(data => setMamparas(data)),
         fetchPaymentsZustand().then(data => setPayments(data)),
         // Obtener elementos archivados - todavía usando axios ya que no tenemos tiendas para estos
-        axiosInstance.get('/api/reservas/archived'),
-        axiosInstance.get('/api/pagos/archived'),
-        axiosInstance.get('/api/finanzas/archived')
+        axiosInstance.get('/reservas/archived'),
+        axiosInstance.get('/pagos/archived'),
+        axiosInstance.get('/finanzas/archived')
       ]);
 
       // Manejar elementos archivados
@@ -206,7 +206,14 @@ const Dashboard = () => {
       results.forEach((result, index) => {
         if (result.status === 'rejected') {
           console.error(`Error en la solicitud ${index}:`, result.reason);
-          toast.error(`Error al cargar los datos de la solicitud ${index + 1}`);
+          
+          // No mostrar toast para errores 404 en solicitudes de elementos archivados (índices 10, 11, 12)
+          const isArchivedRequest = index >= 10 && index <= 12;
+          const is404Error = result.reason?.response?.status === 404;
+          
+          if (!(isArchivedRequest && is404Error)) {
+            toast.error(`Error al cargar los datos de la solicitud ${index + 1}`);
+          }
         }
       });
     } catch (error) {
