@@ -1,5 +1,6 @@
 const { DataTypes } = require('sequelize');
 const sequelize = require('../../config/database');
+const MODEL_SCHEMAS = require('../../utils/schemaMap');
 
 const RecetaInsumo = sequelize.define('RecetasInsumos', {
   id_opcion_alimento: {
@@ -57,7 +58,7 @@ const RecetaInsumo = sequelize.define('RecetasInsumos', {
   }
 }, {
   tableName: 'recetas_insumos',
-  schema: 'tramboory',
+  schema: MODEL_SCHEMAS.RecetaInsumo, // Usar 'main' como schema
   timestamps: true,
   createdAt: 'fecha_creacion',
   updatedAt: 'fecha_actualizacion'
