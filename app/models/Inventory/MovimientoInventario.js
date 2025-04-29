@@ -1,5 +1,6 @@
 const { DataTypes, Op } = require('sequelize');
 const sequelize = require('../../config/database');
+const MODEL_SCHEMAS = require('../../utils/schemaMap');
 
 const MovimientoInventario = sequelize.define('MovimientosInventario', {
   id: {
@@ -83,7 +84,7 @@ const MovimientoInventario = sequelize.define('MovimientosInventario', {
   }
 }, {
   tableName: 'movimientos_inventario',
-  schema: 'tramboory',
+  schema: MODEL_SCHEMAS.MovimientoInventario,
   timestamps: true,
   createdAt: 'fecha_creacion',
   updatedAt: 'fecha_actualizacion'

@@ -1,65 +1,58 @@
 const sequelize = require('../../config/database');
-const { agregarHooksAuditoria } = require('../../utils/modelHooks');
+const MODEL_SCHEMAS = require('../../utils/schemaMap');
+const { DataTypes } = require('sequelize');
 
-// Importar modelos del directorio principal
-const Usuario = require('../Usuario');
-const OpcionAlimento = require('../OpcionAlimento');
-const Reserva = require('../Reserva');
-const Extra = require('../Extra');
-const Pago = require('../Pago');
-const Paquete = require('../Paquete');
-
-// Importar modelos
-const AlertaInventario = require('./AlertaInventario');
-const ConversionMedida = require('./ConversionMedida');
-const DetalleOrdenCompra = require('./DetalleOrdenCompra');
-const Lote = require('./Lote');
+// Importar los modelos
 const MateriaPrima = require('./MateriaPrima');
+const Proveedor = require('./Proveedor');
+const UnidadMedida = require('./UnidadMedida');
+const ConversionMedida = require('./ConversionMedida');
+const Lote = require('./Lote');
+const TipoAjuste = require('./TipoAjuste');
 const MovimientoInventario = require('./MovimientoInventario');
 const OrdenCompra = require('./OrdenCompra');
-const Proveedor = require('./Proveedor');
+const DetalleOrdenCompra = require('./DetalleOrdenCompra');
+const AlertaInventario = require('./AlertaInventario');
 const RecetaInsumo = require('./RecetaInsumo');
-const TipoAjuste = require('./TipoAjuste');
-const UnidadMedida = require('./UnidadMedida');
 
-// Reunir todos los modelos en un objeto
-const models = {
-  AlertaInventario,
-  ConversionMedida,
-  DetalleOrdenCompra,
-  Lote,
+// Establecer asociaciones internas al schema de inventario
+MateriaPrima.belongsTo(Proveedor, { foreignKey: 'proveedor_id', as: 'proveedor' });
+MateriaPrima.belongsTo(UnidadMedida, { foreignKey: 'id_unidad_medida', as: 'unidadMedida' });
+
+// Asociaciones de MovimientoInventario
+MovimientoInventario.belongsTo(TipoAjuste, { foreignKey: 'id_tipo_ajuste', as: 'tipoAjuste' });
+MovimientoInventario.belongsTo(MateriaPrima, { foreignKey: 'id_materia_prima', as: 'materiaPrima' });
+
+// Asociaciones de Lote
+Lote.belongsTo(MateriaPrima, { foreignKey: 'id_materia_prima', as: 'materiaPrima' });
+Lote.belongsTo(OrdenCompra, { foreignKey: 'id_orden_compra', as: 'ordenCompra' });
+
+// Asociaciones de ConversionMedida
+ConversionMedida.belongsTo(UnidadMedida, { foreignKey: 'id_unidad_origen', as: 'unidadOrigen' });
+ConversionMedida.belongsTo(UnidadMedida, { foreignKey: 'id_unidad_destino', as: 'unidadDestino' });
+
+// Asociaciones de OrdenCompra
+OrdenCompra.belongsTo(Proveedor, { foreignKey: 'id_proveedor', as: 'proveedor' });
+OrdenCompra.hasMany(DetalleOrdenCompra, { foreignKey: 'id_orden_compra', as: 'detalles' });
+
+// Asociaciones de DetalleOrdenCompra
+DetalleOrdenCompra.belongsTo(OrdenCompra, { foreignKey: 'id_orden_compra', as: 'ordenCompra' });
+DetalleOrdenCompra.belongsTo(MateriaPrima, { foreignKey: 'id_materia_prima', as: 'materiaPrima' });
+
+// Asociaciones de AlertaInventario
+AlertaInventario.belongsTo(MateriaPrima, { foreignKey: 'id_materia_prima', as: 'materiaPrima' });
+
+// Exportar todos los modelos de inventario
+module.exports = {
   MateriaPrima,
+  Proveedor,
+  UnidadMedida,
+  ConversionMedida,
+  Lote,
+  TipoAjuste,
   MovimientoInventario,
   OrdenCompra,
-  Proveedor,
-  RecetaInsumo,
-  TipoAjuste,
-  UnidadMedida,
-  Usuario, // Añadir el modelo Usuario para las asociaciones
-  OpcionAlimento, // Añadir el modelo OpcionAlimento para las asociaciones
-  Reserva, // Añadir el modelo Reserva para las asociaciones
-  Extra, // Añadir el modelo Extra para las asociaciones
-  Pago, // Añadir el modelo Pago para las asociaciones
-  Paquete // Añadir el modelo Paquete para las asociaciones
+  DetalleOrdenCompra,
+  AlertaInventario,
+  RecetaInsumo
 };
-
-// Configurar hooks de auditoría
-Object.values(models).forEach(model => {
-  agregarHooksAuditoria(model);
-});
-
-// Configurar asociaciones solo para modelos de inventario
-// Evitamos ejecutar associate() en los modelos principales para prevenir duplicación de asociaciones
-const modelosInventario = [
-  AlertaInventario, ConversionMedida, DetalleOrdenCompra, Lote, 
-  MateriaPrima, MovimientoInventario, OrdenCompra, Proveedor, 
-  RecetaInsumo, TipoAjuste, UnidadMedida
-];
-
-modelosInventario.forEach(model => {
-  if (model.associate && typeof model.associate === 'function') {
-    model.associate(models);
-  }
-});
-
-module.exports = models;

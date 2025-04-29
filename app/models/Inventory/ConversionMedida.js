@@ -1,5 +1,6 @@
 const { DataTypes } = require('sequelize');
 const sequelize = require('../../config/database');
+const MODEL_SCHEMAS = require('../../utils/schemaMap');
 
 const ConversionMedida = sequelize.define('ConversionMedida', {
   id_unidad_origen: {
@@ -49,7 +50,7 @@ const ConversionMedida = sequelize.define('ConversionMedida', {
   }
 }, {
   tableName: 'conversiones_medida',
-  schema: 'tramboory',
+  schema: MODEL_SCHEMAS.ConversionMedida,
   timestamps: true,
   createdAt: 'fecha_creacion',
   updatedAt: 'fecha_actualizacion'

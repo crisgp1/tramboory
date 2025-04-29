@@ -1,12 +1,12 @@
-// models/index.js
 const sequelize = require('../config/database');
 const { agregarHooksAuditoria } = require('../utils/modelHooks');
+const MODEL_SCHEMAS = require('../utils/schemaMap');
 
-// Modelos principales
+// Importar modelos
+const Usuario = require('./Usuario');
 const Paquete = require('./Paquete');
 const PaqueteAlimento = require('./PaqueteAlimento');
 const OpcionAlimento = require('./OpcionAlimento');
-const Usuario = require('./Usuario');
 const Reserva = require('./Reserva');
 const Finanza = require('./Finanza');
 const Pago = require('./Pago');
@@ -31,9 +31,7 @@ modelos.forEach(modelo => {
   agregarHooksAuditoria(modelo);
 });
 
-// Los modelos de inventario ya tienen los hooks de auditoría aplicados
-
-// Asociaciones
+// Asociaciones manteniendo schemas explícitos
 Usuario.hasMany(Reserva, { foreignKey: 'id_usuario', as: 'reservas' });
 Reserva.belongsTo(Usuario, { foreignKey: 'id_usuario', as: 'usuario' });
 
@@ -84,14 +82,17 @@ Extra.belongsToMany(Reserva, {
 // Asociación entre OpcionAlimento y modelos de inventario
 if (inventoryModels.MateriaPrima) {
   OpcionAlimento.belongsToMany(inventoryModels.MateriaPrima, {
-    through: 'recetas_insumos',
+    through: {
+      model: 'recetas_insumos',
+      schema: 'main' // Especificar el schema para la tabla intermedia
+    },
     foreignKey: 'id_opcion_alimento',
     otherKey: 'id_materia_prima',
     as: 'materiasPrimas'
   });
 }
 
-// Exportamos todos los modelos, incluidos los de inventario
+// Exportar todos los modelos
 module.exports = {
   sequelize,
   Paquete,
@@ -108,5 +109,5 @@ module.exports = {
   ReservaExtra,
   Auditoria,
   GaleriaHome,
-  ...inventoryModels // Spread para incluir todos los modelos de inventario
+  ...inventoryModels
 };

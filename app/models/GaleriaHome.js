@@ -1,5 +1,6 @@
 const { DataTypes } = require('sequelize');
 const sequelize = require('../config/database');
+const MODEL_SCHEMAS = require('../utils/schemaMap');
 
 const GaleriaHome = sequelize.define('GaleriaHome', {
     id: {
@@ -47,7 +48,7 @@ const GaleriaHome = sequelize.define('GaleriaHome', {
     }
 }, {
     tableName: 'galeria_home',
-    schema: 'tramboory',
+    schema: MODEL_SCHEMAS.GaleriaHome,
     timestamps: true,
     createdAt: 'fecha_creacion',
     updatedAt: 'fecha_actualizacion'

@@ -1,5 +1,6 @@
 const { Model, DataTypes, Op } = require('sequelize');
 const sequelize = require('../config/database');
+const MODEL_SCHEMAS = require('../utils/schemaMap');
 const Finanza = require('./Finanza');
 
 class Reserva extends Model {
@@ -180,7 +181,7 @@ Reserva.init({
   sequelize,
   modelName: 'Reserva',
   tableName: 'reservas',
-  schema: 'tramboory',
+  schema: MODEL_SCHEMAS.Reserva,
   timestamps: true,
   createdAt: 'fecha_creacion',
   updatedAt: 'fecha_actualizacion',

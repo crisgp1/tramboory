@@ -1,5 +1,6 @@
 const { DataTypes, Op } = require('sequelize');
 const sequelize = require('../../config/database');
+const MODEL_SCHEMAS = require('../../utils/schemaMap');
 
 const MateriaPrima = sequelize.define('MateriasPrimas', {
   id: {
@@ -68,7 +69,7 @@ const MateriaPrima = sequelize.define('MateriasPrimas', {
   }
 }, {
   tableName: 'materias_primas',
-  schema: 'tramboory',
+  schema: MODEL_SCHEMAS.MateriaPrima, // Usar 'inventario' como schema
   timestamps: true,
   createdAt: 'fecha_creacion',
   updatedAt: 'fecha_actualizacion'

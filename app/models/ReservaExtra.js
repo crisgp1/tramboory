@@ -1,6 +1,6 @@
 const { DataTypes } = require('sequelize');
 const sequelize = require('../config/database');
-
+const MODEL_SCHEMAS = require('../utils/schemaMap');
 const ReservaExtra = sequelize.define('ReservaExtras', {
   id_reserva: {
     type: DataTypes.INTEGER,
@@ -31,7 +31,7 @@ const ReservaExtra = sequelize.define('ReservaExtras', {
   }
 }, {
   tableName: 'reserva_extras',
-  schema: 'tramboory',
+  schema: MODEL_SCHEMAS.ReservaExtra,
   timestamps: false,
   indexes: [
     {

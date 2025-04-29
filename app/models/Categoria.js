@@ -1,6 +1,6 @@
 const { DataTypes } = require('sequelize');
 const sequelize = require('../config/database');
-
+const MODEL_SCHEMAS = require('../utils/schemaMap');
 const Categoria = sequelize.define('Categorias', {
     id: {
         type: DataTypes.INTEGER,
@@ -27,7 +27,7 @@ const Categoria = sequelize.define('Categorias', {
     }
 }, {
     tableName: 'categorias',
-    schema: 'tramboory',
+    schema: MODEL_SCHEMAS.Categoria,
     timestamps: false
 });
 

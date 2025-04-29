@@ -1,5 +1,6 @@
 const { DataTypes } = require('sequelize');
 const sequelize = require('../config/database');
+const MODEL_SCHEMAS = require('../utils/schemaMap');
 
 const Auditoria = sequelize.define('Auditoria', {
   id: {
@@ -26,7 +27,7 @@ const Auditoria = sequelize.define('Auditoria', {
   }
 }, {
   tableName: 'auditoria',
-  schema: 'tramboory',
+  schema: MODEL_SCHEMAS.Auditoria,
   timestamps: false
 });
 

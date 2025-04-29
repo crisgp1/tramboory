@@ -1,6 +1,7 @@
 const { DataTypes } = require('sequelize');
 const sequelize = require('../config/database');
 const PaqueteAlimento = require('./PaqueteAlimento');
+const MODEL_SCHEMAS = require('../utils/schemaMap');
 
 const Paquete = sequelize.define('Paquetes', {
   id: {
@@ -39,7 +40,7 @@ const Paquete = sequelize.define('Paquetes', {
   }
 }, {
   tableName: 'paquetes',
-  schema: 'tramboory',
+  schema: MODEL_SCHEMAS.Paquete, // Usar 'main' como schema
   timestamps: false,
   indexes: [
     {

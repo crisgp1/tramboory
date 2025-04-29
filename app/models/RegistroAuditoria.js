@@ -1,6 +1,6 @@
 const { DataTypes } = require('sequelize');
 const sequelize = require('../config/database');
-
+const MODEL_SCHEMAS = require('../utils/schemaMap');
 const RegistroAuditoria = sequelize.define('RegistroAuditoria', {
   id: {
     type: DataTypes.BIGINT,
@@ -42,7 +42,7 @@ const RegistroAuditoria = sequelize.define('RegistroAuditoria', {
   }
 }, {
   tableName: 'registro_auditoria',
-  schema: 'tramboory',
+  schema: MODEL_SCHEMAS.RegistroAuditoria,
   timestamps: false, // Ya tenemos fecha_operacion
   // No necesitamos hooks de auditoría en la tabla de auditoría
 });

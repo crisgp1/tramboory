@@ -1,7 +1,8 @@
 const { DataTypes } = require('sequelize');
 const sequelize = require('../config/database');
+const MODEL_SCHEMAS = require('../utils/schemaMap');
 
-const Usuario = sequelize.define('Usuarios', {
+const Usuario = sequelize.define('Usuario', {
   id: {
     type: DataTypes.INTEGER,
     autoIncrement: true,
@@ -61,7 +62,7 @@ const Usuario = sequelize.define('Usuarios', {
   }
 }, {
   tableName: 'usuarios',
-  schema: 'tramboory',
+  schema: MODEL_SCHEMAS.Usuario, // Usar 'usuarios' como schema
   timestamps: true,
   createdAt: 'fecha_creacion',
   updatedAt: 'fecha_actualizacion'

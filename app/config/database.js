@@ -1,12 +1,17 @@
 require('dotenv').config();
 const { Sequelize } = require('sequelize');
 
+// Obtener el searchPath como array de los schemas
+const schemas = process.env.SCHEMAS ? process.env.SCHEMAS.split(',') : ['main', 'usuarios', 'finanzas', 'inventario', 'public'];
+const defaultSchema = process.env.SCHEMA || 'main';
+
 const sequelize = new Sequelize(
   process.env.DB_NAME,
   process.env.DB_USER,
   process.env.DB_PASSWORD,
   {
     host: process.env.DB_HOST,
+    port: process.env.DB_PORT || 5432,
     dialect: 'postgres',
     logging: console.log, // Habilitamos logging temporalmente para debug
     timezone: '-06:00', // Configuración explícita de timezone para Ciudad de México
@@ -22,14 +27,15 @@ const sequelize = new Sequelize(
       idle: 10000
     },
     define: {
-      schema: process.env.SCHEMA // Agregamos el schema por defecto
+      schema: defaultSchema // Schema por defecto para modelos sin schema específico
     },
     hooks: {
       afterConnect: async (connection) => {
         try {
-          // Establecer el search_path
-          await connection.query(`SET search_path TO ${process.env.SCHEMA}, public;`);
-          console.log('Search path establecido correctamente');
+          // Establecer el search_path para incluir todos los schemas
+          const searchPathStr = schemas.join(', ');
+          await connection.query(`SET search_path TO ${searchPathStr};`);
+          console.log(`Search path establecido correctamente: ${searchPathStr}`);
           
           // Configurar el usuario actual para los triggers de auditoría
           await connection.query(`

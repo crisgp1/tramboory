@@ -7,16 +7,24 @@ async function executeMigration(filePath) {
         console.log(`Ejecutando migración: ${filePath}`);
         const sql = await fs.readFile(filePath, 'utf8');
         
-        // Ejecutar la migración como una sola consulta
+        // Ejecutar la migración como una sola transacción
         await sequelize.query(sql, {
             raw: true,
-            logging: console.log
+            logging: console.log,
+            type: sequelize.QueryTypes.RAW
         });
         
         console.log(`Migración completada: ${filePath}`);
         return true;
     } catch (error) {
         console.error(`Error en la migración ${filePath}:`, error);
+        
+        // Si es un error de trigger no encontrado, registrarlo pero no detener el proceso
+        if (error.parent && error.parent.code === '42704') {
+            console.warn('Advertencia: Objeto no encontrado. Continuando con las siguientes migraciones...');
+            return false;
+        }
+        
         throw error;
     }
 }

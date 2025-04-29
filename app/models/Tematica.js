@@ -1,5 +1,6 @@
 const { DataTypes } = require('sequelize');
 const sequelize = require('../config/database');
+const MODEL_SCHEMAS = require('../utils/schemaMap');
 
 const Tematica = sequelize.define('Tematicas', {
     id: {
@@ -34,7 +35,7 @@ const Tematica = sequelize.define('Tematicas', {
     }
 }, {
     tableName: 'tematicas',
-    schema: 'tramboory',
+    schema: MODEL_SCHEMAS.Tematica,
     timestamps: false
 });
 

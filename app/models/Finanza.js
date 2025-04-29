@@ -1,5 +1,6 @@
 const { DataTypes } = require('sequelize');
 const sequelize = require('../config/database');
+const MODEL_SCHEMAS = require('../utils/schemaMap');
 
 const Finanza = sequelize.define('Finanzas', {
   id: {
@@ -82,7 +83,7 @@ const Finanza = sequelize.define('Finanzas', {
   }
 }, {
   tableName: 'finanzas',
-  schema: 'tramboory',
+  schema: MODEL_SCHEMAS.Finanza, // Usar 'finanzas' como schema
   timestamps: true,
   createdAt: 'fecha_creacion',
   updatedAt: 'fecha_actualizacion'

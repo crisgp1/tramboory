@@ -1,6 +1,6 @@
 const { DataTypes } = require('sequelize');
 const sequelize = require('../../config/database');
-
+const MODEL_SCHEMAS = require('../../utils/schemaMap');
 const TipoAjuste = sequelize.define('TiposAjusteInventario', {
   id: {
     type: DataTypes.INTEGER,
@@ -45,7 +45,7 @@ const TipoAjuste = sequelize.define('TiposAjusteInventario', {
   }
 }, {
   tableName: 'tipos_ajuste_inventario',
-  schema: 'tramboory',
+  schema: MODEL_SCHEMAS.TipoAjuste,
   timestamps: true,
   createdAt: 'fecha_creacion',
   updatedAt: 'fecha_actualizacion'

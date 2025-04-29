@@ -1,5 +1,6 @@
 const { DataTypes } = require('sequelize');
 const sequelize = require('../config/database');
+const MODEL_SCHEMAS = require('../utils/schemaMap');
 const Tematica = require('./Tematica');
 
 const Mampara = sequelize.define('Mamparas', {
@@ -35,7 +36,7 @@ const Mampara = sequelize.define('Mamparas', {
   }
 }, {
   tableName: 'mamparas',
-  schema: 'tramboory',
+  schema: MODEL_SCHEMAS.Mampara,
   timestamps: false,
   indexes: [
     {

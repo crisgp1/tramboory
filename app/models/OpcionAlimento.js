@@ -1,5 +1,6 @@
 const { Model, DataTypes } = require('sequelize');
 const sequelize = require('../config/database');
+const MODEL_SCHEMAS = require('../utils/schemaMap');
 
 class OpcionAlimento extends Model {
     static associate(models) {
@@ -103,7 +104,7 @@ OpcionAlimento.init({
     sequelize,
     modelName: 'OpcionAlimento',
     tableName: 'opciones_alimentos',
-    schema: 'tramboory',
+    schema: MODEL_SCHEMAS.OpcionAlimento,
     timestamps: false
 });
 

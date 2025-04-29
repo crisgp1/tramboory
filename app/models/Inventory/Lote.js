@@ -1,6 +1,6 @@
 const { DataTypes } = require('sequelize');
 const sequelize = require('../../config/database');
-
+const MODEL_SCHEMAS = require('../../utils/schemaMap');
 const Lote = sequelize.define('Lotes', {
   id: {
     type: DataTypes.INTEGER,
@@ -78,7 +78,7 @@ const Lote = sequelize.define('Lotes', {
   }
 }, {
   tableName: 'lotes',
-  schema: 'tramboory',
+  schema: MODEL_SCHEMAS.Lote,
   timestamps: true,
   createdAt: 'fecha_creacion',
   updatedAt: 'fecha_actualizacion',

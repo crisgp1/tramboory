@@ -1,5 +1,6 @@
 const { Model, DataTypes, Op } = require('sequelize');
 const sequelize = require('../config/database');
+const MODEL_SCHEMAS = require('../utils/schemaMap');
 
 class Pago extends Model {
   static async validarPagosPendientes() {
@@ -150,7 +151,7 @@ Pago.init({
 }, {
   sequelize,
   tableName: 'pagos',
-  schema: 'tramboory',
+  schema: MODEL_SCHEMAS.Pago,
   timestamps: true,
   createdAt: 'fecha_creacion',
   updatedAt: 'fecha_actualizacion',

@@ -1,6 +1,6 @@
 const { DataTypes } = require('sequelize');
 const sequelize = require('../../config/database');
-
+const MODEL_SCHEMAS = require('../../utils/schemaMap');
 const UnidadMedida = sequelize.define('UnidadesMedida', {
   id: {
     type: DataTypes.INTEGER,
@@ -41,7 +41,7 @@ const UnidadMedida = sequelize.define('UnidadesMedida', {
   }
 }, {
   tableName: 'unidades_medida',
-  schema: 'tramboory',
+  schema: MODEL_SCHEMAS.UnidadMedida,
   timestamps: true,
   createdAt: 'fecha_creacion',
   updatedAt: 'fecha_actualizacion'

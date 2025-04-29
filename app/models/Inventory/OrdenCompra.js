@@ -1,6 +1,6 @@
 const { DataTypes } = require('sequelize');
 const sequelize = require('../../config/database');
-
+const MODEL_SCHEMAS = require('../../utils/schemaMap');
 const OrdenCompra = sequelize.define('OrdenesCompra', {
   id: {
     type: DataTypes.INTEGER,
@@ -83,7 +83,7 @@ const OrdenCompra = sequelize.define('OrdenesCompra', {
   }
 }, {
   tableName: 'ordenes_compra',
-  schema: 'tramboory',
+  schema: MODEL_SCHEMAS.OrdenCompra,
   timestamps: true,
   createdAt: 'fecha_creacion',
   updatedAt: 'fecha_actualizacion'

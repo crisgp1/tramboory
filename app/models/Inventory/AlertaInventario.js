@@ -1,5 +1,6 @@
 const { DataTypes } = require('sequelize');
 const sequelize = require('../../config/database');
+const MODEL_SCHEMAS = require('../../utils/schemaMap');
 
 const AlertaInventario = sequelize.define('AlertasInventario', {
   id: {
@@ -62,7 +63,7 @@ const AlertaInventario = sequelize.define('AlertasInventario', {
   }
 }, {
   tableName: 'alertas_inventario',
-  schema: 'tramboory',
+  schema: MODEL_SCHEMAS.AlertaInventario,
   timestamps: true,
   createdAt: 'fecha_creacion',
   updatedAt: 'fecha_actualizacion'
