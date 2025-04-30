@@ -12,6 +12,10 @@ router.get('/user', authMiddleware, ReservaController.getReservasByUserId);
 router.put('/:id/status', authMiddleware, ReservaController.updateReservaStatus);
 router.post('/block-dates', authMiddleware, ReservaController.blockDates);
 
+// Rutas para el nuevo flujo de reserva
+router.post('/initiate', authMiddleware, ReservaController.initiate);
+router.post('/confirm', authMiddleware, ReservaController.confirm);
+
 // Rutas con parámetros
 router.get('/:id', ReservaController.getReservaById);
 router.put('/:id', authMiddleware, ReservaController.updateReserva);

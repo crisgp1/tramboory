@@ -1758,7 +1758,8 @@ BEGIN
     END IF;
 END $$;
 
--- Trigger para crear pago para reserva
+-- Trigger para crear pago para reserva (COMENTADO para implementar nuevo flujo de pago)
+/*
 DO $$
 BEGIN
     IF NOT EXISTS (SELECT 1 FROM pg_trigger WHERE tgname = 'trigger_crear_pago_reserva') THEN
@@ -1771,6 +1772,7 @@ BEGIN
 END $$;
 
 COMMENT ON TRIGGER trigger_crear_pago_reserva ON main.reservas IS 'Trigger que crea automáticamente un pago cuando se crea una reserva';
+*/
 
 -- Trigger para actualizar estado de reserva y finanza
 DO $$

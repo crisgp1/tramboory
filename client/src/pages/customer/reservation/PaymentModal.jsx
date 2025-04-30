@@ -16,6 +16,8 @@ import {
 
 // Importar el contexto de reserva
 import { ReservationContext } from '@/context/reservationContext.jsx';
+// Importar servicios de reserva
+import { initiateReservation, processPayment, confirmReservation } from '@/services/reservationService';
 
 // Componente PaymentModal simplificado para recibir directamente la reserva
 const PaymentModal = (props) => {
@@ -89,6 +91,26 @@ const PaymentModal = (props) => {
       { opacity: 0, y: -50 },
       { opacity: 1, y: 0, duration: 0.5, ease: 'power3.out' }
     );
+    
+    // Iniciar el proceso de reserva para obtener un ID provisional
+    const initReservation = async () => {
+      try {
+        if (!reservationId) {
+          setIsLoadingReservation(true);
+          const response = await initiateReservation();
+          console.log('ID de reserva provisional obtenido:', response.reservationId);
+          // No podemos modificar props, pero guardamos el ID para usarlo después
+          reservationData.id = response.reservationId;
+        }
+      } catch (error) {
+        console.error('Error al iniciar la reserva:', error);
+        setErrorMessage('No se pudo iniciar el proceso de reserva');
+      } finally {
+        setIsLoadingReservation(false);
+      }
+    };
+    
+    initReservation();
   }, []);
 
   // Add event listener for escape key
@@ -151,27 +173,27 @@ const PaymentModal = (props) => {
     setIsProcessing(true);
 
     try {
+      // Obtener el ID de reserva (provisional o existente)
+      const id_reserva = reservationData?.id || reservationId;
+      
       // Verificar que tenemos un ID de reserva válido
-      if (!reservationId) {
+      if (!id_reserva) {
         console.error('No se encontró ID de reserva válido');
         setErrorMessage('ID de reserva no disponible - Verifique que los datos de la reserva fueron pasados correctamente');
         throw new Error('ID de reserva no disponible - Verifique que los datos de la reserva fueron pasados correctamente al componente');
       }
       
-      console.log('Procesando pago con ID de reserva:', reservationId);
-      
-      // Usar el ID directamente del objeto de reserva
-      const id_reserva = Number(reservationId);
+      console.log('Procesando pago con ID de reserva:', id_reserva);
       
       // Validar que el ID sea un número o se pueda convertir a número
-      if (isNaN(id_reserva)) {
-        console.error('El ID de reserva no es un número válido:', reservationId);
+      if (isNaN(Number(id_reserva))) {
+        console.error('El ID de reserva no es un número válido:', id_reserva);
         setErrorMessage('El ID de reserva debe ser un número válido');
         throw new Error('El ID de reserva debe ser un número válido');
       }
       
       // Validar que el ID no sea un timestamp de fecha (demasiado grande)
-      if (id_reserva > 1000000000000) {
+      if (Number(id_reserva) > 1000000000000) {
         console.error('ID sospechosamente grande, posible timestamp de fecha:', id_reserva);
         setErrorMessage('ID de reserva inválido (posible confusión con fecha)');
         throw new Error('ID de reserva inválido (posible confusión con fecha)');
@@ -194,76 +216,56 @@ const PaymentModal = (props) => {
         throw new Error('Método de pago no seleccionado');
       }
       
-      // Crear el payload con conversiones explícitas de tipos
-      const payloadData = {
-        id_reserva: Number(id_reserva), // Asegurar que sea número
-        monto: Number(parseFloat(monto).toFixed(2)), // Asegurar que sea número con 2 decimales
-        fecha_pago: new Date().toISOString().split('T')[0],
-        metodo_pago: paymentMethod === 'transfer' ? 'transferencia' : 'efectivo',
-        estado: 'completado', // Crear directamente como completado
-      };
-      
-      // Log detallado para depuración
-      console.log('Payload completo enviado al servidor:', JSON.stringify(payloadData, null, 2));
-      console.log('Tipos de datos en payload:', {
-        id_reserva_type: typeof payloadData.id_reserva,
-        id_reserva_value: payloadData.id_reserva,
-        monto_type: typeof payloadData.monto,
-        monto_value: payloadData.monto,
-        metodo_pago_type: typeof payloadData.metodo_pago,
-        metodo_pago_value: payloadData.metodo_pago,
-        fecha_pago_type: typeof payloadData.fecha_pago,
-        fecha_pago_value: payloadData.fecha_pago
+      // 1. Procesar el pago
+      console.log('Procesando pago...');
+      const paymentResponse = await processPayment({
+        reservationId: Number(id_reserva),
+        amount: Number(parseFloat(monto).toFixed(2)),
+        paymentMethod: paymentMethod
       });
       
-      // Enviar la petición con manejo de errores mejorado
-      try {
-        // Verificar la URL correcta para el servicio de pagos
-        const response = await axiosInstance.post('/api/pagos', payloadData);
-        
-        console.log('Respuesta del servidor:', response.data);
-        
-        if (response && response.data) {
-          toast.success('¡Pago registrado exitosamente!');
-          setErrorMessage(''); // Limpiar cualquier error previo
-          if (handleConfirmSuccess) {
-            handleConfirmSuccess(); // Call success handler if provided
-          } else {
-            handleCancel(); // Cerrar el modal después de completar el pago
-          }
-        }
-      } catch (error) {
-        console.error('Error detallado al procesar el pago:', error);
-        
-        // Extraer y mostrar información detallada del error
-        if (error.response) {
-          console.error('Datos de la respuesta de error:', error.response.data);
-          console.error('Estado HTTP:', error.response.status);
-          console.error('Cabeceras:', error.response.headers);
-          toast.error(`Error ${error.response.status}: ${error.response.data.error || 'Error al procesar el pago'}`);
-          setErrorMessage(error.response.data.error || 'Error al procesar el pago');
-        } else if (error.request) {
-          console.error('No se recibió respuesta. Request:', error.request);
-          toast.error('No se recibió respuesta del servidor');
-          setErrorMessage('No se recibió respuesta del servidor. Verifique su conexión.');
-        } else {
-          console.error('Error al configurar la petición:', error.message);
-          toast.error(`Error: ${error.message}`);
-          setErrorMessage(error.message || 'Error al procesar el pago');
-        }
+      console.log('Respuesta del procesamiento de pago:', paymentResponse);
+      
+      // 2. Confirmar la reserva
+      console.log('Confirmando reserva...');
+      
+      // Preparar los datos de la reserva para confirmar
+      const reservationDataToConfirm = {
+        ...reservationData,
+        reservationId: Number(id_reserva)
+      };
+      
+      const confirmResponse = await confirmReservation(reservationDataToConfirm);
+      console.log('Respuesta de confirmación de reserva:', confirmResponse);
+      
+      // Mostrar mensaje de éxito
+      toast.success('¡Reserva confirmada exitosamente!');
+      setErrorMessage(''); // Limpiar cualquier error previo
+      
+      // Llamar al manejador de éxito o cerrar el modal
+      if (handleConfirmSuccess) {
+        handleConfirmSuccess(); // Call success handler if provided
+      } else {
+        handleCancel(); // Cerrar el modal después de completar el pago
       }
     } catch (error) {
-      console.error('Error en la preparación del pago:', error);
+      console.error('Error en el proceso de pago y confirmación:', error);
       
-      // Mostrar mensaje de error más específico si está disponible
-      if (!errorMessage) { // Solo mostrar si no se ha establecido un mensaje de error específico
-        if (error.response && error.response.data && error.response.data.error) {
-          toast.error(`Error: ${error.response.data.error}`);
-        } else if (error.message) {
-          toast.error(`Error: ${error.message}`);
-        } else {
-          toast.error('Error al procesar el pago');
-        }
+      // Extraer y mostrar información detallada del error
+      if (error.response) {
+        console.error('Datos de la respuesta de error:', error.response.data);
+        console.error('Estado HTTP:', error.response.status);
+        console.error('Cabeceras:', error.response.headers);
+        toast.error(`Error ${error.response.status}: ${error.response.data.error || 'Error al procesar el pago'}`);
+        setErrorMessage(error.response.data.error || 'Error al procesar el pago');
+      } else if (error.request) {
+        console.error('No se recibió respuesta. Request:', error.request);
+        toast.error('No se recibió respuesta del servidor');
+        setErrorMessage('No se recibió respuesta del servidor. Verifique su conexión.');
+      } else {
+        console.error('Error al configurar la petición:', error.message);
+        toast.error(`Error: ${error.message}`);
+        setErrorMessage(error.message || 'Error al procesar el pago');
       }
     } finally {
       setIsProcessing(false);

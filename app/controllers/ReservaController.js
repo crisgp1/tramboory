@@ -12,6 +12,189 @@ const sequelize = require('../config/database');
 const { Op } = require('sequelize');
 const moment = require('moment');
 
+/**
+ * Inicia el proceso de reserva obteniendo un ID provisional
+ * @param {Object} req - Objeto de solicitud Express
+ * @param {Object} res - Objeto de respuesta Express
+ * @param {Function} next - Función next de Express
+ */
+exports.initiate = async (req, res, next) => {
+  try {
+    // Obtener el siguiente valor de la secuencia de reservas
+    const { rows } = await sequelize.query(
+      `SELECT nextval('main.reservas_id_seq') AS id`
+    );
+    
+    // Devolver el ID provisional
+    res.json({ reservationId: rows[0].id });
+  } catch (error) {
+    console.error('Error al iniciar el proceso de reserva:', error);
+    next(error);
+  }
+};
+
+/**
+ * Confirma una reserva después de que el pago ha sido procesado
+ * @param {Object} req - Objeto de solicitud Express
+ * @param {Object} res - Objeto de respuesta Express
+ * @param {Function} next - Función next de Express
+ */
+exports.confirm = async (req, res, next) => {
+  const client = await sequelize.getConnection();
+  try {
+    await client.query('BEGIN');
+    
+    const reservaData = req.body;
+    
+    // Validación básica
+    const camposRequeridos = ['id_paquete', 'fecha_reserva', 'hora_inicio', 'estado', 'total', 'nombre_festejado', 'edad_festejado', 'reservationId'];
+    for (const campo of camposRequeridos) {
+      if (reservaData[campo] === undefined) {
+        await client.query('ROLLBACK');
+        return res.status(400).json({ error: `El campo ${campo} es requerido` });
+      }
+    }
+    
+    // Extraer el ID del usuario autenticado
+    let userId = req.user.id;
+    
+    // Solo permitir que admin pueda crear reservas para otros usuarios
+    if (reservaData.id_usuario && req.user.tipo_usuario === 'admin') {
+      if (!Number.isInteger(reservaData.id_usuario)) {
+        await client.query('ROLLBACK');
+        return res.status(400).json({ error: 'id_usuario debe ser un número entero' });
+      }
+      userId = reservaData.id_usuario;
+    }
+    
+    // Verificar disponibilidad del horario
+    const existingReservation = await Reserva.findOne({
+      where: {
+        fecha_reserva: reservaData.fecha_reserva,
+        hora_inicio: reservaData.hora_inicio,
+        estado: {
+          [Op.in]: ['pendiente', 'confirmada']
+        },
+        id: {
+          [Op.ne]: reservaData.reservationId // Excluir la reserva actual
+        }
+      }
+    });
+
+    if (existingReservation) {
+      await client.query('ROLLBACK');
+      return res.status(409).json({ error: 'El horario seleccionado ya está ocupado' });
+    }
+    
+    // Extraer los extras antes de crear la reserva
+    const { extras, reservationId, ...reservaDataSinExtras } = reservaData;
+    
+    // Verificar que el usuario para el que se creará la reserva existe
+    const usuario = await Usuario.findOne({
+      where: {
+        id: userId,
+        activo: true
+      }
+    });
+    
+    if (!usuario) {
+      await client.query('ROLLBACK');
+      return res.status(404).json({ error: 'Usuario no encontrado o inactivo' });
+    }
+    
+    // Asignar explícitamente el ID del usuario autenticado a la reserva
+    reservaDataSinExtras.id_usuario = userId;
+    
+    // Crear o actualizar la reserva con el ID proporcionado
+    const [reserva, created] = await Reserva.upsert(
+      {
+        id: reservationId,
+        ...reservaDataSinExtras
+      },
+      {
+        user: usuario, // Pasar el usuario para los hooks de auditoría
+        transaction: client
+      }
+    );
+    
+    // Si hay extras, crear las relaciones en la tabla intermedia
+    if (extras && Array.isArray(extras) && extras.length > 0) {
+      // Verificar que cada extra existe
+      const extraIds = extras.map(extra => extra.id);
+      const existingExtras = await Extra.findAll({
+        where: {
+          id: extraIds
+        }
+      });
+      
+      if (existingExtras.length !== extraIds.length) {
+        await client.query('ROLLBACK');
+        return res.status(400).json({ error: 'Uno o más extras no existen' });
+      }
+      
+      // Eliminar extras existentes para esta reserva
+      await ReservaExtra.destroy({
+        where: { id_reserva: reservationId },
+        transaction: client
+      });
+      
+      // Crear las relaciones con cantidad
+      await Promise.all(extras.map(async (extra) => {
+        await ReservaExtra.create({
+          id_reserva: reservationId,
+          id_extra: extra.id,
+          cantidad: extra.cantidad || 1 // Usar la cantidad proporcionada o 1 por defecto
+        }, {
+          transaction: client
+        });
+      }));
+    }
+    
+    // Obtener la reserva con sus relaciones
+    const reservaCompleta = await Reserva.findOne({
+      where: { id: reservationId },
+      include: [
+        { model: Usuario, as: 'usuario', attributes: ['id', 'nombre', 'email', 'telefono'] },
+        { model: Paquete, as: 'paquete', attributes: ['id', 'nombre'] },
+        { model: OpcionAlimento, as: 'opcionAlimento', attributes: ['id', 'nombre'] },
+        { model: Tematica, as: 'tematicaReserva', attributes: ['id', 'nombre'] },
+        {
+          model: Mampara,
+          as: 'mampara',
+          attributes: ['id', 'piezas', 'precio'],
+          include: [
+            { model: Tematica, as: 'tematica', attributes: ['id', 'nombre'] }
+          ]
+        },
+        {
+          model: Extra,
+          as: 'extras',
+          attributes: ['id', 'nombre', 'descripcion', 'precio'],
+          through: {
+            attributes: ['cantidad']
+          }
+        }
+      ],
+      transaction: client
+    });
+    
+    // Emitir evento Socket.IO para notificar a los clientes sobre la nueva reserva
+    if (global.io) {
+      global.io.emit('reserva_creada', reservaCompleta);
+      console.log('Evento Socket.IO emitido: reserva_creada');
+    }
+    
+    await client.query('COMMIT');
+    res.status(201).json(reservaCompleta);
+  } catch (error) {
+    await client.query('ROLLBACK');
+    console.error('Error detallado al confirmar la reserva:', error);
+    next(error);
+  } finally {
+    client.release();
+  }
+};
+
 exports.createReserva = async (req, res) => {
   try {
     console.log('Datos recibidos para crear reserva:', req.body);
