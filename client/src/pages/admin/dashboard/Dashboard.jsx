@@ -734,28 +734,55 @@ const Dashboard = () => {
     if (!isMainDashboard) return null;
     
     return (
-      <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6'>
-        <div className="bg-white p-6 rounded-lg shadow">
-          <ReservationCalendar
-            reservations={reservations}
-            onSelectReservation={handleSelectReservation}
-          />
+      <div className='mb-8'>
+        {/* Header del Dashboard con gradiente */}
+        <div className="bg-gradient-to-r from-indigo-600 to-purple-600 rounded-xl shadow-lg p-6 mb-8">
+          <h1 className="text-3xl font-bold text-white mb-2">Panel de Control</h1>
+          <p className="text-indigo-100">Bienvenido al sistema de administración de Tramboory</p>
         </div>
-        <div className="bg-white p-6 rounded-lg shadow">
-          <UserSummary users={users} />
+        
+        {/* Widgets de estadísticas */}
+        <div className='grid grid-cols-1 md:grid-cols-3 gap-6 mb-8'>
+          <div className="bg-gradient-to-br from-indigo-50 to-white p-0 rounded-xl shadow-md overflow-hidden border border-indigo-100 transform transition-all duration-300 hover:shadow-xl hover:-translate-y-1">
+            <UserSummary users={users} />
+          </div>
+          <div className="bg-gradient-to-br from-green-50 to-white p-0 rounded-xl shadow-md overflow-hidden border border-green-100 transform transition-all duration-300 hover:shadow-xl hover:-translate-y-1">
+            <ReservationSummary
+              reservations={reservations}
+              filterDataByMonth={filterDataByMonth}
+            />
+          </div>
+          <div className="bg-gradient-to-br from-purple-50 to-white p-0 rounded-xl shadow-md overflow-hidden border border-purple-100 transform transition-all duration-300 hover:shadow-xl hover:-translate-y-1">
+            <div className="p-6">
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="text-2xl font-semibold text-gray-800">Pagos</h2>
+                <div className="p-2 rounded-full bg-purple-100 text-purple-600">
+                  <HiPlus className="w-5 h-5" />
+                </div>
+              </div>
+              <p className="text-4xl font-bold text-purple-600">{payments.length}</p>
+              <p className="text-sm text-gray-500 mt-1">
+                {payments.filter(p => p.estado === 'completado').length} completados
+              </p>
+            </div>
+          </div>
         </div>
-        <div className="bg-white p-6 rounded-lg shadow">
-          <ReservationSummary
-            reservations={reservations}
-            filterDataByMonth={filterDataByMonth}
-          />
-        </div>
-        <div className="bg-white p-6 rounded-lg shadow">
-          <FinancialSummary
-            finances={finances}
-            filterDataByMonth={filterDataByMonth}
-            categories={categories}
-          />
+        
+        {/* Widgets principales */}
+        <div className='grid grid-cols-1 lg:grid-cols-3 gap-6'>
+          <div className="lg:col-span-2 bg-white rounded-xl shadow-md overflow-hidden border border-indigo-100 transform transition-all duration-300 hover:shadow-lg">
+            <ReservationCalendar
+              reservations={reservations}
+              onSelectReservation={handleSelectReservation}
+            />
+          </div>
+          <div className="bg-white rounded-xl shadow-md overflow-hidden border border-indigo-100 transform transition-all duration-300 hover:shadow-lg">
+            <FinancialSummary
+              finances={finances}
+              filterDataByMonth={filterDataByMonth}
+              categories={categories}
+            />
+          </div>
         </div>
       </div>
     );
@@ -806,7 +833,7 @@ const Dashboard = () => {
       {renderDashboardWidgets()}
       
       {/* Contenedor principal contextual */}
-      <div className='bg-white rounded-lg shadow p-6'>
+      <div className='bg-white rounded-xl shadow-md p-6 border border-gray-100'>
         {/* Breadcrumb para navegación contextual */}
         <Breadcrumb 
           items={currentBreadcrumbItems} 

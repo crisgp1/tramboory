@@ -241,9 +241,9 @@ const ReservationCalendar = ({ reservations }) => {
   );
 
   return (
-    <div className="bg-white/80 backdrop-blur-sm rounded-lg shadow-lg p-4 transition-all duration-300 hover:shadow-xl">
+    <div className="h-full">
       {/* Header con gradiente */}
-      <div className="bg-gradient-to-r from-indigo-500 to-purple-500 -mx-4 -mt-4 px-4 py-3 rounded-t-lg">
+      <div className="bg-gradient-to-r from-blue-600 to-indigo-700 px-6 py-4 rounded-t-xl">
         <div className="flex justify-between items-center">
           <h2 className="text-xl font-semibold text-white">Calendario de Reservas</h2>
           <div className="flex items-center gap-2">
@@ -261,10 +261,10 @@ const ReservationCalendar = ({ reservations }) => {
                   setSelectedDates([]);
                 }
               }}
-              className={`px-3 py-1.5 rounded-md transition-colors duration-200 flex items-center gap-2 text-sm ${
-                isBlockingMode 
-                  ? 'bg-red-600 text-white hover:bg-red-700' 
-                  : 'bg-indigo-600 text-white hover:bg-indigo-700'
+              className={`px-3 py-1.5 rounded-full transition-all duration-300 flex items-center gap-2 text-sm ${
+                isBlockingMode
+                  ? 'bg-red-600 text-white hover:bg-red-700 shadow-md'
+                  : 'bg-white/20 text-white hover:bg-white/30 backdrop-blur-sm'
               }`}
             >
               {isBlockingMode ? (
@@ -283,7 +283,7 @@ const ReservationCalendar = ({ reservations }) => {
         </div>
       </div>
 
-      <div className="mt-4">
+      <div className="p-4 bg-white">
         {/* Calendario */}
         <div className={`relative ${isBlockingMode && selectedDates.length > 0 ? 'lg:w-3/4' : 'w-full'}`}>
           {/* Leyenda flotante */}
@@ -302,7 +302,7 @@ const ReservationCalendar = ({ reservations }) => {
                     stiffness: 300
                   }
                 }}
-                className="absolute top-2 right-2 z-10 bg-white/95 backdrop-blur-sm p-3 rounded-lg shadow-lg border border-indigo-100"
+                className="absolute top-2 right-2 z-10 bg-white/95 backdrop-blur-sm p-3 rounded-lg shadow-lg border border-indigo-100 dark:bg-gray-800/95 dark:border-gray-700"
               >
                 <div className="grid grid-cols-2 gap-2 text-xs">
                   <div className="flex items-center gap-1.5">
@@ -329,7 +329,7 @@ const ReservationCalendar = ({ reservations }) => {
           </AnimatePresence>
 
           {/* Calendario */}
-          <div className="border border-indigo-100 rounded-lg shadow-sm overflow-hidden bg-white">
+          <div className="border border-indigo-100 rounded-lg shadow-sm overflow-hidden bg-white hover:shadow-md transition-shadow duration-300">
             <Calendar
               localizer={localizer}
               events={[
@@ -437,11 +437,11 @@ const ReservationCalendar = ({ reservations }) => {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: 20 }}
-              className="fixed bottom-4 right-4"
+              className="fixed bottom-6 right-6 z-50"
             >
               <button
                 onClick={() => setShowBlockModal(true)}
-                className="bg-indigo-600 text-white px-4 py-2 rounded-lg shadow-lg hover:bg-indigo-700 transition-colors duration-200 flex items-center gap-2"
+                className="bg-indigo-600 text-white px-5 py-3 rounded-full shadow-lg hover:bg-indigo-700 transition-all duration-300 flex items-center gap-2 hover:shadow-indigo-200 hover:shadow-md"
               >
                 <FiCalendar className="text-lg" />
                 <span>

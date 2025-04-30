@@ -138,49 +138,68 @@ const FinancialSummary = ({ finances, filterDataByMonth, categories }) => {
             initial={{ opacity: 0, y: 50 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5, delay: 0.2 }}
-            className="bg-white rounded-lg shadow-lg p-6"
+            className="h-full"
         >
-            <div className="flex items-center justify-between mb-4">
-                <h2 className="text-2xl font-semibold text-gray-800">Finanzas</h2>
-                <div className="flex items-center space-x-2">
-                    <button
-                        onClick={() => setChartType(chartType === 'bar' ? 'pie' : 'bar')}
-                        className={`p-2 rounded ${chartType === 'bar' ? 'bg-green-500 text-white' : 'bg-yellow-500 text-white'}`}
-                        title={`Cambiar a gráfico de ${chartType === 'bar' ? 'pastel' : 'barras'}`}
-                    >
-                        {chartType === 'bar' ? <FiPieChart /> : <FiBarChart />}
-                    </button>
+            {/* Header con gradiente */}
+            <div className="bg-gradient-to-r from-purple-600 to-indigo-600 p-6 rounded-t-xl">
+                <div className="flex items-center justify-between">
+                    <h2 className="text-xl font-semibold text-white">Finanzas</h2>
+                    <div className="flex items-center space-x-2">
+                        <button
+                            onClick={() => setChartType(chartType === 'bar' ? 'pie' : 'bar')}
+                            className={`p-2 rounded-full bg-white/20 text-white hover:bg-white/30 transition-all duration-300`}
+                            title={`Cambiar a gráfico de ${chartType === 'bar' ? 'pastel' : 'barras'}`}
+                        >
+                            {chartType === 'bar' ? <FiPieChart className="w-5 h-5" /> : <FiBarChart className="w-5 h-5" />}
+                        </button>
+                    </div>
                 </div>
             </div>
-            <div className="mb-4">
-                <button
-                    onClick={() => setShowCategoryMenu(!showCategoryMenu)}
-                    className="flex items-center justify-between w-full p-2 bg-blue-500 text-white rounded"
-                >
-                    <span>Seleccionar Categorías</span>
-                    {showCategoryMenu ? <FiChevronUp /> : <FiChevronDown />}
-                </button>
-                {showCategoryMenu && (
-                    <div className="mt-2 p-2 border rounded">
-                        <div className="flex flex-wrap gap-2">
-                            {Object.keys(categoryData).map(category => (
-                                <button
-                                    key={category}
-                                    onClick={() => handleCategoryChange(category)}
-                                    className={`px-3 py-1 rounded ${
-                                        selectedCategories.includes(category)
-                                            ? 'bg-blue-500 text-white'
-                                            : 'bg-gray-200 text-gray-700'
-                                    }`}
-                                >
-                                    {category}
-                                </button>
-                            ))}
+            
+            {/* Contenido */}
+            <div className="p-6 bg-white">
+                <div className="mb-4">
+                    <button
+                        onClick={() => setShowCategoryMenu(!showCategoryMenu)}
+                        className="flex items-center justify-between w-full p-2.5 bg-gradient-to-r from-indigo-500 to-purple-500 text-white rounded-lg shadow-sm hover:shadow-md transition-all duration-300"
+                    >
+                        <span className="font-medium">Seleccionar Categorías</span>
+                        <div className="p-1 bg-white/20 rounded-full">
+                            {showCategoryMenu ? <FiChevronUp className="w-4 h-4" /> : <FiChevronDown className="w-4 h-4" />}
                         </div>
-                    </div>
-                )}
+                    </button>
+                    
+                    {showCategoryMenu && (
+                        <motion.div
+                            initial={{ opacity: 0, y: -10 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            exit={{ opacity: 0, y: -10 }}
+                            transition={{ duration: 0.2 }}
+                            className="mt-3 p-3 border border-indigo-100 rounded-lg shadow-sm bg-white"
+                        >
+                            <div className="flex flex-wrap gap-2">
+                                {Object.keys(categoryData).map(category => (
+                                    <button
+                                        key={category}
+                                        onClick={() => handleCategoryChange(category)}
+                                        className={`px-3 py-1.5 rounded-full text-sm font-medium transition-all duration-200 ${
+                                            selectedCategories.includes(category)
+                                                ? 'bg-indigo-100 text-indigo-700 shadow-sm'
+                                                : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                                        }`}
+                                    >
+                                        {category}
+                                    </button>
+                                ))}
+                            </div>
+                        </motion.div>
+                    )}
+                </div>
+                
+                <div className="bg-white rounded-lg p-2">
+                    {renderChart()}
+                </div>
             </div>
-            {renderChart()}
         </motion.div>
     );
 };

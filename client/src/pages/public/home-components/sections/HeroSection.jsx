@@ -14,7 +14,7 @@ const HeroSection = ({ sectionRefs }) => {
   const decorRef = useRef(null);
   
   // Efecto parallax avanzado basado en scroll
-  const yParallax = useTransform(scrollY, [0, 500], [0, -150]);
+  const yParallax = useTransform(scrollY, [0, 500], [0, -80]);
   const opacityParallax = useTransform(scrollY, [0, 300], [1, 0]);
   
   useEffect(() => {
@@ -38,38 +38,19 @@ const HeroSection = ({ sectionRefs }) => {
           initial={{ opacity: 0, scale: 0.8 }}
           animate={controls}
           custom={0}
-          className="absolute -top-40 -right-40 w-[28rem] h-[28rem] bg-gradient-to-b from-purple-500/15 to-transparent rounded-full blur-[60px]"
+          className="absolute -top-40 -right-40 w-[24rem] h-[24rem] bg-gradient-to-b from-purple-500/10 to-transparent rounded-full blur-[50px]"
         />
-        <motion.div 
+        <motion.div
           initial={{ opacity: 0, scale: 0.8 }}
           animate={controls}
           custom={1}
-          className="absolute top-1/3 left-10 w-40 h-40 bg-gradient-to-r from-yellow-400/15 to-transparent rounded-full blur-[40px]"
+          className="absolute top-1/3 left-10 w-32 h-32 bg-gradient-to-r from-yellow-400/10 to-transparent rounded-full blur-[30px]"
         />
-        <motion.div 
+        <motion.div
           initial={{ opacity: 0, scale: 0.8 }}
           animate={controls}
           custom={2}
-          className="absolute bottom-20 right-20 w-72 h-72 bg-gradient-to-t from-indigo-500/15 to-transparent rounded-full blur-[50px]"
-        />
-        
-        {/* Elementos decorativos adicionales */}
-        <div className="absolute top-1/4 right-1/3 w-1 h-1 bg-yellow-300 rounded-full filter blur-[1px] animate-pulse"></div>
-        <div className="absolute top-1/2 left-1/4 w-2 h-2 bg-purple-300 rounded-full filter blur-[1px] animate-pulse"></div>
-        <div className="absolute bottom-1/3 right-1/4 w-1.5 h-1.5 bg-indigo-300 rounded-full filter blur-[1px] animate-pulse"></div>
-        
-        {/* Formas geométricas decorativas */}
-        <motion.div 
-          initial={{ opacity: 0, rotate: -10 }}
-          animate={{ opacity: 0.3, rotate: 0 }}
-          transition={{ duration: 2, ease: "easeOut" }}
-          className="absolute top-[15%] left-[10%] w-8 h-8 border border-yellow-400/20 rounded-md transform rotate-12"
-        />
-        <motion.div 
-          initial={{ opacity: 0, rotate: 10 }}
-          animate={{ opacity: 0.3, rotate: 0 }}
-          transition={{ duration: 2, ease: "easeOut", delay: 0.5 }}
-          className="absolute bottom-[25%] right-[15%] w-12 h-12 border border-purple-400/20 rounded-full"
+          className="absolute bottom-20 right-20 w-60 h-60 bg-gradient-to-t from-indigo-500/10 to-transparent rounded-full blur-[40px]"
         />
       </div>
       
@@ -115,7 +96,7 @@ const HeroSection = ({ sectionRefs }) => {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 1, delay: 0.3 }}
-            className="text-5xl md:text-7xl lg:text-8xl font-bold text-white mb-8 font-funhouse leading-tight"
+            className="text-6xl md:text-8xl lg:text-9xl font-bold text-white mb-8 font-funhouse leading-tight"
           >
             <span className="block relative">
               Celebra con{' '}
@@ -145,10 +126,10 @@ const HeroSection = ({ sectionRefs }) => {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 1, delay: 0.5 }}
-            className="text-xl md:text-2xl text-gray-200 mb-14 max-w-3xl mx-auto leading-relaxed"
+            className="text-lg md:text-xl text-gray-200 mb-14 max-w-3xl mx-auto leading-relaxed"
           >
             Tu salón de eventos infantiles en Zapopan con experiencias diseñadas
-            para crear recuerdos inolvidables en el cumpleaños de tus pequeños
+            para crear recuerdos inolvidables en el cumpleaños de tus pequeños.
           </motion.p>
           
           {/* Botones CTA mejorados */}
@@ -166,9 +147,9 @@ const HeroSection = ({ sectionRefs }) => {
               <span className="absolute -inset-1 bg-gradient-to-r from-yellow-400/80 to-yellow-500/80 rounded-xl blur-md opacity-0 group-hover:opacity-100 transition-opacity duration-300"></span>
               <Link
                 to="/appointments"
-                className="relative px-8 py-4 bg-gradient-to-r from-yellow-400 to-yellow-500
-                  text-purple-900 rounded-xl font-bold text-lg shadow-xl
-                  hover:shadow-yellow-400/40 hover:from-yellow-500 hover:to-yellow-600 
+                className="relative px-10 py-5 bg-gradient-to-r from-yellow-400 to-yellow-500
+                  text-purple-900 rounded-xl font-extrabold text-xl shadow-2xl
+                  hover:shadow-yellow-400/40 hover:from-yellow-500 hover:to-yellow-600
                   transition-all duration-300 flex items-center group-hover:text-purple-950"
               >
                 <FiCalendar className="mr-2" />
@@ -184,8 +165,8 @@ const HeroSection = ({ sectionRefs }) => {
               <span className="absolute -inset-0.5 bg-white/5 rounded-xl blur-md opacity-0 group-hover:opacity-100 transition-opacity duration-300"></span>
               <motion.a
                 href="#services"
-                className="relative px-8 py-4 bg-white/10 backdrop-blur-lg text-white rounded-xl
-                  font-bold text-lg border border-white/20 hover:bg-white/20 hover:border-white/40
+                className="relative px-10 py-5 bg-white/10 backdrop-blur-lg text-white rounded-xl
+                  font-extrabold text-xl border border-white/20 hover:bg-white/20 hover:border-white/40
                   transition-all duration-300 flex items-center group-hover:text-yellow-200"
               >
                 <FiGift className="mr-2" />
