@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, createContext, useContext } from 'react';
+import { useEffect, useRef, useState, useContext } from 'react';
 import { gsap } from 'gsap';
 import axiosInstance from '@/components/axiosConfig';
 import { toast } from 'react-hot-toast';
@@ -14,34 +14,47 @@ import {
   FiLoader
 } from 'react-icons/fi';
 
-// Crear un contexto para la reserva
-export const ReservationContext = createContext(null);
+// Importar el contexto de reserva
+import { ReservationContext } from '@/context/reservationContext.jsx';
 
-// Hook personalizado para acceder al contexto de reserva
-export const useReservation = () => useContext(ReservationContext);
-
-// Recibimos props como objeto completo en lugar de desestructurarlo incorrectamente
+// Componente PaymentModal simplificado para recibir directamente la reserva
 const PaymentModal = (props) => {
   // Desestructuramos las propiedades que necesitamos del objeto props
   const {
-    reservationData,
+    reservation, // Prop principal: objeto de reserva completo
     onCancel,
     onConfirm,
     isOpen,
     onClose,
     onSuccess,
-    amount,
-    formData,
-    reservaId: explicitReservaId // Aceptar ID explícito
+    amount
   } = props;
   
-  // Estado para mensajes de error y carga
+  // Estado para mensajes de error
   const [errorMessage, setErrorMessage] = useState('');
   const [isLoadingReservation, setIsLoadingReservation] = useState(false);
-  const [loadedReservation, setLoadedReservation] = useState(null);
   
-  // Intentar acceder al contexto de reserva si está disponible
+  // Intentar acceder al contexto de reserva como respaldo
   const reservationContext = useContext(ReservationContext);
+  
+  // Obtener el objeto de reserva de la prop directa o del contexto
+  const reservationData = reservation || reservationContext;
+  
+  // Extraer el ID de reserva directamente
+  const reservationId = reservationData?.id;
+  
+  // Log de depuración para verificar si tenemos el ID
+  useEffect(() => {
+    console.log('PaymentModal montado con datos:', {
+      reservationDirecto: reservation,
+      reservationContext: reservationContext,
+      reservationId: reservationId
+    });
+    
+    if (!reservationId) {
+      console.error('PaymentModal montado sin ID de reserva válido');
+    }
+  }, [reservation, reservationContext, reservationId]);
   const modalRef = useRef(null);
   const [paymentMethod, setPaymentMethod] = useState('');
   const [copiedClabe, setCopiedClabe] = useState(false);
@@ -58,7 +71,6 @@ const PaymentModal = (props) => {
     console.log('PaymentModal - Datos completos:', {
       propsCompleto: props,
       reservationData: reservationData,
-      formData: formData,
       // Mostrar todas las propiedades disponibles
       propiedadesDisponibles: Object.keys(props)
     });
@@ -102,21 +114,25 @@ const PaymentModal = (props) => {
     setTimeout(() => setCopiedClabe(false), 2000);
   };
 
-  // Efecto para cargar la reserva si tenemos un ID explícito pero no tenemos los datos completos
+  // Si no tenemos ID de reserva, intentar cargar la reserva desde la URL
   useEffect(() => {
     const fetchReservationIfNeeded = async () => {
-      // Si ya tenemos datos de reserva completos, no necesitamos cargar
-      if (reservationData && reservationData.id) return;
+      // Si ya tenemos datos de reserva con ID, no necesitamos cargar
+      if (reservationId) return;
       
-      // Si tenemos un ID explícito, intentamos cargar la reserva
-      if (explicitReservaId && !isLoadingReservation && !loadedReservation) {
+      // Intentar obtener ID de la URL
+      const urlParams = new URLSearchParams(window.location.search);
+      const urlReservationId = urlParams.get('reservaId') || urlParams.get('id');
+      
+      if (urlReservationId && !isLoadingReservation) {
         setIsLoadingReservation(true);
         try {
-          console.log('Cargando datos de reserva con ID:', explicitReservaId);
-          const response = await axiosInstance.get(`/api/reservas/${explicitReservaId}`);
+          console.log('Cargando datos de reserva con ID desde URL:', urlReservationId);
+          const response = await axiosInstance.get(`/api/reservas/${urlReservationId}`);
           if (response && response.data) {
             console.log('Datos de reserva cargados:', response.data);
-            setLoadedReservation(response.data);
+            // No podemos modificar props, pero podemos mostrar un mensaje
+            console.log('IMPORTANTE: Usar estos datos en el componente padre');
           }
         } catch (error) {
           console.error('Error al cargar datos de reserva:', error);
@@ -128,123 +144,41 @@ const PaymentModal = (props) => {
     };
     
     fetchReservationIfNeeded();
-  }, [explicitReservaId, reservationData, isLoadingReservation, loadedReservation]);
+  }, [reservationId, isLoadingReservation]);
 
   const handleConfirm = async () => {
     if (!paymentMethod || isProcessing) return;
     setIsProcessing(true);
 
     try {
-      // Diagnóstico mejorado del ID de reserva
-      console.log('Intentando obtener ID de reserva:', {
-        reservationDataCompleto: reservationData,
-        loadedReservation: loadedReservation,
-        formDataCompleto: formData,
-        propsCompletos: props,
-        explicitReservaId: explicitReservaId,
-        reservationContext: reservationContext,
-        urlParams: new URLSearchParams(window.location.search)
-      });
-      
-      // Intenta extraer el ID de todas las fuentes posibles - LÓGICA MEJORADA
-      let reservaId;
-      
-      // 0. Usar ID explícito si está disponible (máxima prioridad)
-      if (explicitReservaId) {
-        reservaId = explicitReservaId;
-        console.log('Usando ID explícito:', reservaId);
-      }
-      
-      // 1. Usar reserva cargada si está disponible
-      if (!reservaId && loadedReservation && loadedReservation.id) {
-        reservaId = loadedReservation.id;
-        console.log('ID extraído de loadedReservation:', reservaId);
-      }
-      
-      // 2. Usar contexto de reserva si está disponible
-      if (!reservaId && reservationContext && reservationContext.id) {
-        reservaId = reservationContext.id;
-        console.log('ID extraído de reservationContext:', reservaId);
-      }
-      
-      // 3. Buscar en reservationData
-      if (!reservaId && reservationData && typeof reservationData === 'object') {
-        reservaId = reservationData.id;
-        console.log('ID extraído de reservationData.id:', reservaId);
-      }
-      
-      // 4. Buscar el ID en formData
-      if (!reservaId && formData && formData.id) {
-        reservaId = formData.id;
-        console.log('ID extraído de formData.id:', reservaId);
-      }
-      
-      // 5. Buscar directamente en props
-      if (!reservaId && props.id) {
-        reservaId = props.id;
-        console.log('ID extraído de props.id:', reservaId);
-      }
-      
-      // 6. Buscar en props.reserva
-      if (!reservaId && props.reserva && props.reserva.id) {
-        reservaId = props.reserva.id;
-        console.log('ID extraído de props.reserva.id:', reservaId);
-      }
-      
-      // 7. Intentar obtener de URL params
-      if (!reservaId) {
-        const urlParams = new URLSearchParams(window.location.search);
-        reservaId = urlParams.get('reservaId') || urlParams.get('id');
-        if (reservaId) {
-          console.log('ID extraído de URL params:', reservaId);
-        }
-      }
-      
-      // 8. Último recurso: buscar en localStorage
-      if (!reservaId) {
-        const storedReservationData = localStorage.getItem('currentReservation');
-        if (storedReservationData) {
-          try {
-            const parsedData = JSON.parse(storedReservationData);
-            reservaId = parsedData.id || parsedData.reservaId || parsedData.id_reserva;
-            console.log('ID extraído de localStorage:', reservaId);
-          } catch (e) {
-            console.log('Error al parsear datos de localStorage:', e);
-          }
-        }
-      }
-      
-      // Validaciones previas al envío
-      if (!reservaId) {
-        console.error('No se pudo encontrar el ID de reserva en ninguna fuente');
+      // Verificar que tenemos un ID de reserva válido
+      if (!reservationId) {
+        console.error('No se encontró ID de reserva válido');
         setErrorMessage('ID de reserva no disponible - Verifique que los datos de la reserva fueron pasados correctamente');
         throw new Error('ID de reserva no disponible - Verifique que los datos de la reserva fueron pasados correctamente al componente');
       }
       
+      console.log('Procesando pago con ID de reserva:', reservationId);
+      
+      // Usar el ID directamente del objeto de reserva
+      const id_reserva = Number(reservationId);
+      
       // Validar que el ID sea un número o se pueda convertir a número
-      if (isNaN(Number(reservaId))) {
-        console.error('El ID de reserva no es un número válido:', reservaId);
+      if (isNaN(id_reserva)) {
+        console.error('El ID de reserva no es un número válido:', reservationId);
         setErrorMessage('El ID de reserva debe ser un número válido');
         throw new Error('El ID de reserva debe ser un número válido');
       }
       
       // Validar que el ID no sea un timestamp de fecha (demasiado grande)
-      if (reservaId && Number(reservaId) > 1000000000000) {
-        console.error('ID sospechosamente grande, posible timestamp de fecha:', reservaId);
+      if (id_reserva > 1000000000000) {
+        console.error('ID sospechosamente grande, posible timestamp de fecha:', id_reserva);
         setErrorMessage('ID de reserva inválido (posible confusión con fecha)');
         throw new Error('ID de reserva inválido (posible confusión con fecha)');
       }
       
-      // Usar el ID encontrado
-      const id_reserva = Number(reservaId); // Convertir explícitamente a número
-      
-      // Obtener el monto - LÓGICA MEJORADA
-      const monto = amount ||
-                   (loadedReservation && loadedReservation.total) ||
-                   (reservationData && reservationData.total) ||
-                   (formData && formData.total) ||
-                   (formData && formData.monto) ||
-                   (reservationContext && reservationContext.total);
+      // Obtener el monto - LÓGICA SIMPLIFICADA
+      const monto = amount || (reservationData && reservationData.total) || 0;
       
       // Validar el monto
       if (!monto || isNaN(parseFloat(monto)) || parseFloat(monto) <= 0) {
@@ -474,15 +408,15 @@ const PaymentModal = (props) => {
               )}
               
               {/* Mostrar información de la reserva si está disponible */}
-              {(loadedReservation || reservationData) && (
+              {reservationData && (
                 <div className="bg-green-50 p-4 rounded-lg mt-4">
                   <h3 className="font-medium text-green-800 mb-2">Detalles de la Reserva:</h3>
                   <p className="text-green-700">
-                    ID: {loadedReservation?.id || reservationData?.id || explicitReservaId || 'No disponible'}
+                    ID: {reservationId || 'No disponible'}
                   </p>
-                  {(loadedReservation?.nombre_festejado || reservationData?.nombre_festejado) && (
+                  {reservationData.nombre_festejado && (
                     <p className="text-green-700">
-                      Festejado: {loadedReservation?.nombre_festejado || reservationData?.nombre_festejado}
+                      Festejado: {reservationData.nombre_festejado}
                     </p>
                   )}
                 </div>
