@@ -17,16 +17,24 @@ exports.createReserva = async (req, res) => {
     console.log('Datos recibidos para crear reserva:', req.body);
     const reservaData = req.body;
 
-    // Validación básica
-    const camposRequeridos = ['id_usuario', 'id_paquete', 'fecha_reserva', 'hora_inicio', 'estado', 'total', 'nombre_festejado', 'edad_festejado'];
+    // Validación básica - quitamos id_usuario de los campos requeridos ya que lo obtendremos del token
+    const camposRequeridos = ['id_paquete', 'fecha_reserva', 'hora_inicio', 'estado', 'total', 'nombre_festejado', 'edad_festejado'];
     for (const campo of camposRequeridos) {
       if (reservaData[campo] === undefined) {
         return res.status(400).json({ error: `El campo ${campo} es requerido` });
       }
     }
 
-    // Validación de tipos
-    if (!Number.isInteger(reservaData.id_usuario)) return res.status(400).json({ error: 'id_usuario debe ser un número entero' });
+    // Extraer el ID del usuario autenticado del objeto req.user
+    let userId = req.user.id;
+    
+    // Solo permitir que admin pueda crear reservas para otros usuarios
+    if (reservaData.id_usuario && req.user.tipo_usuario === 'admin') {
+      if (!Number.isInteger(reservaData.id_usuario)) {
+        return res.status(400).json({ error: 'id_usuario debe ser un número entero' });
+      }
+      userId = reservaData.id_usuario;
+    }
     if (!Number.isInteger(reservaData.id_paquete)) return res.status(400).json({ error: 'id_paquete debe ser un número entero' });
     if (reservaData.id_opcion_alimento && !Number.isInteger(reservaData.id_opcion_alimento)) return res.status(400).json({ error: 'id_opcion_alimento debe ser un número entero' });
     if (reservaData.id_tematica && !Number.isInteger(reservaData.id_tematica)) return res.status(400).json({ error: 'id_tematica debe ser un número entero' });
@@ -79,11 +87,20 @@ exports.createReserva = async (req, res) => {
     // Extraer los extras antes de crear la reserva
     const { extras, ...reservaDataSinExtras } = reservaData;
 
-    // Obtener el usuario actual
-    const usuario = await Usuario.findByPk(req.user.id);
+    // Verificar que el usuario para el que se creará la reserva existe
+    const usuario = await Usuario.findOne({
+      where: { 
+        id: userId,
+        activo: true 
+      }
+    });
+    
     if (!usuario) {
-      return res.status(404).json({ error: 'Usuario no encontrado' });
+      return res.status(404).json({ error: 'Usuario no encontrado o inactivo' });
     }
+
+    // Asignar explícitamente el ID del usuario autenticado a la reserva
+    reservaDataSinExtras.id_usuario = userId;
 
     // Crear la reserva con el usuario en las opciones para los hooks
     const reserva = await Reserva.create(reservaDataSinExtras, {
@@ -233,7 +250,14 @@ exports.getReservaById = async (req, res) => {
 
 exports.updateReserva = async (req, res) => {
   try {
-    const reservaData = req.body;
+    const reservaData = { ...req.body };
+    
+    // Protección contra manipulación de id_usuario
+    // Solo permitir que un admin pueda cambiar el id_usuario de una reserva
+    if (reservaData.id_usuario && req.user.tipo_usuario !== 'admin') {
+      delete reservaData.id_usuario; // Eliminar el campo si no es admin
+    }
+    
     const [updated] = await Reserva.update(reservaData, {
       where: { id: req.params.id, activo: true },
       user: req.user // Pasar el usuario para los hooks de auditoría
@@ -636,6 +660,19 @@ exports.blockDates = async (req, res) => {
       });
     }
 
+    // Obtener el usuario autenticado para verificación y auditoría
+    const userId = req.user.id;
+    const usuario = await Usuario.findOne({
+      where: { 
+        id: userId,
+        activo: true 
+      }
+    });
+    
+    if (!usuario) {
+      return res.status(404).json({ error: 'Usuario autenticado no encontrado o inactivo' });
+    }
+    
     // Crear reservas de bloqueo para ambos horarios de cada fecha
     const blockReservations = [];
     const fechasNoDisponibles = [];
@@ -669,7 +706,7 @@ exports.blockDates = async (req, res) => {
       // Si el turno mañana está disponible, crear bloqueo
       if (!existingMorningReservation) {
         blockReservations.push({
-          id_usuario: req.user.id,
+          id_usuario: userId,
           id_paquete: paquete.id,
           fecha_reserva: date,
           hora_inicio: '11:00:00',
@@ -689,7 +726,7 @@ exports.blockDates = async (req, res) => {
       // Si el turno tarde está disponible, crear bloqueo
       if (!existingEveningReservation) {
         blockReservations.push({
-          id_usuario: req.user.id,
+          id_usuario: userId,
           id_paquete: paquete.id,
           fecha_reserva: date,
           hora_inicio: '17:00:00',
@@ -724,7 +761,7 @@ exports.blockDates = async (req, res) => {
 
     // Crear todas las reservas de bloqueo
     const nuevasReservas = await Reserva.bulkCreate(blockReservations, {
-      user: req.user // Para los hooks de auditoría
+      user: usuario // Pasar el objeto usuario completo para los hooks de auditoría
     });
 
     // Emitir evento Socket.IO para notificar a los clientes sobre los nuevos bloqueos
