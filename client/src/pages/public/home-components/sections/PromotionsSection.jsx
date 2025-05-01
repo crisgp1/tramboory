@@ -123,12 +123,14 @@ const PromotionsSection = ({ promocionesImages }) => {
           variants={itemVariants}
           className="text-center mb-14"
         >
-          <div className="inline-flex items-center gap-2 bg-gradient-to-r from-yellow-500/10 via-pink-500/10 to-yellow-500/10 
-            backdrop-blur-sm px-5 py-2 rounded-full border border-yellow-500/30 mb-4">
-            <FiGift className="text-yellow-300 animate-pulse" />
-            <span className="text-sm font-medium text-yellow-300 uppercase tracking-wide">
-              Ofertas Especiales
-            </span>
+          <div className="flex justify-center mb-2">
+            <div className="inline-flex items-center gap-2 bg-gradient-to-r from-yellow-500/10 via-pink-500/10 to-yellow-500/10 
+              backdrop-blur-sm px-5 py-2 rounded-full border border-yellow-500/30">
+              <FiGift className="text-yellow-300 animate-pulse" />
+              <span className="text-[0.98em] font-medium text-yellow-300 uppercase tracking-wide">
+                Ofertas Especiales
+              </span>
+            </div>
           </div>
           
           <h2 className="text-4xl md:text-5xl lg:text-6xl font-bold text-white mb-5 font-funhouse relative inline-block">

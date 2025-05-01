@@ -24,7 +24,7 @@ const ContactSection = () => {
   return (
     <motion.section
       ref={sectionRef}
-      id="contact"
+      id="listo-para-celebrar"
       style={{ opacity, scale }}
       className="relative py-28 bg-gradient-to-b from-purple-900/90 via-indigo-950/90 to-purple-950/90 
         scroll-mt-20 overflow-hidden"
@@ -101,13 +101,15 @@ const ContactSection = () => {
             transition={{ duration: 0.8 }}
             className="text-center mb-20"
           >
-            {/* Badge mejorado */}
-            <div className="inline-flex items-center gap-2 bg-gradient-to-r from-green-500/10 via-blue-500/10 to-green-500/10 
-              backdrop-blur-sm px-5 py-2 rounded-full border border-green-500/30 mb-5">
-              <FiMessageCircle className="text-green-300" />
-              <span className="text-sm font-medium text-green-300 uppercase tracking-wider">
-                Estamos Aquí Para Ti
-              </span>
+            {/* Badge mejorado - Ahora posicionado correctamente */}
+            <div className="flex justify-center mb-2">
+              <div className="inline-flex items-center gap-2 bg-gradient-to-r from-green-500/10 via-blue-500/10 to-green-500/10 
+                backdrop-blur-sm px-5 py-2 rounded-full border border-green-500/30">
+                <FiMessageCircle className="text-green-300" />
+                <span className="text-[0.98em] font-medium text-green-300 uppercase tracking-wider">
+                  Estamos Aquí Para Ti
+                </span>
+              </div>
             </div>
             
             {/* Título mejorado */}

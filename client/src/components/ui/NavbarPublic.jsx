@@ -30,10 +30,11 @@ const NavbarPublic = () => {
   // Elementos de menú con íconos y enlaces
   const menuItems = [
     { icon: <FiHome />, text: 'Inicio', link: '/' },
-    { icon: <FiCalendar />, text: 'Reservar', link: '/appointments' },
-    { icon: <FiPackage />, text: 'Paquetes', link: '/appointments' },
+    // Removed Reservar link as requested
+    // { icon: <FiCalendar />, text: 'Reservar', link: '/appointments' },
+    { icon: <FiPackage />, text: 'Paquetes', link: '#paquetes' },
     { icon: <FiInfo />, text: 'Nosotros', link: '/about' },
-    { icon: <FiPhone />, text: 'Contacto', link: '/contact' }
+    { icon: <FiPhone />, text: 'Contacto', link: '#listo-para-celebrar' }
   ];
 
   // Optimizamos la función de scroll con useCallback

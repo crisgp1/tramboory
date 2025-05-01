@@ -10,13 +10,18 @@ const SocialLinks = () => {
   const socialLinks = [
     {
       url: "https://www.instagram.com/tramboory/",
-      label: "Tramboory Instagram"
+      label: "Tramboory Mx"
     },
     {
-      url: "https://www.instagram.com/tramboory.express/",
-      label: "Tramboory Express Instagram"
+      url: "https://www.instagram.com/oss.artchive/?__pwa=1",
+      label: "Oss Artchive"
     }
   ];
+
+  // Función para manejar el clic en los enlaces de Instagram
+  const handleInstagramClick = (url) => {
+    window.open(url, '_blank', 'noopener,noreferrer');
+  };
 
   return (
     <div className="mt-10">
@@ -30,13 +35,18 @@ const SocialLinks = () => {
             href={link.url}
             target="_blank"
             rel="noopener noreferrer"
+            aria-label={link.label}
+            onClick={(e) => {
+              e.preventDefault();
+              handleInstagramClick(link.url);
+            }}
             whileHover={{ scale: 1.1, rotate: 5 }}
             whileTap={{ scale: 0.95 }}
             className="w-12 h-12 rounded-xl bg-gradient-to-br from-purple-600/20 to-pink-600/20 flex items-center justify-center
-              hover:bg-white/20 transition-colors duration-300 border border-purple-500/30 shadow-lg"
-            aria-label={link.label}
+              hover:bg-white/20 transition-colors duration-300 border border-purple-500/30 shadow-lg
+              cursor-pointer z-10 relative"
           >
-            <FiInstagram className="text-yellow-400 text-xl" />
+            <FiInstagram className="text-yellow-400 text-xl" aria-hidden="true" />
           </motion.a>
         ))}
       </div>

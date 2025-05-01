@@ -66,11 +66,12 @@ const ServiceCard = ({ service, index }) => {
       </div>
       
       {service.recommended && (
-        <div className="absolute -top-4 left-1/2 transform -translate-x-1/2 z-10">
-          <span className="bg-gradient-to-r from-yellow-300 to-yellow-500 text-purple-900 px-4 py-1 rounded-full
-            text-sm font-semibold shadow-lg flex items-center">
-            <FiStar className="mr-1" /> Recomendado
-          </span>
+        <div className="absolute top-0 right-0 z-20">
+          <div className="bg-gradient-to-r from-yellow-500 to-yellow-400 text-purple-900 
+              py-1 px-3 font-semibold text-sm shadow-lg flex items-center justify-center
+              rounded-bl-md">
+            <FiStar className="mr-1.5" /> Recomendado
+          </div>
         </div>
       )}
 

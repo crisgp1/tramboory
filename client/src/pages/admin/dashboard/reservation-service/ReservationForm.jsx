@@ -19,6 +19,7 @@ import MamparaSection from './reservationform-components/MamparaSection.jsx';
 import ExtrasSection from './reservationform-components/ExtrasSection.jsx';
 import CelebrantSection from './reservationform-components/CelebrantSection.jsx';
 import CommentsSection from './reservationform-components/CommentsSection.jsx';
+import GenderSelector from '@/components/form/GenderSelector';
 
 
 const ReservationForm = ({
@@ -278,11 +279,17 @@ const ReservationForm = ({
     async (data) => {
       try {
         addLog('Preparando datos para guardar');
-        const cleanedData = formatReservationForApi(data);
+        // Ensure extras[] is properly formatted
+        const cleanedData = {
+          ...data,
+          extras: data.extras || []
+        };
+        
+        const formattedData = formatReservationForApi(cleanedData);
         addLog('Datos formateados para guardar');
 
         try {
-          const reservation = await onSave(cleanedData);
+          const reservation = await onSave(formattedData);
           addLog('Reserva guardada');
 
           if (reservation?.id) {
@@ -291,7 +298,7 @@ const ReservationForm = ({
             // Crear pago pendiente automáticamente
             const paymentData = {
               id_reserva: reservation.id,
-              monto: cleanedData.total,
+              monto: formattedData.total,
               fecha_pago: new Date(),
               metodo_pago: 'pendiente',
               estado: 'pendiente',
@@ -496,6 +503,10 @@ const ReservationForm = ({
 
             <div className="bg-white p-4 rounded-lg shadow-sm border border-gray-200">
               <CelebrantSection control={control} errors={errors} />
+            </div>
+
+            <div className="bg-white p-4 rounded-lg shadow-sm border border-gray-200">
+              <GenderSelector control={control} errors={errors} />
             </div>
 
             <div className="bg-white p-4 rounded-lg shadow-sm border border-gray-200">

@@ -161,13 +161,15 @@ const FeaturesSection = () => {
           transition={{ duration: 0.8 }}
           className="text-center mb-20"
         >
-          {/* Badge mejorado */}
-          <div className="inline-flex items-center gap-2 bg-gradient-to-r from-blue-500/10 via-purple-500/10 to-blue-500/10 
-            backdrop-blur-sm px-5 py-2 rounded-full border border-blue-500/30 mb-5">
-            <FiAward className="text-blue-300" />
-            <span className="text-sm font-medium text-blue-300 uppercase tracking-wider">
-              Por Qué Elegirnos
-            </span>
+          {/* Badge mejorado - Ahora posicionado correctamente */}
+          <div className="flex justify-center mb-2">
+            <div className="inline-flex items-center gap-2 bg-gradient-to-r from-blue-500/10 via-purple-500/10 to-blue-500/10 
+              backdrop-blur-sm px-5 py-2 rounded-full border border-blue-500/30">
+              <FiAward className="text-blue-300" />
+              <span className="text-[0.98em] font-medium text-blue-300 uppercase tracking-wider">
+                Por Qué Elegirnos
+              </span>
+            </div>
           </div>
           
           {/* Título mejorado */}

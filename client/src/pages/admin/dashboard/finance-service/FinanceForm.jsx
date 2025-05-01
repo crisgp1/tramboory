@@ -19,10 +19,10 @@ import {
   FiFileText as FiFilePdf,
   FiCode
 } from 'react-icons/fi'
-import { TwitterPicker } from 'react-color'
 // Usar el alias @ para garantizar resolución correcta en Docker
 import CurrencyInput from '@/components/CurrencyInput'
 import CloudinaryFileSelector from '@/components/cloudinary/CloudinaryFileSelector'
+import ColorPalette from '@/components/ui/ColorPalette'
 
 const FinanceForm = ({
   editingItem,
@@ -49,7 +49,6 @@ const FinanceForm = ({
   const [showNewCategoryInput, setShowNewCategoryInput] = useState(false)
   const [newCategory, setNewCategory] = useState('')
   const [categoryColor, setCategoryColor] = useState('#FF6900')
-  const [showColorPicker, setShowColorPicker] = useState(false)
   const [showInvoiceFields, setShowInvoiceFields] = useState(false)
 
   const [searchTerm, setSearchTerm] = useState('')
@@ -290,21 +289,12 @@ const FinanceForm = ({
               onClick={() => setShowColorPicker(!showColorPicker)}
             />
           </div>
-          {showColorPicker && (
-            <div className='relative'>
-              <TwitterPicker
-                color={categoryColor}
-                onChangeComplete={color => setCategoryColor(color.hex)}
-              />
-              <button
-                type='button'
-                onClick={() => setShowColorPicker(false)}
-                className='absolute top-2 right-2 text-gray-500 hover:text-gray-700'
-              >
-                <FiX />
-              </button>
-            </div>
-          )}
+          <div className='mb-2'>
+            <ColorPalette 
+              selectedColor={categoryColor} 
+              onSelectColor={setCategoryColor} 
+            />
+          </div>
           <button
             type='button'
             onClick={handleAddCategory}

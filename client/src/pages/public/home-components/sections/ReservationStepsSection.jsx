@@ -120,11 +120,13 @@ const ReservationStepsSection = () => {
           transition={{ duration: 0.8 }}
           className="text-center mb-20"
         >
-          <div className="inline-flex items-center gap-2 bg-gradient-to-r from-indigo-500/10 via-indigo-600/10 to-indigo-500/10 
-            backdrop-blur-sm px-5 py-2 rounded-full border border-indigo-500/30 mb-5">
-            <span className="text-sm font-medium text-indigo-300 uppercase tracking-wider">
-              Proceso Simplificado
-            </span>
+          <div className="flex justify-center mb-2">
+            <div className="inline-flex items-center gap-2 bg-gradient-to-r from-indigo-500/10 via-indigo-600/10 to-indigo-500/10 
+              backdrop-blur-sm px-5 py-2 rounded-full border border-indigo-500/30">
+              <span className="text-[0.98em] font-medium text-indigo-300 uppercase tracking-wider">
+                Proceso Simplificado
+              </span>
+            </div>
           </div>
           
           <h2 className="text-4xl md:text-5xl lg:text-6xl font-bold text-white mb-6 font-funhouse relative inline-block">
