@@ -24,27 +24,29 @@ const UserSummary = ({ users }) => {
             </div>
             
             {/* Contenido */}
-            <div className="p-6">
-                <p className="text-4xl font-bold text-indigo-600">{users.length}</p>
-                <p className="text-sm text-gray-500 mb-4">usuarios registrados</p>
+            <div className="p-4 md:p-6">
+                <div className="flex flex-col items-center text-center mb-4 md:mb-6">
+                    <p className="text-3xl md:text-4xl font-bold text-indigo-600">{users.length}</p>
+                    <p className="text-xs md:text-sm font-medium text-gray-600 mt-1">usuarios registrados</p>
+                </div>
                 
-                <div className="grid grid-cols-2 gap-4 mt-2">
-                    <div className="flex items-center">
-                        <div className="p-2 rounded-full bg-green-100 text-green-600 mr-3">
-                            <FiUserCheck className="w-4 h-4" />
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 md:gap-6">
+                    <div className="bg-white rounded-lg p-3 md:p-4 shadow-sm border border-gray-100 text-center">
+                        <div className="mx-auto w-8 h-8 md:w-10 md:h-10 flex items-center justify-center rounded-full bg-green-100 text-green-600 mb-2 md:mb-3">
+                            <FiUserCheck className="w-4 h-4 md:w-5 md:h-5" />
                         </div>
-                        <div>
-                            <p className="text-sm font-medium">{activeUsers}</p>
-                            <p className="text-xs text-gray-500">Activos</p>
+                        <div className="flex flex-col items-center justify-center">
+                            <p className="text-base md:text-xl font-bold text-gray-800">{activeUsers}</p>
+                            <p className="text-xs md:text-sm font-medium text-gray-600 text-center">Activos</p>
                         </div>
                     </div>
-                    <div className="flex items-center">
-                        <div className="p-2 rounded-full bg-purple-100 text-purple-600 mr-3">
-                            <FiUserPlus className="w-4 h-4" />
+                    <div className="bg-white rounded-lg p-3 md:p-4 shadow-sm border border-gray-100 text-center">
+                        <div className="mx-auto w-8 h-8 md:w-10 md:h-10 flex items-center justify-center rounded-full bg-purple-100 text-purple-600 mb-2 md:mb-3">
+                            <FiUserPlus className="w-4 h-4 md:w-5 md:h-5" />
                         </div>
-                        <div>
-                            <p className="text-sm font-medium">{adminUsers}</p>
-                            <p className="text-xs text-gray-500">Administradores</p>
+                        <div className="flex flex-col items-center justify-center">
+                            <p className="text-base md:text-xl font-bold text-gray-800">{adminUsers}</p>
+                            <p className="text-xs md:text-sm font-medium text-gray-600 text-center">Administradores</p>
                         </div>
                     </div>
                 </div>

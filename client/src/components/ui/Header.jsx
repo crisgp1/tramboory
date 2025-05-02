@@ -220,7 +220,7 @@ export const Header = () => {
                 initial={{ opacity: 0, y: -20 }}
                 animate={{ opacity: 1, y: 0 }}
                 src={Logo}
-                alt="Logo"
+                alt=""
                 className="h-12 w-auto transition-transform duration-300 hover:scale-110"
               />
             </Link>

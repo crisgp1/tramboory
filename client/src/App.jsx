@@ -186,7 +186,7 @@ const SubtleLoader = () => {
                 <FiWifiOff className='absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 text-6xl text-red-500' />
                 <img
                   src={Logo}
-                  alt='Tramboory Logo'
+                  alt=''
                   className='w-full h-full object-cover rounded-full shadow-lg'
                 />
               </motion.div>

@@ -126,10 +126,10 @@ const Sidebar = ({ open, setOpen, isMobile }) => {
       
       <div className="flex flex-col h-full">
         <div className="p-4 border-b">
-          <img 
-            src={open ? "/img/LogoComplete.webp" : "/img/logo.webp"} 
-            alt="Logo" 
-            className={`${open ? 'mx-auto w-32' : 'mx-auto w-10'} transition-all duration-300`} 
+          <img
+            src={open ? "/img/LogoComplete.webp" : "/img/logo.webp"}
+            alt=""
+            className={`${open ? 'mx-auto w-32' : 'mx-auto w-10'} transition-all duration-300`}
           />
         </div>
         

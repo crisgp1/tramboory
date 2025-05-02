@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import { motion, AnimatePresence, useAnimation } from 'framer-motion';
 import Logo from '@/img/logo.webp';
@@ -27,14 +27,26 @@ const NavbarPublic = () => {
   const [isScrolled, setIsScrolled] = useState(false);
   const controls = useAnimation();
 
+  // Referencia para el manejador de scroll suave
+  const scrollToSection = (sectionId) => {
+    const section = document.getElementById(sectionId);
+    if (section) {
+      window.scrollTo({
+        top: section.offsetTop - 80, // Ajuste para considerar la barra de navegación
+        behavior: 'smooth'
+      });
+      setIsMenuOpen(false); // Cerrar menú si está abierto
+    }
+  };
+
   // Elementos de menú con íconos y enlaces
   const menuItems = [
     { icon: <FiHome />, text: 'Inicio', link: '/' },
     // Removed Reservar link as requested
     // { icon: <FiCalendar />, text: 'Reservar', link: '/appointments' },
-    { icon: <FiPackage />, text: 'Paquetes', link: '#paquetes' },
+    { icon: <FiPackage />, text: 'Paquetes', link: '#services', onClick: () => scrollToSection('services') },
     { icon: <FiInfo />, text: 'Nosotros', link: '/about' },
-    { icon: <FiPhone />, text: 'Contacto', link: '#listo-para-celebrar' }
+    { icon: <FiPhone />, text: 'Contacto', link: '#listo-para-celebrar', onClick: () => scrollToSection('listo-para-celebrar') }
   ];
 
   // Optimizamos la función de scroll con useCallback
@@ -238,6 +250,12 @@ const NavbarPublic = () => {
                 >
                   <Link
                     to={item.link}
+                    onClick={(e) => {
+                      if (item.onClick) {
+                        e.preventDefault();
+                        item.onClick();
+                      }
+                    }}
                     className="px-3 py-2 text-white rounded-lg hover:bg-white/10 transition-all duration-300 
                       flex items-center space-x-2 group relative overflow-hidden"
                   >
@@ -331,6 +349,12 @@ const NavbarPublic = () => {
                 >
                   <Link
                     to={item.link}
+                    onClick={(e) => {
+                      if (item.onClick) {
+                        e.preventDefault();
+                        item.onClick();
+                      }
+                    }}
                     className="px-2 py-1.5 text-white rounded-lg hover:bg-white/10 transition-all duration-300 
                       flex items-center space-x-1 group relative overflow-hidden text-sm"
                   >
@@ -452,7 +476,14 @@ const NavbarPublic = () => {
                   >
                     <Link
                       to={item.link}
-                      onClick={() => setIsMenuOpen(false)}
+                      onClick={(e) => {
+                        if (item.onClick) {
+                          e.preventDefault();
+                          item.onClick();
+                        } else {
+                          setIsMenuOpen(false);
+                        }
+                      }}
                       className="flex items-center justify-between px-4 py-3 rounded-lg 
                         hover:bg-gradient-to-r hover:from-white/5 hover:to-white/10 
                         transition-all duration-300 group relative overflow-hidden"

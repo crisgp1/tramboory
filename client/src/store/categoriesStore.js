@@ -9,7 +9,7 @@ const useCategoriesStore = create((set, get) => ({
   // Acciones
   fetchCategories: async () => {
     try {
-      const response = await axiosInstance.get('/api/categorias')
+      const response = await axiosInstance.get('/categorias')
       set({ categories: response.data })
       return response.data
     } catch (error) {
@@ -42,9 +42,9 @@ const useCategoriesStore = create((set, get) => ({
   
   updateCategory: async (id, categoryData) => {
     try {
-      const response = await axiosInstance.put(`/api/categorias/${id}`, categoryData)
+      const response = await axiosInstance.put(`/categorias/${id}`, categoryData)
       set(state => ({
-        categories: state.categories.map(category => 
+        categories: state.categories.map(category =>
           category.id === id ? { ...category, ...response.data } : category
         )
       }))
@@ -59,7 +59,7 @@ const useCategoriesStore = create((set, get) => ({
   
   deleteCategory: async (id) => {
     try {
-      await axiosInstance.delete(`/api/categorias/${id}`)
+      await axiosInstance.delete(`/categorias/${id}`)
       set(state => ({
         categories: state.categories.filter(category => category.id !== id)
       }))

@@ -1,6 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react'
 import { useForm, Controller } from 'react-hook-form'
 import { toast } from 'react-toastify'
+import { yupResolver } from '@hookform/resolvers/yup'
+import * as yup from 'yup'
 import {
   FiDollarSign,
   FiCalendar,
@@ -24,6 +26,42 @@ import CurrencyInput from '@/components/CurrencyInput'
 import CloudinaryFileSelector from '@/components/cloudinary/CloudinaryFileSelector'
 import ColorPalette from '@/components/ui/ColorPalette'
 
+// Esquema de validación con Yup
+const financeSchema = yup.object().shape({
+  tipo: yup
+    .string()
+    .required('El tipo de transacción es requerido')
+    .oneOf(['ingreso', 'gasto'], 'Tipo de transacción inválido'),
+  monto: yup
+    .string()
+    .required('El monto es requerido')
+    .test('is-number', 'El monto debe ser un número válido', value => !isNaN(parseFloat(value)))
+    .test('is-positive', 'El monto debe ser mayor que 0', value => parseFloat(value) > 0),
+  fecha: yup
+    .string()
+    .required('La fecha es requerida')
+    .test('is-date', 'Fecha inválida', value => !isNaN(Date.parse(value))),
+  id_categoria: yup
+    .number()
+    .nullable()
+    .required('La categoría es requerida'),
+  descripcion: yup
+    .string()
+    .nullable(),
+  id_reserva: yup
+    .number()
+    .nullable(),
+  factura_pdf: yup
+    .string()
+    .nullable(),
+  factura_xml: yup
+    .string()
+    .nullable(),
+  archivo_prueba: yup
+    .string()
+    .nullable()
+})
+
 const FinanceForm = ({
   editingItem,
   onSave,
@@ -33,7 +71,8 @@ const FinanceForm = ({
   activeTab,
   currentUser // Necesitamos el usuario actual para id_usuario
 }) => {
-  const { register, handleSubmit, control, setValue, watch } = useForm({
+  const { register, handleSubmit, control, setValue, watch, formState: { errors } } = useForm({
+    resolver: yupResolver(financeSchema),
     defaultValues: editingItem || {
       fecha: new Date().toISOString().split('T')[0],
       tipo: '',
@@ -106,29 +145,41 @@ const FinanceForm = ({
   }
 
   const onSubmit = data => {
-    if (!currentUser?.id) {
-      toast.error('Error: Usuario no disponible');
-      return;
+    try {
+      if (!currentUser?.id) {
+        toast.error('Error: Usuario no disponible');
+        return;
+      }
+
+      const formattedData = {
+        ...data,
+        id_categoria: data.id_categoria,
+        id_reserva: data.id_reserva || null,
+        id_usuario: currentUser.id,
+        monto: parseFloat(data.monto || '0'),
+        // Las URLs de Cloudinary ya están en los campos
+        factura_pdf: data.factura_pdf || null,
+        factura_xml: data.factura_xml || null,
+        archivo_prueba: data.archivo_prueba || null
+      };
+
+      // Validación adicional por seguridad
+      if (isNaN(formattedData.monto) || formattedData.monto <= 0) {
+        toast.error('El monto debe ser mayor que 0');
+        return;
+      }
+
+      if (!formattedData.id_categoria) {
+        toast.error('Debe seleccionar una categoría');
+        return;
+      }
+
+      console.log('Enviando datos financieros:', formattedData);
+      onSave(formattedData);
+    } catch (error) {
+      console.error('Error al procesar el formulario:', error);
+      toast.error('Error al procesar el formulario. Por favor, revise los datos e intente nuevamente.');
     }
-
-  const formattedData = {
-    ...data,
-    id_categoria: data.id_categoria,
-    id_reserva: data.id_reserva || null,
-    id_usuario: currentUser.id,
-    monto: parseFloat(data.monto || '0'),
-    // Las URLs de Cloudinary ya están en los campos
-    factura_pdf: data.factura_pdf || null,
-    factura_xml: data.factura_xml || null,
-    archivo_prueba: data.archivo_prueba || null
-  };
-
-    if (isNaN(formattedData.monto) || formattedData.monto <= 0) {
-      toast.error('El monto debe ser mayor que 0');
-      return;
-    }
-
-    onSave(formattedData);
   }
 
   const handleAddCategory = () => {
@@ -173,16 +224,18 @@ const FinanceForm = ({
             <FiDollarSign className='absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500 w-5 h-5 z-10 transition-colors duration-200' />
             <div className="relative">
               <select
-              {...register('tipo', { 
-                required: 'Este campo es requerido',
-                validate: value => ['ingreso', 'gasto'].includes(value) || 'Tipo de transacción inválido'
-              })}
-              className='pl-10 w-full p-2.5 border rounded-lg shadow-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 bg-white hover:border-indigo-300 transition-colors duration-200'
-            >
-              <option value=''>Seleccionar tipo</option>
-              <option value='ingreso'>Ingreso</option>
-              <option value='gasto'>Gasto</option>
+                {...register('tipo')}
+                className={`pl-10 w-full p-2.5 border rounded-lg shadow-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 bg-white hover:border-indigo-300 transition-colors duration-200 ${
+                  errors.tipo ? 'border-red-500' : ''
+                }`}
+              >
+                <option value=''>Seleccionar tipo</option>
+                <option value='ingreso'>Ingreso</option>
+                <option value='gasto'>Gasto</option>
               </select>
+              {errors.tipo && (
+                <p className="mt-1 text-xs text-red-500">{errors.tipo.message}</p>
+              )}
             </div>
           </div>
         </div>
@@ -195,29 +248,29 @@ const FinanceForm = ({
           <Controller
             name='monto'
             control={control}
-            rules={{ 
-              required: 'Este campo es requerido',
-              validate: {
-                isNumber: value => !isNaN(parseFloat(value)) || 'El monto debe ser un número válido',
-                isPositive: value => parseFloat(value) > 0 || 'El monto debe ser mayor que 0'
-              }
-            }}
             defaultValue=""
             render={({ field: { onChange, value, ...field } }) => (
-              <CurrencyInput
-                {...field}
-                value={value}
-                onChange={(e) => {
-                  const numericValue = e.target.value.replace(/[^0-9.]/g, '');
-                  const parsedValue = parseFloat(numericValue);
-                  if (!isNaN(parsedValue)) {
-                    onChange(numericValue);
-                  }
-                }}
-                className='pl-10 w-full p-2.5 border rounded-lg shadow-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 bg-white hover:border-indigo-300 transition-colors duration-200'
-                placeholder='Monto'
-                icon={FiDollarSign}
-              />
+              <>
+                <CurrencyInput
+                  {...field}
+                  value={value}
+                  onChange={(e) => {
+                    const numericValue = e.target.value.replace(/[^0-9.]/g, '');
+                    const parsedValue = parseFloat(numericValue);
+                    if (!isNaN(parsedValue)) {
+                      onChange(numericValue);
+                    }
+                  }}
+                  className={`pl-10 w-full p-2.5 border rounded-lg shadow-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 bg-white hover:border-indigo-300 transition-colors duration-200 ${
+                    errors.monto ? 'border-red-500' : ''
+                  }`}
+                  placeholder='Monto'
+                  icon={FiDollarSign}
+                />
+                {errors.monto && (
+                  <p className="mt-1 text-xs text-red-500">{errors.monto.message}</p>
+                )}
+              </>
             )}
           />
         </div>
@@ -231,14 +284,14 @@ const FinanceForm = ({
             <FiCalendar className='absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500 w-5 h-5 z-10 transition-colors duration-200' />
             <input
               type='date'
-              {...register('fecha', { 
-                required: 'Este campo es requerido',
-                validate: {
-                  validDate: value => !isNaN(Date.parse(value)) || 'Fecha inválida'
-                }
-              })}
-              className='pl-10 w-full p-2.5 border rounded-lg shadow-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 bg-white hover:border-indigo-300 transition-colors duration-200'
+              {...register('fecha')}
+              className={`pl-10 w-full p-2.5 border rounded-lg shadow-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 bg-white hover:border-indigo-300 transition-colors duration-200 ${
+                errors.fecha ? 'border-red-500' : ''
+              }`}
             />
+            {errors.fecha && (
+              <p className="mt-1 text-xs text-red-500">{errors.fecha.message}</p>
+            )}
           </div>
         </div>
 
@@ -253,7 +306,9 @@ const FinanceForm = ({
               {...register('id_categoria', {
                 setValueAs: value => value === '' ? null : parseInt(value, 10)
               })}
-              className='pl-10 w-full p-2.5 border rounded-lg shadow-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 bg-white hover:border-indigo-300 transition-colors duration-200'
+              className={`pl-10 w-full p-2.5 border rounded-lg shadow-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 bg-white hover:border-indigo-300 transition-colors duration-200 ${
+                errors.id_categoria ? 'border-red-500' : ''
+              }`}
             >
               <option value=''>Seleccionar categoría</option>
               {categories.map(cat => (
@@ -262,6 +317,9 @@ const FinanceForm = ({
                 </option>
               ))}
             </select>
+            {errors.id_categoria && (
+              <p className="mt-1 text-xs text-red-500">{errors.id_categoria.message}</p>
+            )}
             <button
               type='button'
               onClick={() => setShowNewCategoryInput(!showNewCategoryInput)}
@@ -488,6 +546,17 @@ const FinanceForm = ({
             )}
           />
         </div>
+      </div>
+
+      {/* Botón de guardar */}
+      <div className="mt-6 flex justify-end">
+        <button
+          type="submit"
+          className="flex items-center px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-colors duration-200"
+        >
+          <FiSave className="mr-2" />
+          Guardar
+        </button>
       </div>
     </form>
   )

@@ -200,57 +200,118 @@ const CelebrantStep = () => {
                 name="sexo_festejado"
                 control={control}
                 render={({ field }) => (
-                  <div className="flex gap-4 mt-2">
-                    <label className={`flex items-center gap-2 p-3 rounded-lg border cursor-pointer transition-colors ${
-                      field.value === 'femenino'
-                        ? 'bg-pink-50 border-pink-300 text-pink-700'
-                        : 'bg-white border-gray-300 hover:bg-gray-50'
-                    }`}>
-                      <input
-                        {...field}
-                        type="radio"
-                        value="femenino"
-                        className="hidden"
-                        checked={field.value === 'femenino'}
-                        onChange={() => field.onChange('femenino')}
-                      />
-                      <div className={`w-4 h-4 rounded-full border flex items-center justify-center ${
+                  <>
+                    <div className="flex gap-4 mt-2">
+                      <label className={`flex items-center gap-2 p-3 rounded-lg border cursor-pointer transition-colors ${
                         field.value === 'femenino'
-                          ? 'border-pink-500 bg-white'
-                          : 'border-gray-400'
+                          ? 'bg-pink-50 border-pink-300 text-pink-700'
+                          : 'bg-white border-gray-300 hover:bg-gray-50'
                       }`}>
-                        {field.value === 'femenino' && (
-                          <div className="w-2 h-2 rounded-full bg-pink-500"></div>
-                        )}
-                      </div>
-                      <span>Niña</span>
-                    </label>
-                    
-                    <label className={`flex items-center gap-2 p-3 rounded-lg border cursor-pointer transition-colors ${
-                      field.value === 'masculino'
-                        ? 'bg-blue-50 border-blue-300 text-blue-700'
-                        : 'bg-white border-gray-300 hover:bg-gray-50'
-                    }`}>
-                      <input
-                        {...field}
-                        type="radio"
-                        value="masculino"
-                        className="hidden"
-                        checked={field.value === 'masculino'}
-                        onChange={() => field.onChange('masculino')}
-                      />
-                      <div className={`w-4 h-4 rounded-full border flex items-center justify-center ${
+                        <input
+                          {...field}
+                          type="radio"
+                          value="femenino"
+                          className="hidden"
+                          checked={field.value === 'femenino'}
+                          onChange={() => field.onChange('femenino')}
+                        />
+                        <div className={`w-4 h-4 rounded-full border flex items-center justify-center ${
+                          field.value === 'femenino'
+                            ? 'border-pink-500 bg-white'
+                            : 'border-gray-400'
+                        }`}>
+                          {field.value === 'femenino' && (
+                            <div className="w-2 h-2 rounded-full bg-pink-500"></div>
+                          )}
+                        </div>
+                        <span>Niña</span>
+                      </label>
+                      
+                      <label className={`flex items-center gap-2 p-3 rounded-lg border cursor-pointer transition-colors ${
                         field.value === 'masculino'
-                          ? 'border-blue-500 bg-white'
-                          : 'border-gray-400'
+                          ? 'bg-blue-50 border-blue-300 text-blue-700'
+                          : 'bg-white border-gray-300 hover:bg-gray-50'
                       }`}>
-                        {field.value === 'masculino' && (
-                          <div className="w-2 h-2 rounded-full bg-blue-500"></div>
-                        )}
-                      </div>
-                      <span>Niño</span>
-                    </label>
-                  </div>
+                        <input
+                          {...field}
+                          type="radio"
+                          value="masculino"
+                          className="hidden"
+                          checked={field.value === 'masculino'}
+                          onChange={() => field.onChange('masculino')}
+                        />
+                        <div className={`w-4 h-4 rounded-full border flex items-center justify-center ${
+                          field.value === 'masculino'
+                            ? 'border-blue-500 bg-white'
+                            : 'border-gray-400'
+                        }`}>
+                          {field.value === 'masculino' && (
+                            <div className="w-2 h-2 rounded-full bg-blue-500"></div>
+                          )}
+                        </div>
+                        <span>Niño</span>
+                      </label>
+
+                      <label className={`flex items-center gap-2 p-3 rounded-lg border cursor-pointer transition-colors ${
+                        field.value && !['femenino', 'masculino'].includes(field.value)
+                          ? 'bg-purple-50 border-purple-300 text-purple-700'
+                          : 'bg-white border-gray-300 hover:bg-gray-50'
+                      }`}>
+                        <input
+                          {...field}
+                          type="radio"
+                          value="otro"
+                          className="hidden"
+                          checked={field.value && !['femenino', 'masculino'].includes(field.value)}
+                          onChange={() => field.onChange('otro')}
+                        />
+                        <div className={`w-4 h-4 rounded-full border flex items-center justify-center ${
+                          field.value && !['femenino', 'masculino'].includes(field.value)
+                            ? 'border-purple-500 bg-white'
+                            : 'border-gray-400'
+                        }`}>
+                          {field.value && !['femenino', 'masculino'].includes(field.value) && (
+                            <div className="w-2 h-2 rounded-full bg-purple-500"></div>
+                          )}
+                        </div>
+                        <span>Otro</span>
+                      </label>
+                    </div>
+
+                    {/* Campo de texto para "Otro" con animación */}
+                    {field.value && !['femenino', 'masculino'].includes(field.value) && (
+                      <motion.div
+                        initial={{ opacity: 0, y: -10, height: 0 }}
+                        animate={{ opacity: 1, y: 0, height: 'auto' }}
+                        exit={{ opacity: 0, y: -10, height: 0 }}
+                        transition={{
+                          duration: 0.3,
+                          ease: "easeInOut",
+                          opacity: { duration: 0.2 }
+                        }}
+                        className="mt-3 overflow-hidden"
+                      >
+                        <Controller
+                          name="sexo_festejado_personalizado"
+                          control={control}
+                          render={({ field: customField }) => (
+                            <input
+                              {...customField}
+                              type="text"
+                              placeholder="Especifica el género"
+                              className="w-full p-3 rounded-lg border border-purple-300 focus:ring-2 focus:ring-purple-500 focus:border-purple-500 bg-purple-50 transition-all duration-300"
+                              onChange={(e) => {
+                                customField.onChange(e);
+                                // Actualiza el valor principal con el texto personalizado
+                                field.onChange(e.target.value);
+                              }}
+                              autoFocus
+                            />
+                          )}
+                        />
+                      </motion.div>
+                    )}
+                  </>
                 )}
               />
             </FormField>

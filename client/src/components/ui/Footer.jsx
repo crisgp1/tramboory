@@ -6,7 +6,7 @@ export const Footer = () => {
       <div className="container mx-auto px-6">
         <div className="flex flex-col md:flex-row items-center justify-between">
           <div className="flex items-center mb-4 md:mb-0">
-            <img src={Logo} alt="Logo" className="w-32 mr-4" />
+            <img src={Logo} alt="" className="w-32 mr-4" />
           </div>
           <p className="text-white text-sm">
             Todos los derechos reservados &copy; {new Date().getFullYear()}

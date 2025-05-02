@@ -106,11 +106,11 @@ const ServicesSection = ({ services }) => {
           className="text-center mb-20"
         >
           {/* Badge mejorado - Ahora posicionado correctamente */}
-          <div className="flex justify-center mb-2">
+          <div className="flex justify-center mb-3">
             <div className="inline-flex items-center gap-2 bg-gradient-to-r from-purple-500/10 via-indigo-500/10 to-purple-500/10 
               backdrop-blur-sm px-5 py-2 rounded-full border border-purple-500/30">
               <FiPackage className="text-purple-300" />
-              <span className="text-[0.98em] font-medium text-purple-300 uppercase tracking-wider">
+              <span className="text-[0.96em] font-medium text-purple-300 uppercase tracking-wider">
                 Paquetes Disponibles
               </span>
             </div>
@@ -118,7 +118,7 @@ const ServicesSection = ({ services }) => {
           
           {/* Título mejorado */}
           <h2 className="text-4xl md:text-5xl lg:text-6xl font-bold text-white mb-6 font-funhouse relative inline-block">
-            Nuestros Servicios
+            Nuestros Paquetes
             <motion.span 
               className="absolute -bottom-2 left-0 w-full h-1 bg-gradient-to-r from-purple-300/0 via-purple-300/70 to-purple-300/0"
               animate={{ 
@@ -126,7 +126,7 @@ const ServicesSection = ({ services }) => {
                 x: ["-100%", "0%", "0%", "100%"]
               }}
               transition={{ 
-                duration: 4, 
+                duration: 4,  
                 repeat: Infinity,
                 ease: "easeInOut" 
               }}
