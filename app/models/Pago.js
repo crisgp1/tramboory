@@ -32,6 +32,12 @@ class Pago extends Model {
 
   async validarMontoTotal() {
     try {
+      // Si el pago está asociado a una pre-reserva, no necesitamos validación de montos
+      if (this.id_pre_reserva) {
+        console.log('Pago asociado a pre-reserva, omitiendo validación de monto total');
+        return;
+      }
+
       const reserva = await this.getReservaPago();
       if (!reserva) {
         console.error('Reserva no encontrada para el pago:', {
@@ -99,6 +105,12 @@ class Pago extends Model {
       throw error;
     }
   }
+  
+  // Método para verificar si la pre-reserva ha expirado
+  haExpirado() {
+    if (!this.expiracion_pre_reserva) return false;
+    return new Date() > new Date(this.expiracion_pre_reserva);
+  }
 }
 
 Pago.init({
@@ -109,9 +121,17 @@ Pago.init({
   },
   id_reserva: {
     type: DataTypes.INTEGER,
-    allowNull: false,
+    allowNull: true, // Ahora es opcional
     references: {
       model: 'reservas',
+      key: 'id'
+    }
+  },
+  id_pre_reserva: {
+    type: DataTypes.INTEGER,
+    allowNull: true, // Permite NULL para pagos asociados a reservas existentes
+    references: {
+      model: 'pre_reservas',
       key: 'id'
     }
   },
@@ -134,9 +154,39 @@ Pago.init({
     allowNull: true
   },
   estado: {
-    type: DataTypes.ENUM('pendiente', 'completado', 'fallido'),
+    type: DataTypes.ENUM('pendiente', 'completado', 'fallido', 'reembolsado', 'parcial_reembolsado'),
     allowNull: false,
     defaultValue: 'pendiente'
+  },
+  token_transaccion: {
+    type: DataTypes.STRING(255),
+    allowNull: true,
+    comment: 'Token de identificación de la transacción en el sistema externo'
+  },
+  datos_transaccion: {
+    type: DataTypes.JSON,
+    allowNull: true,
+    comment: 'Datos adicionales de la transacción en formato JSON'
+  },
+  expiracion_pre_reserva: {
+    type: DataTypes.DATE,
+    allowNull: true,
+    comment: 'Fecha y hora en que expira la pre-reserva asociada'
+  },
+  es_pago_parcial: {
+    type: DataTypes.BOOLEAN,
+    defaultValue: false,
+    comment: 'Indica si este es un pago parcial del total'
+  },
+  referencia_pago: {
+    type: DataTypes.STRING(100),
+    allowNull: true,
+    comment: 'Referencia o identificador del pago'
+  },
+  notas: {
+    type: DataTypes.TEXT,
+    allowNull: true,
+    comment: 'Notas o comentarios sobre el pago'
   },
   fecha_creacion: {
     type: DataTypes.DATE,
@@ -161,8 +211,16 @@ Pago.init({
       fields: ['id_reserva']
     },
     {
+      name: 'idx_pagos_pre_reserva',
+      fields: ['id_pre_reserva']
+    },
+    {
       name: 'idx_pagos_compuesto',
       fields: ['id_reserva', 'estado', 'fecha_pago']
+    },
+    {
+      name: 'idx_pagos_token',
+      fields: ['token_transaccion']
     }
   ],
   hooks: {
@@ -199,6 +257,21 @@ Pago.init({
                   timestamp: new Date().toISOString()
                 });
                 await pagoActual.update({ estado: 'fallido' });
+                
+                // Si hay pre-reserva asociada, marcarla como expirada
+                if (pagoActual.id_pre_reserva) {
+                  const PreReserva = sequelize.models.PreReserva;
+                  if (PreReserva) {
+                    const preReserva = await PreReserva.findByPk(pagoActual.id_pre_reserva);
+                    if (preReserva && preReserva.estado === 'pendiente') {
+                      await preReserva.update({ estado: 'expirada' });
+                      console.log('Pre-reserva marcada como expirada:', {
+                        preReservaId: preReserva.id,
+                        timestamp: new Date().toISOString()
+                      });
+                    }
+                  }
+                }
               }
             } catch (error) {
               console.error('Error en timeout de pago:', {
@@ -208,7 +281,9 @@ Pago.init({
                 timestamp: new Date().toISOString()
               });
             }
-          }, 30 * 60000); // 30 minutos
+          }, pago.expiracion_pre_reserva ? 
+             (new Date(pago.expiracion_pre_reserva) - new Date()) : 
+             (30 * 60000)); // 30 minutos por defecto o el tiempo hasta la expiración
         }
       } catch (error) {
         console.error('Error en hook afterCreate:', {

@@ -5,7 +5,8 @@ import {
   FiPieChart, 
   FiAlertTriangle,
   FiSettings,
-  FiSliders
+  FiSliders,
+  FiTrendingUp
 } from 'react-icons/fi';
 
 /**
@@ -22,6 +23,7 @@ const TabNav = ({ activeTab, setActiveTab, customTabs }) => {
     { id: 'resumen', icon: FiBarChart2, label: 'Resumen' },
     { id: 'acciones', icon: FiPlus, label: 'Acciones Rápidas' },
     { id: 'graficos', icon: FiPieChart, label: 'Gráficos' },
+    { id: 'proyecciones', icon: FiTrendingUp, label: 'Proyecciones' },
     { id: 'alertas', icon: FiAlertTriangle, label: 'Alertas' }
   ];
 

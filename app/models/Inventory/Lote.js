@@ -35,6 +35,18 @@ const Lote = sequelize.define('Lotes', {
       }
     }
   },
+  prioridad_uso: {
+    type: DataTypes.INTEGER,
+    allowNull: true,
+    defaultValue: 100,
+    comment: 'Prioridad de uso (menor número = mayor prioridad)'
+  },
+  en_uso: {
+    type: DataTypes.BOOLEAN,
+    allowNull: false,
+    defaultValue: false,
+    comment: 'Indica si el lote está actualmente en uso'
+  },
   cantidad_inicial: {
     type: DataTypes.DECIMAL(10, 2),
     allowNull: false,
@@ -129,7 +141,7 @@ Lote.findProximosACaducar = function(diasLimite = 7) {
   });
 };
 
-// Método para obtener lotes con existencias
+// Método para obtener lotes con existencias ordenados por FIFO y caducidad
 Lote.findConExistencias = function() {
   return this.findAll({
     where: {
@@ -143,7 +155,29 @@ Lote.findConExistencias = function() {
       as: 'materiaPrima',
       attributes: ['nombre', 'id_unidad_medida']
     }],
-    order: [['fecha_caducidad', 'ASC']]
+    order: [
+      ['fecha_caducidad', 'ASC'],
+      ['fecha_produccion', 'ASC'],
+      ['prioridad_uso', 'ASC']
+    ]
+  });
+};
+
+// Método para obtener lotes disponibles para una materia prima ordenados por FIFO y caducidad
+Lote.findLotesDisponiblesPorMateriaPrima = function(idMateriaPrima) {
+  return this.findAll({
+    where: {
+      id_materia_prima: idMateriaPrima,
+      activo: true,
+      cantidad_actual: {
+        [sequelize.Op.gt]: 0
+      }
+    },
+    order: [
+      ['fecha_caducidad', 'ASC'],
+      ['fecha_produccion', 'ASC'],
+      ['prioridad_uso', 'ASC']
+    ]
   });
 };
 
@@ -162,6 +196,28 @@ Lote.prototype.actualizarCantidad = async function(cantidad, tipo) {
     }
     this.cantidad_actual = nuevaCantidad;
   }
+  return this.save();
+};
+
+// Método para calcular días para caducidad
+Lote.prototype.diasParaCaducidad = function() {
+  if (!this.fecha_caducidad) return null;
+  
+  const hoy = new Date();
+  const fechaCaducidad = new Date(this.fecha_caducidad);
+  const diferencia = fechaCaducidad.getTime() - hoy.getTime();
+  return Math.ceil(diferencia / (1000 * 60 * 60 * 24));
+};
+
+// Método para marcar un lote como en uso
+Lote.prototype.marcarEnUso = async function() {
+  this.en_uso = true;
+  return this.save();
+};
+
+// Método para establecer prioridad de uso
+Lote.prototype.establecerPrioridad = async function(prioridad) {
+  this.prioridad_uso = prioridad;
   return this.save();
 };
 

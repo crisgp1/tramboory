@@ -18,6 +18,9 @@ import {
   AlertasTab
 } from '@/components/inventory/dashboard';
 
+// Importar tab de proyecciones
+import ProyeccionesTab from '@/components/inventory/dashboard/tabs/ProyeccionesTab';
+
 // Datos de ejemplo para gráficos - En una implementación real, esto vendría de la API
 const stockMovementData = [
   { name: 'Ene', entradas: 65, salidas: 28 },
@@ -163,6 +166,10 @@ const InventoryDashboard = () => {
           timeRange={timeRange}
           setTimeRange={setTimeRange}
         />
+      )}
+
+      {activeTab === 'proyecciones' && (
+        <ProyeccionesTab />
       )}
 
       {activeTab === 'alertas' && (

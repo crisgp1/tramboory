@@ -17,6 +17,9 @@ import PaymentModal from './PaymentModal';
 import TuesdayModal from './TuesdayModal';
 import ConfirmationModal from './ConfirmationModal';
 
+// Store para pre-reservas (nuevo flujo de pago primero)
+import usePreReservasStore from '@/store/preReservasStore';
+
 // Constantes para slots de tiempo
 const TIME_SLOTS = {
   MORNING: {
@@ -38,6 +41,9 @@ const isActiveReservation = (reserva) => {
   return reserva.activo &&
     (reserva.estado === 'pendiente' || reserva.estado === 'confirmada');
 };
+
+// Tiempo máximo para completar la pre-reserva (en minutos)
+const PRE_RESERVA_TIMEOUT = 30;
 
 // Componente de tarjeta de información
 const InfoCard = ({ icon: Icon, title, description }) => (
@@ -208,7 +214,18 @@ const ReservationPage = () => {
     }
   };
 
-  // Manejar envío de reserva
+  // Obtener las funciones y estados de preReservasStore
+  const { 
+    iniciarProcesoPago, 
+    confirmarPago, 
+    loading: preReservaLoading, 
+    error: preReservaError,
+    pagoEnProceso,
+    preReserva,
+    limpiarPreReserva
+  } = usePreReservasStore();
+
+  // Manejar envío de reserva - Nuevo flujo de pago primero
   const handleReservationSubmit = async (data) => {
     try {
       // Validar fecha y hora
@@ -276,11 +293,10 @@ const ReservationPage = () => {
 
       const formattedTotal = total.toFixed(2);
 
-      // Crear objeto de reserva
+      // Crear objeto de reserva para pre-reserva
       const reservationData = {
         ...data,
         id_usuario: userData?.id,
-        estado: 'pendiente',
         packagePrice: packagePrice,
         total: parseFloat(formattedTotal),
         extras: selectedExtras,
@@ -302,62 +318,46 @@ const ReservationPage = () => {
     }
   };
 
-  // Guardar reserva en backend
-  const saveReservation = async () => {
+  // Iniciar el proceso de pago en lugar de crear la reserva directamente
+  const iniciarPago = async () => {
     try {
-      const { id, ...reservationDataWithoutId } = reservationData;
-      const response = await axiosInstance.post(
-        '/reservas',
-        reservationDataWithoutId,
-        getAuthHeader()
-      );
-
-      if (response.status === 201) {
-        const savedReservation = response.data;
-        setReservationData(prevData => ({ ...prevData, ...savedReservation }));
-        toast.success('Reserva creada exitosamente');
-        setIsContractModalOpen(true);
-      } else {
-        throw new Error('Error al crear la reserva');
-      }
+      setIsConfirmationModalOpen(false);
+      setIsPaymentModalOpen(true);
     } catch (error) {
-      console.error('Error al guardar la reserva:', error);
-      if (error.response) {
-        toast.error(
-          `Error ${error.response.status}: ${error.response.data.message || error.response.data}`
-        );
-      } else {
-        toast.error('Error al guardar la reserva. Por favor, intenta nuevamente.');
-      }
-      if (error.response?.status === 401) {
-        navigate('/signin');
-      }
+      console.error('Error al iniciar el proceso de pago:', error);
+      toast.error('Error al iniciar el proceso de pago. Por favor, intenta nuevamente.');
     }
   };
 
-  // Manejar pago
-  const handlePaymentConfirm = async paymentData => {
+  // Función para manejar la selección del método de pago
+  const handleSelectPaymentMethod = async (metodoPago) => {
     try {
-      const response = await axiosInstance.post(
-        '/pagos',
-        {
-          ...paymentData,
-          id_reserva: reservationData.id
-        },
-        getAuthHeader()
-      );
+      // Iniciar proceso de pago con pre-reserva
+      await iniciarProcesoPago(reservationData, metodoPago);
       
-      if (response.status === 201) {
-        toast.success('¡Reserva y pago completados con éxito!');
-        setIsPaymentModalOpen(false);
-        navigate('/customer/reservationstatus');
-      }
+      // Cerrar modal de pago y mostrar modal de confirmación
+      setIsPaymentModalOpen(false);
+      setIsConfirmationModalOpen(true);
     } catch (error) {
-      console.error('Error al procesar el pago:', error);
-      toast.error('Error al procesar el pago. Por favor, intenta nuevamente.');
-      if (error.response?.status === 401) {
-        navigate('/signin');
-      }
+      console.error('Error al iniciar proceso de pago:', error);
+      // El error se maneja en el store y se muestra en el modal
+    }
+  };
+
+  // Manejar confirmación de pago
+  const handlePaymentConfirm = async () => {
+    try {
+      const result = await confirmarPago();
+      toast.success('¡Reserva confirmada con éxito!');
+      
+      // Limpiar datos de pre-reserva
+      limpiarPreReserva();
+      
+      // Navegar a la página de estado de reserva
+      navigate(`/customer/reservationstatus/${result.reserva.id}`);
+    } catch (error) {
+      console.error('Error al confirmar pago:', error);
+      // El error se maneja en el store y se muestra en el modal
     }
   };
 
@@ -505,45 +505,57 @@ const ReservationPage = () => {
       </div>
       
       {/* Modales */}
-      {isConfirmationModalOpen && (
-        <ConfirmationModal
-          reservationData={reservationData}
-          packages={packages}
-          foodOptions={foodOptions}
-          tematicas={tematicas}
-          extras={extrasData}
-          mamparas={mamparas}
-          onCancel={() => setIsConfirmationModalOpen(false)}
-          onConfirm={() => {
-            setIsConfirmationModalOpen(false);
-            saveReservation();
-          }}
-        />
-      )}
+          {isConfirmationModalOpen && pagoEnProceso ? (
+            // Modal de confirmación para pago ya iniciado
+            <ConfirmationModal
+              onClose={() => setIsConfirmationModalOpen(false)}
+              onConfirm={handlePaymentConfirm}
+            />
+          ) : isConfirmationModalOpen && !pagoEnProceso && (
+            // Modal de confirmación de datos antes de pago
+            <ConfirmationModal
+              reservationData={reservationData}
+              packages={packages}
+              foodOptions={foodOptions}
+              tematicas={tematicas}
+              extras={extrasData}
+              mamparas={mamparas}
+              onCancel={() => setIsConfirmationModalOpen(false)}
+              onConfirm={iniciarPago}
+            />
+          )}
 
-      {isContractModalOpen && (
-        <ContractModal
-          isOpen={isContractModalOpen}
-          onClose={() => setIsContractModalOpen(false)}
-          onAccept={handleContractAccept}
-        />
-      )}
+          {isPaymentModalOpen && (
+            <PaymentModal
+              total={reservationData?.total || 0}
+              onClose={() => setIsPaymentModalOpen(false)}
+              onSelectPaymentMethod={handleSelectPaymentMethod}
+              loading={preReservaLoading}
+            />
+          )}
 
-      {contractAccepted && isPaymentModalOpen && (
-        <PaymentModal
-          reservationData={reservationData}
-          setReservationData={setReservationData}
-          onCancel={() => setIsPaymentModalOpen(false)}
-          onConfirm={handlePaymentConfirm}
-        />
-      )}
+          {isContractModalOpen && (
+            <ContractModal
+              isOpen={isContractModalOpen}
+              onClose={() => setIsContractModalOpen(false)}
+              onAccept={handleContractAccept}
+            />
+          )}
 
-      {isTuesdayModalOpen && (
-        <TuesdayModal
-          onClose={() => setIsTuesdayModalOpen(false)}
-          onConfirm={() => setIsTuesdayModalOpen(false)}
-        />
-      )}
+          {isTuesdayModalOpen && (
+            <TuesdayModal
+              onClose={() => setIsTuesdayModalOpen(false)}
+              onConfirm={() => setIsTuesdayModalOpen(false)}
+            />
+          )}
+
+          {/* Mostrar mensaje de error si existe */}
+          {preReservaError && (
+            <div className="fixed bottom-4 right-4 bg-red-100 border-l-4 border-red-500 text-red-700 p-4 rounded shadow-lg z-50">
+              <p className="font-bold">Error</p>
+              <p>{preReservaError}</p>
+            </div>
+          )}
     </div>
   );
 };

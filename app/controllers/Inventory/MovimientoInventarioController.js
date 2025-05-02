@@ -104,6 +104,109 @@ exports.getMovimientoById = async (req, res) => {
   }
 };
 
+// Método para registrar salida de inventario utilizando estrategia FIFO
+exports.registrarSalida = async (req, res) => {
+  const transaction = await sequelize.transaction();
+  
+  try {
+    const { id_materia_prima, cantidad, descripcion, id_tipo_ajuste } = req.body;
+    
+    // Validar materia prima
+    const materiaPrima = await MateriaPrima.findByPk(id_materia_prima, {
+      transaction
+    });
+    
+    if (!materiaPrima) {
+      await transaction.rollback();
+      return res.status(400).json({
+        success: false,
+        message: 'Materia prima no encontrada'
+      });
+    }
+    
+    // Validar stock disponible
+    if (materiaPrima.stock_actual < cantidad) {
+      await transaction.rollback();
+      return res.status(400).json({
+        success: false,
+        message: 'Stock insuficiente para realizar la salida'
+      });
+    }
+    
+    // Obtener lotes disponibles ordenados por FIFO y fecha de caducidad
+    const lotes = await Lote.findLotesDisponiblesPorMateriaPrima(id_materia_prima);
+    
+    if (!lotes.length) {
+      await transaction.rollback();
+      return res.status(400).json({
+        success: false,
+        message: 'No hay lotes disponibles para esta materia prima'
+      });
+    }
+    
+    // Procesar la salida de inventario por lotes
+    let cantidadRestante = parseFloat(cantidad);
+    const lotesAfectados = [];
+    
+    for (const lote of lotes) {
+      if (cantidadRestante <= 0) break;
+      
+      const cantidadDisponible = parseFloat(lote.cantidad_actual);
+      const cantidadAUsar = Math.min(cantidadRestante, cantidadDisponible);
+      cantidadRestante -= cantidadAUsar;
+      
+      // Actualizar lote
+      await lote.actualizarCantidad(cantidadAUsar, 'salida');
+      
+      // Marcar lote como en uso si no lo estaba
+      if (!lote.en_uso) {
+        await lote.marcarEnUso();
+      }
+      
+      lotesAfectados.push({
+        id: lote.id,
+        codigo: lote.codigo_lote,
+        cantidad_usada: cantidadAUsar,
+        dias_para_caducidad: lote.diasParaCaducidad()
+      });
+      
+      // Registrar movimiento de inventario para este lote
+      await MovimientoInventario.create({
+        id_materia_prima,
+        id_lote: lote.id,
+        tipo_movimiento: 'salida',
+        cantidad: cantidadAUsar,
+        fecha: new Date(),
+        descripcion,
+        id_tipo_ajuste,
+        id_usuario: req.usuario?.id || null
+      }, { transaction });
+    }
+    
+    // Actualizar stock en materia prima
+    await materiaPrima.update({
+      stock_actual: materiaPrima.stock_actual - cantidad
+    }, { transaction });
+    
+    await transaction.commit();
+    
+    res.status(200).json({
+      success: true,
+      message: 'Salida de inventario registrada correctamente',
+      lotes_afectados: lotesAfectados,
+      total_procesado: parseFloat(cantidad)
+    });
+  } catch (error) {
+    await transaction.rollback();
+    console.error('Error al registrar la salida de inventario:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error al registrar la salida de inventario',
+      error: error.message
+    });
+  }
+};
+
 exports.createMovimiento = async (req, res) => {
   const transaction = await sequelize.transaction();
 
@@ -636,6 +739,94 @@ exports.deleteMovimiento = async (req, res) => {
     res.status(500).json({
       error: 'Error al eliminar movimiento',
       details: error.message
+    });
+  }
+};
+
+// Obtener estadísticas de consumo para proyecciones
+exports.obtenerEstadisticasConsumo = async (req, res) => {
+  try {
+    const { id_materia_prima, periodo } = req.query;
+    
+    // Validar parámetros
+    if (!id_materia_prima) {
+      return res.status(400).json({
+        success: false,
+        message: 'Se requiere el ID de la materia prima'
+      });
+    }
+    
+    // Definir el período de análisis (por defecto 30 días)
+    const diasAnalisis = periodo ? parseInt(periodo) : 30;
+    
+    const fechaInicio = new Date();
+    fechaInicio.setDate(fechaInicio.getDate() - diasAnalisis);
+    
+    // Obtener todos los movimientos de salida en el período
+    const movimientos = await MovimientoInventario.findAll({
+      where: {
+        id_materia_prima,
+        tipo_movimiento: 'salida',
+        fecha: {
+          [Op.gte]: fechaInicio
+        },
+        activo: true
+      },
+      order: [['fecha', 'ASC']]
+    });
+    
+    // Calcular estadísticas de consumo
+    const totalConsumido = movimientos.reduce((sum, mov) => sum + parseFloat(mov.cantidad), 0);
+    const consumoDiario = totalConsumido / diasAnalisis;
+    
+    // Calcular tendencia de consumo (aumento o disminución)
+    let tendencia = 0;
+    
+    if (movimientos.length > 1) {
+      // Dividir en dos períodos para comparar
+      const mitad = Math.floor(movimientos.length / 2);
+      const primeraConsumido = movimientos.slice(0, mitad).reduce((sum, mov) => sum + parseFloat(mov.cantidad), 0);
+      const segundaConsumido = movimientos.slice(mitad).reduce((sum, mov) => sum + parseFloat(mov.cantidad), 0);
+      
+      // Calcular porcentaje de cambio
+      if (primeraConsumido > 0) {
+        tendencia = ((segundaConsumido - primeraConsumido) / primeraConsumido) * 100;
+      }
+    }
+    
+    // Calcular proyección de stock
+    const materiaPrima = await MateriaPrima.findByPk(id_materia_prima);
+    
+    const stockActual = materiaPrima ? parseFloat(materiaPrima.stock_actual) : 0;
+    const diasEstimados = consumoDiario > 0 ? Math.floor(stockActual / consumoDiario) : null;
+    
+    // Obtener lotes próximos a caducar
+    const lotesCaducidad = await Lote.findProximosACaducar(30); // Próximos 30 días
+    const lotesMaterialCaducidad = lotesCaducidad.filter(lote => lote.id_materia_prima === parseInt(id_materia_prima));
+    
+    res.status(200).json({
+      success: true,
+      estadisticas: {
+        total_consumido: totalConsumido,
+        consumo_diario: consumoDiario,
+        tendencia_porcentaje: tendencia,
+        stock_actual: stockActual,
+        dias_estimados: diasEstimados,
+        lotes_por_caducar: lotesMaterialCaducidad.map(lote => ({
+          id: lote.id,
+          codigo: lote.codigo_lote,
+          cantidad: lote.cantidad_actual,
+          fecha_caducidad: lote.fecha_caducidad,
+          dias_restantes: lote.diasParaCaducidad()
+        }))
+      }
+    });
+  } catch (error) {
+    console.error('Error al obtener estadísticas de consumo:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error al obtener estadísticas de consumo',
+      error: error.message
     });
   }
 };

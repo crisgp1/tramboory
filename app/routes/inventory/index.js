@@ -11,6 +11,7 @@ const LoteController = require('../../controllers/Inventory/LoteController');
 const AlertaInventarioController = require('../../controllers/Inventory/AlertaInventarioController');
 const ConversionMedidaController = require('../../controllers/Inventory/ConversionMedidaController');
 const TipoAjusteController = require('../../controllers/Inventory/TipoAjusteController');
+const ProyeccionInventarioController = require('../../controllers/Inventory/ProyeccionInventarioController');
 
 // Rutas para Unidades de Medida
 // Nota: La autenticación ya se maneja globalmente en app.js
@@ -45,6 +46,10 @@ router.post('/movimientos', MovimientoInventarioController.createMovimiento);
 router.put('/movimientos/:id', MovimientoInventarioController.updateMovimiento);
 router.delete('/movimientos/:id', MovimientoInventarioController.deleteMovimiento);
 router.get('/movimientos/materia-prima/:id', MovimientoInventarioController.getMovimientosByMateriaPrima);
+// Nueva ruta para manejo FIFO de salidas de inventario
+router.post('/movimientos/salida', MovimientoInventarioController.registrarSalida);
+// Ruta para estadísticas de consumo
+router.get('/movimientos/estadisticas/consumo', MovimientoInventarioController.obtenerEstadisticasConsumo);
 
 // Rutas para Lotes
 router.get('/lotes', LoteController.getAllLotes);
@@ -77,5 +82,11 @@ router.get('/tipos-ajuste/:id', TipoAjusteController.getTipoAjusteById);
 router.post('/tipos-ajuste', TipoAjusteController.createTipoAjuste);
 router.put('/tipos-ajuste/:id', TipoAjusteController.updateTipoAjuste);
 router.delete('/tipos-ajuste/:id', TipoAjusteController.deleteTipoAjuste);
+
+// Rutas para Proyecciones de Inventario
+router.get('/proyecciones', ProyeccionInventarioController.obtenerProyeccion);
+router.get('/proyecciones/materia-prima/:id', ProyeccionInventarioController.obtenerProyeccionMateriaPrima);
+router.get('/proyecciones/reabastecimiento', ProyeccionInventarioController.generarInformeReabastecimiento);
+router.get('/proyecciones/caducidad', ProyeccionInventarioController.generarAlertasCaducidad);
 
 module.exports = router;

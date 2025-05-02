@@ -1,55 +1,35 @@
-import { useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { gsap } from 'gsap';
+import { toast } from 'react-toastify';
+import usePreReservasStore from '@/store/preReservasStore';
 import {
-  FiPackage,
+  FiCreditCard,
   FiCalendar,
-  FiClock,
-  FiDollarSign,
-  FiImage,
   FiUser,
-  FiAlertCircle,
-  FiList,
+  FiPackage,
   FiCheck,
   FiX,
-  FiGift
+  FiAlertCircle,
+  FiClock
 } from 'react-icons/fi';
-import SummaryItem from './SummaryItem';
 
-const ConfirmationModal = ({
-  reservationData,
-  packages = [],
-  foodOptions = [],
-  tematicas = [],
-  extras = [],
-  mamparas = [],
-  onCancel,
-  onConfirm,
-}) => {
+const ConfirmationModal = ({ onClose, onConfirm }) => {
   const modalRef = useRef(null);
+  const [transactionData, setTransactionData] = useState({
+    token_transaccion: '',
+    comprobante: '',
+  });
+  const [isValid, setIsValid] = useState(false);
 
-  const formatCurrency = (amount) => {
-    return new Intl.NumberFormat('es-MX', {
-      style: 'currency',
-      currency: 'MXN'
-    }).format(amount);
-  };
+  const { 
+    pagoEnProceso, 
+    error, 
+    loading, 
+    confirmarPago, 
+    preReserva 
+  } = usePreReservasStore();
 
-  const formatDate = (date) => {
-    return new Intl.DateTimeFormat('es-MX', {
-      weekday: 'long',
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric'
-    }).format(new Date(date));
-  };
-
-  const getDayType = (fecha) => {
-    if (!fecha) return '';
-    const reservationDate = new Date(fecha);
-    const dayOfWeek = reservationDate.getDay();
-    return dayOfWeek >= 1 && dayOfWeek <= 4 ? 'L-J' : 'V-D';
-  };
-
+  // Animation on mount
   useEffect(() => {
     gsap.fromTo(
       modalRef.current,
@@ -58,97 +38,116 @@ const ConfirmationModal = ({
     );
   }, []);
 
-  const Section = ({ title, children, icon: Icon }) => (
-    <div className="bg-white p-4 rounded-lg border border-gray-100 space-y-3">
-      <h3 className="text-lg font-medium text-gray-900 flex items-center gap-2 border-b pb-2">
-        {Icon && <Icon className="w-5 h-5 text-indigo-600" />}
-        {title}
-      </h3>
-      {children}
-    </div>
-  );
-
-  const selectedFoodOption = foodOptions?.find(f => f?.id === reservationData?.id_opcion_alimento);
-  const selectedPackage = packages?.find(pkg => pkg?.id === reservationData?.id_paquete);
-  const selectedTematica = tematicas?.find(t => t?.id === reservationData?.id_tematica);
-  const selectedMampara = mamparas?.find(m => m?.id === reservationData?.id_mampara);
-  const mamparaPrice = parseFloat(selectedMampara?.precio) || 0;
-  const tematicaPrice = parseFloat(selectedTematica?.precio) || 0;
-
-  // Get complete extra information
-  const getExtraInfo = (extraId) => {
-    return extras.find(e => e.id === extraId);
-  };
-
-  // Calculate extras total
-  const calculateExtrasTotal = () => {
-    if (!reservationData?.extras?.length) return 0;
+  // Calculate time remaining for pre-reservation expiration
+  const calculateTimeRemaining = () => {
+    if (!pagoEnProceso?.expiracion_pre_reserva) return null;
     
-    return reservationData.extras.reduce((total, extra) => {
-      const extraInfo = getExtraInfo(extra.id);
-      if (!extraInfo) return total;
+    const expiration = new Date(pagoEnProceso.expiracion_pre_reserva);
+    const now = new Date();
+    const diffMs = expiration - now;
+    
+    if (diffMs <= 0) return 'Expirado';
+    
+    const diffMins = Math.floor(diffMs / 60000);
+    const diffSecs = Math.floor((diffMs % 60000) / 1000);
+    
+    return `${diffMins}:${diffSecs < 10 ? '0' : ''}${diffSecs}`;
+  };
+  
+  const [timeRemaining, setTimeRemaining] = useState(calculateTimeRemaining());
+  
+  // Update time remaining every second
+  useEffect(() => {
+    if (!pagoEnProceso?.expiracion_pre_reserva) return;
+    
+    const timer = setInterval(() => {
+      const remaining = calculateTimeRemaining();
+      setTimeRemaining(remaining);
       
-      const precio = parseFloat(extraInfo.precio) || 0;
-      const cantidad = parseInt(extra.cantidad) || 0;
-      return total + (precio * cantidad);
-    }, 0);
+      if (remaining === 'Expirado') {
+        clearInterval(timer);
+        toast.error('La pre-reserva ha expirado. Por favor, inicie el proceso nuevamente.');
+        onClose();
+      }
+    }, 1000);
+    
+    return () => clearInterval(timer);
+  }, [pagoEnProceso, onClose]);
+
+  // Add event listener for escape key
+  useEffect(() => {
+    const handleEscKey = (event) => {
+      if (event.key === 'Escape') {
+        onClose();
+      }
+    };
+
+    document.addEventListener('keydown', handleEscKey);
+    return () => {
+      document.removeEventListener('keydown', handleEscKey);
+    };
+  }, [onClose]);
+
+  // Validate form input
+  useEffect(() => {
+    setIsValid(!!transactionData.token_transaccion);
+  }, [transactionData]);
+
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setTransactionData(prev => ({
+      ...prev,
+      [name]: value
+    }));
   };
 
-  const renderFoodOptionDetails = () => {
-    if (!selectedFoodOption) return null;
-
-    return (
-      <div className="space-y-2">
-        <div className="flex justify-between items-center p-2 bg-gray-50 rounded-lg">
-          <span className="text-gray-700">Menú para Adultos</span>
-          <span className="font-medium">
-            {selectedFoodOption.menu_adulto || selectedFoodOption.nombre || 'No especificado'}
-          </span>
-        </div>
-        <div className="flex justify-between items-center p-2 bg-gray-50 rounded-lg">
-          <span className="text-gray-700">Menú para Niños</span>
-          <span className="font-medium">
-            {selectedFoodOption.menu_nino || selectedFoodOption.nombre || 'No especificado'}
-          </span>
-        </div>
-        <div className="flex justify-between items-center p-2 bg-indigo-50 rounded-lg">
-          <span className="text-gray-700">Total Alimentos</span>
-          <span className="font-medium">
-            {formatCurrency(parseFloat(selectedFoodOption.precio_extra) || 0)}
-          </span>
-        </div>
-      </div>
-    );
-  };
-
-  // Calculate total
-  const calculateTotal = () => {
-    let total = 0;
-    
-    // Add package price
-    total += parseFloat(reservationData?.packagePrice) || 0;
-    
-    // Add food option price
-    if (selectedFoodOption) {
-      total += parseFloat(selectedFoodOption.precio_extra) || 0;
+  const handleFileChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.readAsDataURL(file);
+      reader.onloadend = () => {
+        setTransactionData(prev => ({
+          ...prev,
+          comprobante: reader.result
+        }));
+      };
     }
-    
-    // Add mampara price
-    total += mamparaPrice;
-    
-    // Add tematica price
-    total += tematicaPrice;
-    
-    // Add tuesday fee
-    total += parseFloat(reservationData?.tuesdayFee) || 0;
-    
-    // Add extras
-    total += calculateExtrasTotal();
-    
-    return total;
   };
 
-  if (!reservationData) return null;
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    if (!isValid || loading) return;
+    
+    try {
+      await confirmarPago({
+        token_transaccion: transactionData.token_transaccion,
+        datos_transaccion: {
+          comprobante: transactionData.comprobante
+        }
+      });
+      
+      if (onConfirm) {
+        onConfirm();
+      }
+    } catch (err) {
+      console.error('Error al confirmar pago:', err);
+      // Error is handled by the store
+    }
+  };
+
+  // Format date for display
+  const formatDate = (dateString) => {
+    if (!dateString) return '';
+    const date = new Date(dateString);
+    return new Intl.DateTimeFormat('es-MX', {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    }).format(date);
+  };
 
   return (
     <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full flex justify-center items-center z-50 p-4">
@@ -156,199 +155,154 @@ const ConfirmationModal = ({
         ref={modalRef}
         className="bg-white rounded-xl shadow-xl w-full max-w-2xl max-h-[90vh] overflow-y-auto"
       >
-        {/* Encabezado */}
+        {/* Header */}
         <div className="bg-indigo-50 p-6 border-b border-indigo-100">
-          <div className="flex items-center gap-3 mb-2">
-            <FiAlertCircle className="text-indigo-600 text-2xl" />
-            <h2 className="text-2xl font-bold text-indigo-700">
-              Confirmar Reserva
-            </h2>
-          </div>
+          <h2 className="text-2xl font-bold text-indigo-700 mb-2">Confirmar Pago</h2>
           <p className="text-gray-600">
-            Por favor, verifica que todos los detalles de tu reserva sean correctos antes de continuar.
+            Tu pre-reserva está pendiente de confirmación. Por favor, ingresa los datos del pago realizado.
           </p>
-        </div>
-
-        {/* Contenido */}
-        <div className="p-6 space-y-6">
-          {/* Detalles del Paquete */}
-          <Section title="Detalles del Paquete" icon={FiPackage}>
-            <div className="bg-indigo-50 p-4 rounded-lg space-y-3">
-              <SummaryItem
-                icon={<FiPackage className="text-indigo-600" />}
-                label="Paquete Seleccionado"
-                value={selectedPackage?.nombre || 'No seleccionado'}
-                className="font-medium"
-              />
-              <div className="flex justify-between items-center p-2 bg-white rounded-lg">
-                <span className="text-gray-700">Tarifa {getDayType(reservationData.fecha_reserva)}</span>
-                <span className="font-medium text-indigo-600">{formatCurrency(parseFloat(reservationData.packagePrice) || 0)}</span>
+          
+          {pagoEnProceso && (
+            <div className="mt-4 bg-indigo-100 p-4 rounded-lg flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <FiClock className="text-indigo-600" />
+                <span className="font-medium text-indigo-700">Tiempo restante:</span>
               </div>
-            </div>
-          </Section>
-
-          {/* Fecha y Horario */}
-          <Section title="Fecha y Horario" icon={FiCalendar}>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <SummaryItem
-                icon={<FiCalendar className="text-indigo-600" />}
-                label="Fecha"
-                value={formatDate(reservationData.fecha_reserva)}
-              />
-              <SummaryItem
-                icon={<FiClock className="text-indigo-600" />}
-                label="Horario"
-                value={reservationData.hora_inicio === 'mañana' ? 'Matutino (9:00 - 14:00)' : 'Vespertino (15:00 - 20:00)'}
-              />
-            </div>
-          </Section>
-
-          {/* Servicios Seleccionados */}
-          <Section title="Servicios Seleccionados" icon={FiList}>
-            <div className="space-y-4">
-              {selectedFoodOption && (
-                <div className="space-y-2">
-                  <h4 className="text-sm font-medium text-gray-700">Opciones de Alimento</h4>
-                  {renderFoodOptionDetails()}
-                </div>
-              )}
-              
-              {selectedTematica && (
-                <div className="flex justify-between items-center p-2 bg-gray-50 rounded-lg">
-                  <span className="text-gray-700">Temática: {selectedTematica.nombre}</span>
-                  
-                </div>
-              )}
-
-              {selectedMampara && (
-                <div className="flex justify-between items-center p-2 bg-gray-50 rounded-lg">
-                  <span className="text-gray-700">Mampara: {selectedMampara.nombre}</span>
-                  <span className="font-medium">{formatCurrency(mamparaPrice)}</span>
-                </div>
-              )}
-            </div>
-          </Section>
-
-          {/* Extras Seleccionados */}
-          {reservationData?.extras?.length > 0 && (
-            <Section title="Extras Seleccionados" icon={FiGift}>
-              <div className="space-y-2">
-                {reservationData.extras.map((extra) => {
-                  const extraInfo = getExtraInfo(extra.id);
-                  if (!extraInfo) return null;
-                  
-                  const extraTotal = (parseFloat(extraInfo.precio) || 0) * (parseInt(extra.cantidad) || 0);
-                  
-                  return (
-                    <div key={extra.id} className="flex justify-between items-center p-2 bg-gray-50 rounded-lg">
-                      <span className="text-sm font-medium text-gray-700">
-                        {extraInfo.nombre}
-                      </span>
-                      <div className="flex items-center gap-2">
-                        <span className="text-sm text-gray-600">
-                          {formatCurrency(parseFloat(extraInfo.precio))} x {extra.cantidad} = {formatCurrency(extraTotal)}
-                        </span>
-                      </div>
-                    </div>
-                  );
-                })}
-                <div className="flex justify-between items-center p-2 bg-indigo-50 rounded-lg">
-                  <span className="text-gray-700">Total Extras</span>
-                  <span className="font-medium">{formatCurrency(calculateExtrasTotal())}</span>
-                </div>
-              </div>
-            </Section>
-          )}
-
-          {/* Información del Festejado */}
-          <Section title="Información del Festejado" icon={FiUser}>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <SummaryItem
-                icon={<FiUser className="text-indigo-600" />}
-                label="Nombre"
-                value={reservationData.nombre_festejado || 'No especificado'}
-              />
-              <SummaryItem
-                icon={<FiUser className="text-indigo-600" />}
-                label="Edad"
-                value={reservationData.edad_festejado ? `${reservationData.edad_festejado} años` : 'No especificada'}
-              />
-            </div>
-          </Section>
-
-          {/* Desglose de Costos */}
-          <Section title="Desglose de Costos" icon={FiDollarSign}>
-            <div className="space-y-3">
-              <div className="flex justify-between items-center p-2 bg-gray-50 rounded-lg">
-                <span className="text-gray-700">Tarifa {getDayType(reservationData.fecha_reserva)}</span>
-                <span className="font-medium">{formatCurrency(parseFloat(reservationData.packagePrice) || 0)}</span>
-              </div>
-              
-              {selectedFoodOption && (
-                <div className="flex justify-between items-center p-2 bg-gray-50 rounded-lg">
-                  <span className="text-gray-700">Total Alimentos</span>
-                  <span className="font-medium">{formatCurrency(parseFloat(selectedFoodOption.precio_extra) || 0)}</span>
-                </div>
-              )}
-
-              {selectedTematica && (
-                <div className="flex justify-between items-center p-2 bg-gray-50 rounded-lg">
-                  <span className="text-gray-700">Temática: {selectedTematica.nombre}</span>
-                  
-                </div>
-              )}
-
-              {selectedMampara && (
-                <div className="flex justify-between items-center p-2 bg-gray-50 rounded-lg">
-                  <span className="text-gray-700">Mampara: {selectedMampara.nombre}</span>
-                  <span className="font-medium">{formatCurrency(mamparaPrice)}</span>
-                </div>
-              )}
-
-              {reservationData.tuesdayFee > 0 && (
-                <div className="flex justify-between items-center p-2 bg-gray-50 rounded-lg">
-                  <span className="text-gray-700">Cargo por Martes</span>
-                  <span className="font-medium">{formatCurrency(parseFloat(reservationData.tuesdayFee) || 0)}</span>
-                </div>
-              )}
-
-              {reservationData?.extras?.length > 0 && (
-                <div className="flex justify-between items-center p-2 bg-gray-50 rounded-lg">
-                  <span className="text-gray-700">Total Extras</span>
-                  <span className="font-medium">
-                    {formatCurrency(calculateExtrasTotal())}
-                  </span>
-                </div>
-              )}
-            </div>
-          </Section>
-
-          {/* Total */}
-          <div className="bg-indigo-50 p-4 rounded-lg">
-            <div className="flex justify-between items-center">
-              <span className="text-lg font-medium text-gray-700">Total a Pagar:</span>
-              <span className="text-2xl font-bold text-indigo-600">
-                {formatCurrency(calculateTotal())}
+              <span className="font-mono text-lg font-bold text-indigo-800">
+                {timeRemaining || 'Calculando...'}
               </span>
             </div>
-          </div>
+          )}
         </div>
 
-        {/* Botones de Acción */}
+        {/* Content */}
+        <div className="p-6 space-y-6">
+          {/* Pre-reserva info */}
+          {preReserva && (
+            <div className="bg-gray-50 p-4 rounded-lg space-y-3">
+              <h3 className="font-medium text-gray-900">Detalles de Pre-reserva</h3>
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="flex items-start gap-2">
+                  <FiUser className="mt-1 text-indigo-500" />
+                  <div>
+                    <p className="text-sm text-gray-500">Festejado</p>
+                    <p className="font-medium">{preReserva.nombre_festejado || 'No especificado'}</p>
+                  </div>
+                </div>
+                
+                <div className="flex items-start gap-2">
+                  <FiCalendar className="mt-1 text-indigo-500" />
+                  <div>
+                    <p className="text-sm text-gray-500">Fecha y Hora</p>
+                    <p className="font-medium">
+                      {preReserva.fecha_reserva ? formatDate(preReserva.fecha_reserva) : 'No especificado'}
+                    </p>
+                  </div>
+                </div>
+                
+                <div className="flex items-start gap-2">
+                  <FiPackage className="mt-1 text-indigo-500" />
+                  <div>
+                    <p className="text-sm text-gray-500">Paquete</p>
+                    <p className="font-medium">{preReserva.paquete_nombre || 'No especificado'}</p>
+                  </div>
+                </div>
+                
+                <div className="flex items-start gap-2">
+                  <FiCreditCard className="mt-1 text-indigo-500" />
+                  <div>
+                    <p className="text-sm text-gray-500">Total a Pagar</p>
+                    <p className="font-medium text-indigo-700">
+                      ${pagoEnProceso?.monto?.toFixed(2) || 'N/A'} MXN
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Error message */}
+          {error && (
+            <div className="bg-red-50 p-4 rounded-lg flex items-start gap-2 text-red-600">
+              <FiAlertCircle className="mt-1 flex-shrink-0" />
+              <div>
+                <p className="font-medium">Error</p>
+                <p>{error}</p>
+              </div>
+            </div>
+          )}
+
+          {/* Payment confirmation form */}
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <div>
+              <label htmlFor="token_transaccion" className="block text-sm font-medium text-gray-700 mb-1">
+                Número de Referencia / Confirmación
+              </label>
+              <input
+                type="text"
+                id="token_transaccion"
+                name="token_transaccion"
+                value={transactionData.token_transaccion}
+                onChange={handleChange}
+                placeholder="Ej. 123456789"
+                className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                required
+              />
+              <p className="mt-1 text-sm text-gray-500">
+                Ingresa el número de referencia o confirmación de tu pago
+              </p>
+            </div>
+
+            <div>
+              <label htmlFor="comprobante" className="block text-sm font-medium text-gray-700 mb-1">
+                Comprobante de Pago (opcional)
+              </label>
+              <input
+                type="file"
+                id="comprobante"
+                name="comprobante"
+                onChange={handleFileChange}
+                accept="image/*,.pdf"
+                className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+              />
+              <p className="mt-1 text-sm text-gray-500">
+                Puedes adjuntar una imagen o PDF de tu comprobante de pago
+              </p>
+            </div>
+          </form>
+        </div>
+
+        {/* Actions */}
         <div className="border-t border-gray-200 p-6 bg-gray-50 flex justify-end gap-4">
           <button
-            onClick={onCancel}
-            className="px-6 py-2 rounded-lg text-gray-700 bg-white border border-gray-300 hover:bg-gray-50 transition duration-300 flex items-center gap-2 shadow-sm"
+            onClick={onClose}
+            className="px-6 py-2 rounded-lg text-gray-700 bg-white border border-gray-300 hover:bg-gray-50 transition duration-300 flex items-center gap-2"
+            disabled={loading}
           >
             <FiX className="w-5 h-5" />
             Cancelar
           </button>
           <button
-            onClick={onConfirm}
-            className="px-6 py-2 rounded-lg text-white bg-indigo-600 hover:bg-indigo-700 transition duration-300 flex items-center gap-2 shadow-sm"
+            onClick={handleSubmit}
+            disabled={!isValid || loading}
+            className={`px-6 py-2 rounded-lg text-white flex items-center gap-2 ${
+              isValid && !loading
+                ? 'bg-indigo-600 hover:bg-indigo-700'
+                : 'bg-gray-400 cursor-not-allowed'
+            } transition duration-300`}
           >
-            <FiCheck className="w-5 h-5" />
-            Confirmar Reserva
+            {loading ? (
+              <>
+                <span className="animate-spin h-5 w-5 mr-2 border-t-2 border-b-2 border-white rounded-full"></span>
+                Procesando...
+              </>
+            ) : (
+              <>
+                <FiCheck className="w-5 h-5" />
+                Confirmar Pago
+              </>
+            )}
           </button>
         </div>
       </div>
