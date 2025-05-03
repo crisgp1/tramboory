@@ -30,6 +30,7 @@ const Appointment = lazy(() => import('@/pages/customer/reservation/Appointment.
 const PublicAppointment = lazy(() => import('@/pages/public/Appointment.jsx'))
 const AboutTramboory = lazy(() => import('@/pages/public/AboutTramboory.jsx'))
 const InventoryDashboard = lazy(() => import('@/pages/admin/inventory/InventoryDashboard.jsx'))
+const Cotizaciones = lazy(() => import('@/pages/customer/cotizaciones/index.jsx'))
 const ReservationStatus = lazy(() =>
   import('@/pages/customer/reservation/ReservationStatus.jsx')
 )
@@ -316,6 +317,18 @@ function App () {
                     redirectPath='/signin'
                   >
                     <ReservationStatus />
+                  </ProtectedRoute>
+                }
+              />
+
+              <Route
+                path='/customer/cotizaciones'
+                element={
+                  <ProtectedRoute
+                    allowedRoles={['cliente']}
+                    redirectPath='/signin'
+                  >
+                    <Cotizaciones />
                   </ProtectedRoute>
                 }
               />

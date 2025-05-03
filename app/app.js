@@ -20,6 +20,7 @@ const pagoRoutes = require('./routes/pagoRoutes');
 const auditoriaRoutes = require('./routes/auditoriaRoutes');
 const galeriaHomeRoutes = require('./routes/galeriaHomeRoutes');
 const inventoryRoutes = require('./routes/inventory');
+const cotizacionesRoutes = require('./routes/cotizacionesRoutes');
 const errorHandler = require('./middlewares/errorMiddleware');
 const fs = require('fs');
 const cors = require('cors');
@@ -111,6 +112,7 @@ app.use('/api/finanzas', protectedRoute(finanzaRoutes));
 app.use('/api/reservas', protectedRoute(reservaRoutes));
 app.use('/api/pagos', protectedRoute(pagoRoutes));
 app.use('/api/auditoria', protectedRoute(auditoriaRoutes));
+app.use('/api/cotizaciones', protectedRoute(cotizacionesRoutes));
 
 // Rutas semi-protegidas (solo auditoría)
 app.use('/api/paquetes', auditMiddleware, paqueteRoutes);

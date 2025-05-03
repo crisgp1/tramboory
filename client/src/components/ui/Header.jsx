@@ -142,6 +142,7 @@ export const Header = () => {
     ] : []),
     ...(isAuthenticated ? [
       { icon: <FiCalendar />, text: 'Mis Reservas', link: '/reservations' },
+      { icon: <FiAlertCircle />, text: 'Mis Cotizaciones', link: '/customer/cotizaciones' },
       { icon: <FiUserCheck />, text: 'Mi Perfil', link: '/profile' }
     ] : [
       { icon: <FiLogIn />, text: 'Iniciar Sesión', link: '/signin' },

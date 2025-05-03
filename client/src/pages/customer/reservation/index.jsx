@@ -16,9 +16,11 @@ import ContractModal from './ContractModal';
 import PaymentModal from './PaymentModal';
 import TuesdayModal from './TuesdayModal';
 import ConfirmationModal from './ConfirmationModal';
+import QuotationConfirmationModal from './QuotationConfirmationModal';
 
-// Store para pre-reservas (nuevo flujo de pago primero)
+// Stores
 import usePreReservasStore from '@/store/preReservasStore';
+import useCotizacionesStore from '@/store/cotizacionesStore';
 
 // Constantes para slots de tiempo
 const TIME_SLOTS = {
@@ -78,6 +80,7 @@ const ReservationPage = () => {
   const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
   const [isTuesdayModalOpen, setIsTuesdayModalOpen] = useState(false);
   const [isConfirmationModalOpen, setIsConfirmationModalOpen] = useState(false);
+  const [isQuotationModalOpen, setIsQuotationModalOpen] = useState(false);
   
   // Estados para flujo de reserva
   const [reservationData, setReservationData] = useState(null);
@@ -85,6 +88,7 @@ const ReservationPage = () => {
   const [contractAccepted, setContractAccepted] = useState(false);
   const [loading, setLoading] = useState(true);
   const [loadingProgress, setLoadingProgress] = useState(0);
+  const [isCotizacion, setIsCotizacion] = useState(true); // Por defecto, crear cotización
 
   // Obtener cabecera de autenticación
   const getAuthHeader = () => {
@@ -214,18 +218,26 @@ const ReservationPage = () => {
     }
   };
 
-  // Obtener las funciones y estados de preReservasStore
-  const { 
-    iniciarProcesoPago, 
-    confirmarPago, 
-    loading: preReservaLoading, 
+  // Obtener las funciones y estados de los stores
+  const {
+    iniciarProcesoPago,
+    confirmarPago,
+    loading: preReservaLoading,
     error: preReservaError,
     pagoEnProceso,
     preReserva,
     limpiarPreReserva
   } = usePreReservasStore();
+  
+  const {
+    crearCotizacion,
+    loading: cotizacionLoading,
+    error: cotizacionError,
+    cotizacionActual,
+    limpiarCotizacionActual
+  } = useCotizacionesStore();
 
-  // Manejar envío de reserva - Nuevo flujo de pago primero
+  // Manejar envío de formulario (puede ser cotización o reserva)
   const handleReservationSubmit = async (data) => {
     try {
       // Validar fecha y hora
@@ -240,10 +252,10 @@ const ReservationPage = () => {
       }
 
       // Transformar hora al formato del backend
-      const timeSlotValue = typeof data.hora_inicio === 'object' ? 
+      const timeSlotValue = typeof data.hora_inicio === 'object' ?
         data.hora_inicio.value : data.hora_inicio;
       
-      const timeSlot = timeSlotValue === 'mañana' ? 
+      const timeSlot = timeSlotValue === 'mañana' ?
         TIME_SLOTS.MORNING : TIME_SLOTS.AFTERNOON;
 
       // Crear fecha sin hora para backend
@@ -293,8 +305,8 @@ const ReservationPage = () => {
 
       const formattedTotal = total.toFixed(2);
 
-      // Crear objeto de reserva para pre-reserva
-      const reservationData = {
+      // Crear objeto de datos para cotización o reserva
+      const formData = {
         ...data,
         id_usuario: userData?.id,
         packagePrice: packagePrice,
@@ -310,15 +322,21 @@ const ReservationPage = () => {
         martes_fee: data.tuesdayFee || 0,
       };
 
-      setReservationData(reservationData);
-      setIsConfirmationModalOpen(true);
+      setReservationData(formData);
+      
+      // Mostrar el modal correspondiente según el flujo seleccionado
+      if (isCotizacion) {
+        setIsQuotationModalOpen(true);
+      } else {
+        setIsConfirmationModalOpen(true);
+      }
     } catch (error) {
       console.error('Error al procesar la reserva:', error);
       toast.error('Ocurrió un error al procesar la reserva. Por favor, intenta nuevamente.');
     }
   };
 
-  // Iniciar el proceso de pago en lugar de crear la reserva directamente
+  // Iniciar el proceso de pago para reserva directa
   const iniciarPago = async () => {
     try {
       setIsConfirmationModalOpen(false);
@@ -326,6 +344,25 @@ const ReservationPage = () => {
     } catch (error) {
       console.error('Error al iniciar el proceso de pago:', error);
       toast.error('Error al iniciar el proceso de pago. Por favor, intenta nuevamente.');
+    }
+  };
+  
+  // Crear cotización
+  const iniciarCotizacion = async () => {
+    try {
+      setIsQuotationModalOpen(false);
+      
+      // Crear cotización en el backend
+      const resultado = await crearCotizacion(reservationData);
+      
+      // Mostrar mensaje de éxito
+      toast.success('¡Cotización creada con éxito! Puedes revisarla en tu perfil.');
+      
+      // Navegar a la página de cotizaciones
+      navigate('/customer/cotizaciones');
+    } catch (error) {
+      console.error('Error al crear cotización:', error);
+      toast.error('Error al crear la cotización. Por favor, intenta nuevamente.');
     }
   };
 
@@ -447,13 +484,40 @@ const ReservationPage = () => {
             
             <h1 className="text-4xl md:text-5xl font-bold text-center text-indigo-800 mb-4">
               <span className="bg-clip-text text-transparent bg-gradient-to-r from-indigo-600 to-purple-600">
-                Crea tu Reserva Mágica
+                {isCotizacion ? 'Crea tu Cotización' : 'Crea tu Reserva Mágica'}
               </span>
             </h1>
             
             <p className="text-center text-gray-600 max-w-2xl">
-              Sigue los pasos para personalizar tu evento y crear una experiencia inolvidable
+              {isCotizacion
+                ? 'Personaliza tu evento y obtén una cotización sin compromiso'
+                : 'Sigue los pasos para personalizar tu evento y crear una experiencia inolvidable'}
             </p>
+            
+            <div className="mt-6 flex justify-center">
+              <div className="bg-white rounded-lg shadow-md p-2 inline-flex">
+                <button
+                  onClick={() => setIsCotizacion(true)}
+                  className={`px-4 py-2 rounded-md transition-colors ${
+                    isCotizacion
+                      ? 'bg-indigo-600 text-white'
+                      : 'bg-transparent text-gray-700 hover:bg-gray-100'
+                  }`}
+                >
+                  Cotización
+                </button>
+                <button
+                  onClick={() => setIsCotizacion(false)}
+                  className={`px-4 py-2 rounded-md transition-colors ${
+                    !isCotizacion
+                      ? 'bg-indigo-600 text-white'
+                      : 'bg-transparent text-gray-700 hover:bg-gray-100'
+                  }`}
+                >
+                  Reserva Directa
+                </button>
+              </div>
+            </div>
             
             {hasReservations && (
               <button
@@ -505,6 +569,21 @@ const ReservationPage = () => {
       </div>
       
       {/* Modales */}
+          {/* Modal de cotización */}
+          {isQuotationModalOpen && (
+            <QuotationConfirmationModal
+              reservationData={reservationData}
+              packages={packages}
+              foodOptions={foodOptions}
+              tematicas={tematicas}
+              extras={extrasData}
+              mamparas={mamparas}
+              onCancel={() => setIsQuotationModalOpen(false)}
+              onConfirm={iniciarCotizacion}
+            />
+          )}
+          
+          {/* Modal de confirmación de pago */}
           {isConfirmationModalOpen && pagoEnProceso ? (
             // Modal de confirmación para pago ya iniciado
             <ConfirmationModal
@@ -549,11 +628,18 @@ const ReservationPage = () => {
             />
           )}
 
-          {/* Mostrar mensaje de error si existe */}
+          {/* Mostrar mensajes de error */}
           {preReservaError && (
             <div className="fixed bottom-4 right-4 bg-red-100 border-l-4 border-red-500 text-red-700 p-4 rounded shadow-lg z-50">
               <p className="font-bold">Error</p>
               <p>{preReservaError}</p>
+            </div>
+          )}
+          
+          {cotizacionError && (
+            <div className="fixed bottom-4 right-4 bg-red-100 border-l-4 border-red-500 text-red-700 p-4 rounded shadow-lg z-50">
+              <p className="font-bold">Error</p>
+              <p>{cotizacionError}</p>
             </div>
           )}
     </div>
