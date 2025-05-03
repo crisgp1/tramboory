@@ -3,7 +3,8 @@ import {
   Navigate,
   Route,
   Routes,
-  Outlet
+  Outlet,
+  useLocation
 } from 'react-router-dom'
 import { lazy, Suspense, useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
@@ -205,6 +206,45 @@ const SubtleLoader = () => {
   )
 }
 
+// Componente de transición de página con animación suave
+const PageTransition = ({ children }) => {
+  const location = useLocation();
+  
+  const pageVariants = {
+    initial: {
+      opacity: 0,
+      y: 30
+    },
+    in: {
+      opacity: 1,
+      y: 0
+    },
+    out: {
+      opacity: 0,
+      y: -30
+    }
+  };
+  
+  const pageTransition = {
+    type: "tween",
+    ease: "easeInOut",
+    duration: 1.2  // Duración más lenta para una transición más suave
+  };
+  
+  return (
+    <motion.div
+      key={location.pathname}
+      initial="initial"
+      animate="in"
+      exit="out"
+      variants={pageVariants}
+      transition={pageTransition}
+    >
+      {children}
+    </motion.div>
+  );
+};
+
 function App () {
   return (
     <AuthProvider>
@@ -226,11 +266,12 @@ function App () {
           }}
         />
         <Suspense fallback={<SubtleLoader />}>
-          <Routes>
-            {/* Rutas sin Header ni Footer */}
-            <Route path='/' element={<Home />} />
-            <Route path='/appointments' element={<PublicAppointment />} />
-            <Route path='/about' element={<AboutTramboory />} />
+          <AnimatePresence mode="wait">
+            <Routes>
+              {/* Rutas sin Header ni Footer */}
+              <Route path='/' element={<PageTransition><Home /></PageTransition>} />
+              <Route path='/appointments' element={<PageTransition><PublicAppointment /></PageTransition>} />
+              <Route path='/about' element={<PageTransition><AboutTramboory /></PageTransition>} />
             
             {/* Rutas con Header y Footer */}
             <Route element={<Layout />}>
@@ -308,6 +349,7 @@ function App () {
 
             <Route path='*' element={<Navigate to='/' />} />
           </Routes>
+          </AnimatePresence>
         </Suspense>
       </Router>
     </AuthProvider>

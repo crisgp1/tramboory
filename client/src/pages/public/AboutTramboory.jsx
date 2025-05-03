@@ -422,19 +422,20 @@ const AboutTramboory = () => {
               Estamos listos para hacer de tu próxima celebración un momento inolvidable
             </p>
             <div className="flex flex-col sm:flex-row items-center justify-center gap-6">
-              <motion.a
-                href="https://wa.me/5213317650187"
-                target="_blank"
-                rel="noopener noreferrer"
-                whileHover={{ scale: 1.05 }}
+              <motion.button
+                onClick={() => {
+                  window.open("https://wa.me/523332300243?text=Hola%2C%20me%20gustar%C3%ADa%20obtener%20m%C3%A1s%20informaci%C3%B3n%20sobre%20sus%20servicios%20para%20fiestas%20infantiles.", '_blank', 'noopener,noreferrer');
+                }}
+                whileHover={{ scale: 1.1, rotate: 5 }}
                 whileTap={{ scale: 0.95 }}
-                className="inline-flex items-center justify-center space-x-2 py-3 px-6 
-                  bg-green-500 text-white rounded-lg font-bold hover:bg-green-600 
-                  transition-colors duration-300 shadow-lg"
+                className="inline-flex items-center justify-center space-x-2 py-3 px-6
+                  bg-green-500 text-white rounded-lg font-bold hover:bg-green-600
+                  transition-colors duration-300 shadow-lg cursor-pointer"
+                aria-label="Contactar por WhatsApp"
               >
                 <FiMessageCircle className="text-xl" />
                 <span>Contactar por WhatsApp</span>
-              </motion.a>
+              </motion.button>
               
               <motion.a
                 href="/appointments"

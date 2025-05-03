@@ -552,7 +552,7 @@ const NavbarPublic = () => {
                   </a>
                   
                   <a
-                    href="tel:+523317650187"
+                    href="tel:+523332300243"
                     className="flex items-center justify-between px-4 py-3 rounded-lg 
                       hover:bg-gradient-to-r hover:from-green-500/5 hover:to-white/10 
                       transition-all duration-300 group relative overflow-hidden"
@@ -569,7 +569,7 @@ const NavbarPublic = () => {
                         <FiPhone />
                       </motion.span>
                       <span className="text-white font-medium group-hover:text-green-400 transition-colors duration-300">
-                        (33) 1765 0187
+                        (33) 3230 0243
                       </span>
                     </div>
                     <motion.div

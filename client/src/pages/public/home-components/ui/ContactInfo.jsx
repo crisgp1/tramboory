@@ -11,7 +11,7 @@ const ContactInfo = () => {
     {
       icon: FiPhone,
       title: "Teléfono",
-      content: "+52 (33) 1765 0187"
+      content: "+52 (33) 3230 0243"
     },
     {
       icon: FiMail,
@@ -49,6 +49,18 @@ const ContactInfo = () => {
               item.content.map((line, i) => (
                 <p key={i} className="text-gray-300">{line}</p>
               ))
+            ) : item.title === "Teléfono" ? (
+              <motion.a
+                href={`https://wa.me/523332300243?text=Hola%2C%20me%20gustar%C3%ADa%20obtener%20m%C3%A1s%20informaci%C3%B3n%20sobre%20sus%20servicios%20para%20fiestas%20infantiles.`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-gray-300 hover:text-green-400 transition-colors duration-300 flex items-center"
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                transition={{ type: "spring", stiffness: 400, damping: 15 }}
+              >
+                {item.content}
+              </motion.a>
             ) : (
               <p className="text-gray-300">{item.content}</p>
             )}

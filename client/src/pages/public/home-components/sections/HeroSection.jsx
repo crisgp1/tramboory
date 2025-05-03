@@ -138,7 +138,7 @@ const HeroSection = ({ sectionRefs }) => {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 1, delay: 0.7 }}
-            className="flex flex-col sm:flex-row items-center justify-center gap-6"
+            className="flex justify-center w-full"
           >
             <motion.div
               whileHover={{ scale: 1.05 }}
@@ -156,23 +156,6 @@ const HeroSection = ({ sectionRefs }) => {
                 <FiCalendar className="mr-2" />
                 <span>Reserva tu fiesta</span>
               </Link>
-            </motion.div>
-            
-            <motion.div
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-              className="relative group"
-            >
-              <span className="absolute -inset-0.5 bg-white/5 rounded-xl blur-md opacity-0 group-hover:opacity-100 transition-opacity duration-300"></span>
-              <motion.a
-                href="#services"
-                className="relative px-10 py-5 bg-white/10 backdrop-blur-lg text-white rounded-xl
-                  font-extrabold text-xl border border-white/20 hover:bg-white/20 hover:border-white/40
-                  transition-all duration-300 flex items-center group-hover:text-yellow-200"
-              >
-                <FiGift className="mr-2" />
-                <span>Paquetes para fiestas</span>
-              </motion.a>
             </motion.div>
           </motion.div>
         </div>

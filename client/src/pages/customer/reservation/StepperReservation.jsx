@@ -643,7 +643,16 @@ const StepperReservation = () => {
                 <div>
                   <h4 className="font-medium text-blue-800">¿Necesitas ayuda?</h4>
                   <p className="text-blue-700 text-sm mt-1">
-                    Puedes contactarnos por WhatsApp para asistencia personal o navegar entre los pasos usando los botones de navegación.
+                    Puedes <motion.button
+                      onClick={() => {
+                        window.open("https://wa.me/523332300243?text=Hola%2C%20necesito%20ayuda%20con%20mi%20reservaci%C3%B3n%20en%20Tramboory.", '_blank', 'noopener,noreferrer');
+                      }}
+                      className="text-blue-800 font-medium hover:text-green-600 transition-colors duration-300 inline cursor-pointer"
+                      whileHover={{ scale: 1.05 }}
+                      whileTap={{ scale: 0.95 }}
+                    >
+                      contactarnos por WhatsApp
+                    </motion.button> para asistencia personal o navegar entre los pasos usando los botones de navegación.
                   </p>
                 </div>
               </div>
