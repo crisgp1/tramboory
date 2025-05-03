@@ -130,21 +130,38 @@ app.use(errorHandler);
 
 // Sincronizar la base de datos
 const { runMigrations } = require('./utils/dbMigrations');
-
 const initializeDatabase = async () => {
     try {
+        // Primer intento de conexión
         await sequelize.authenticate();
         console.log('Conexión a la base de datos establecida correctamente.');
         
-        // Ejecutar las migraciones SQL
-        await runMigrations();
-        console.log('Migraciones SQL ejecutadas correctamente.');
+        // Ejecutar las migraciones SQL con mejor manejo de errores
+        try {
+            await runMigrations();
+            console.log('Migraciones SQL ejecutadas correctamente.');
+        } catch (migrationError) {
+            console.error('Error durante las migraciones, pero continuando:', migrationError.message);
+            // Continuamos a pesar del error en migraciones
+        }
         
-        // Sincronizar los modelos
+        // Sincronizar los modelos con {force: false} para no sobrescribir datos
         await sequelize.sync({ force: false });
         console.log('Modelos sincronizados correctamente.');
     } catch (err) {
         console.error('Error al conectar con la base de datos:', err);
+        
+        // Si no estamos en producción, ayuda para desarrolladores
+        if (process.env.NODE_ENV !== 'production') {
+            console.log('\n--- SUGERENCIAS PARA RESOLVER EL PROBLEMA ---');
+            console.log('1. Asegúrate de que PostgreSQL esté corriendo');
+            console.log('2. Verifica las credenciales en el archivo .env');
+            console.log('3. Verifica que la base de datos "tramboory_db" exista');
+            console.log('4. Si usas Docker, asegúrate de que los contenedores estén corriendo');
+            console.log('   - Ejecuta: docker ps');
+            console.log('   - Para iniciar los servicios: ./start-docker.sh');
+        }
+        
         process.exit(1);
     }
 };
