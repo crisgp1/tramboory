@@ -1,0 +1,33 @@
+// Add this line after the other model imports:
+const PreReserva = require('./PreReserva');
+
+// Update the modelos array to include PreReserva:
+const modelos = [
+  Paquete, PaqueteAlimento, OpcionAlimento, Usuario, Reserva,
+  Finanza, Pago, Mampara, Tematica, Extra, Categoria, GaleriaHome, PreReserva
+];
+
+// Add this association near the other associations:
+Pago.belongsTo(PreReserva, { foreignKey: 'id_pre_reserva', as: 'preReserva' });
+PreReserva.hasMany(Pago, { foreignKey: 'id_pre_reserva', as: 'pagos' });
+
+// Add PreReserva to the exported models:
+module.exports = {
+  sequelize,
+  Paquete,
+  PaqueteAlimento,
+  OpcionAlimento,
+  Usuario,
+  Reserva,
+  Finanza,
+  Pago,
+  Mampara,
+  Tematica,
+  Extra,
+  Categoria,
+  ReservaExtra,
+  Auditoria,
+  GaleriaHome,
+  PreReserva,  // Add this line
+  ...inventoryModels
+};

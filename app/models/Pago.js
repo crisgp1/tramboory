@@ -127,13 +127,10 @@ Pago.init({
       key: 'id'
     }
   },
-  id_pre_reserva: {
+  id_cotizacion: {
     type: DataTypes.INTEGER,
-    allowNull: true, // Permite NULL para pagos asociados a reservas existentes
-    references: {
-      model: 'pre_reservas',
-      key: 'id'
-    }
+    allowNull: true,
+    references: { model: 'cotizaciones', key: 'id' }
   },
   monto: {
     type: DataTypes.DECIMAL(10, 2),
