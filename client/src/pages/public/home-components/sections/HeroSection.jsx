@@ -1,3 +1,4 @@
+
 import React, { useEffect, useRef } from 'react'
 import { Link } from 'react-router-dom'
 import { motion, useAnimation, useScroll, useTransform } from 'framer-motion'
@@ -178,7 +179,7 @@ const HeroSection = ({ sectionRefs }) => {
       </motion.div>
 
       {/* Scroll Indicator mejorado */}
-      <div className="absolute bottom-6 left-0 right-0 z-10">
+      <div className="absolute bottom-6 left-0 right-0 z-10 flex justify-center w-full">
         <ScrollIndicator targetId="services" />
       </div>
     </section>

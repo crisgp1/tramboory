@@ -253,7 +253,7 @@ const CelebrantStep = () => {
                       </label>
 
                       <label className={`flex items-center gap-2 p-3 rounded-lg border cursor-pointer transition-colors ${
-                        field.value && !['femenino', 'masculino'].includes(field.value)
+                        field.value === 'otro'
                           ? 'bg-purple-50 border-purple-300 text-purple-700'
                           : 'bg-white border-gray-300 hover:bg-gray-50'
                       }`}>
@@ -262,15 +262,15 @@ const CelebrantStep = () => {
                           type="radio"
                           value="otro"
                           className="hidden"
-                          checked={field.value && !['femenino', 'masculino'].includes(field.value)}
+                          checked={field.value === 'otro'}
                           onChange={() => field.onChange('otro')}
                         />
                         <div className={`w-4 h-4 rounded-full border flex items-center justify-center ${
-                          field.value && !['femenino', 'masculino'].includes(field.value)
+                          field.value === 'otro'
                             ? 'border-purple-500 bg-white'
                             : 'border-gray-400'
                         }`}>
-                          {field.value && !['femenino', 'masculino'].includes(field.value) && (
+                          {field.value === 'otro' && (
                             <div className="w-2 h-2 rounded-full bg-purple-500"></div>
                           )}
                         </div>
@@ -279,7 +279,7 @@ const CelebrantStep = () => {
                     </div>
 
                     {/* Campo de texto para "Otro" con animación */}
-                    {field.value && !['femenino', 'masculino'].includes(field.value) && (
+                    {field.value === 'otro' && (
                       <motion.div
                         initial={{ opacity: 0, y: -10, height: 0 }}
                         animate={{ opacity: 1, y: 0, height: 'auto' }}
@@ -301,9 +301,8 @@ const CelebrantStep = () => {
                               placeholder="Especifica el género"
                               className="w-full p-3 rounded-lg border border-purple-300 focus:ring-2 focus:ring-purple-500 focus:border-purple-500 bg-purple-50 transition-all duration-300"
                               onChange={(e) => {
-                                customField.onChange(e);
-                                // Actualiza el valor principal con el texto personalizado
-                                field.onChange(e.target.value);
+                                customField.onChange(e.target.value);
+                                // Ya no actualizamos el valor principal, mantenemos 'otro'
                               }}
                               autoFocus
                             />

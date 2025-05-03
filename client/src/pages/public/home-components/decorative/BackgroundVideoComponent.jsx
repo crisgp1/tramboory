@@ -21,14 +21,16 @@ const BackgroundVideoComponent = ({ videoRef, isVideoPlaying, toggleVideo }) => 
     <div className="absolute inset-0 bg-gradient-to-b from-purple-950/70 via-purple-900/60 to-indigo-950/70 backdrop-blur-[2px]" />
     <button
       onClick={toggleVideo}
-      className="absolute bottom-4 right-4 z-10 p-3 rounded-full bg-white/10 backdrop-blur-md
-        hover:bg-white/20 transition-all duration-300 border border-white/20"
+      className="absolute bottom-4 right-4 z-50 p-3 sm:p-4 rounded-full bg-white/10 backdrop-blur-md
+        hover:bg-white/20 transition-all duration-300 border border-white/20
+        transform hover:scale-110 focus:outline-none focus:ring-2 focus:ring-yellow-400/50
+        cursor-pointer touch-manipulation"
       aria-label={isVideoPlaying ? "Pausar video" : "Reproducir video"}
     >
       {isVideoPlaying ? (
-        <FiPause className="text-white text-xl" />
+        <FiPause className="text-white text-xl sm:text-2xl" />
       ) : (
-        <FiPlay className="text-white text-xl" />
+        <FiPlay className="text-white text-xl sm:text-2xl" />
       )}
     </button>
   </div>
