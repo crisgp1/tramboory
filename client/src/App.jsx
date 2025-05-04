@@ -30,6 +30,7 @@ const Appointment = lazy(() => import('@/pages/customer/reservation/Appointment.
 const PublicAppointment = lazy(() => import('@/pages/public/Appointment.jsx'))
 const AboutTramboory = lazy(() => import('@/pages/public/AboutTramboory.jsx'))
 const InventoryDashboard = lazy(() => import('@/pages/admin/inventory/InventoryDashboard.jsx'))
+const InventoryIndex = lazy(() => import('@/pages/admin/inventory/index.jsx'))
 const Cotizaciones = lazy(() => import('@/pages/customer/cotizaciones/index.jsx'))
 const ReservationStatus = lazy(() =>
   import('@/pages/customer/reservation/ReservationStatus.jsx')
@@ -348,13 +349,15 @@ function App () {
               <Route path='/forgot-password' element={<ForgotPassword />} />
               
               <Route
-                path='/inventory'
+                path='/inventory/*'
                 element={
                   <ProtectedRoute
                     allowedRoles={['admin', 'inventario']}
                     redirectPath='/signin'
                   >
-                    <InventoryDashboard />
+                    <Suspense fallback={<div className="flex items-center justify-center h-screen"><span className="loading loading-spinner loading-lg"></span></div>}>
+                      <InventoryIndex />
+                    </Suspense>
                   </ProtectedRoute>
                 }
               />

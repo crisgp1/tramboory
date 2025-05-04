@@ -14,17 +14,17 @@ import {
   FiClock,
   FiDollarSign
 } from 'react-icons/fi';
-import { 
-  getAllProviders, 
-  getProviderById, 
-  createProvider, 
-  updateProvider, 
+import {
+  getAllProviders,
+  getProviderById,
+  createProvider,
+  updateProvider,
   deleteProvider,
   searchProviders
-} from '../../services/inventoryService';
-import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from '../../components/ui/Table';
-import { Button } from '../../components/ui/Button';
-import Modal from '../../components/ui/Modal';
+} from '@/services/inventoryService';
+import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from '@/components/ui/Table';
+import { Button } from '@/components/ui/Button';
+import Modal from '@/components/ui/Modal';
 
 const Proveedores = () => {
   const [providers, setProviders] = useState([]);

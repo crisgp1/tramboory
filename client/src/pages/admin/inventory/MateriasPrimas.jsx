@@ -1,18 +1,18 @@
 import { useState, useEffect, useCallback } from 'react';
 import { toast } from 'react-toastify';
 import { FiEdit2, FiTrash2, FiPlus, FiSearch, FiPackage, FiFilter, FiX } from 'react-icons/fi';
-import { 
-  getAllItems, 
-  getItemById, 
-  createItem, 
-  updateItem, 
+import {
+  getAllItems,
+  getItemById,
+  createItem,
+  updateItem,
   deleteItem,
   getAllUnits
-} from '../../services/inventoryService';
-import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from '../../components/ui/Table';
-import { Button } from '../../components/ui/Button';
-import Modal from '../../components/ui/Modal';
-import Badge from '../../components/ui/Badge';
+} from '@/services/inventoryService';
+import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from '@/components/ui/Table';
+import { Button } from '@/components/ui/Button';
+import Modal from '@/components/ui/Modal';
+import { Badge } from '@/components/ui/Badge';
 
 const MateriasPrimas = () => {
   const [items, setItems] = useState([]);

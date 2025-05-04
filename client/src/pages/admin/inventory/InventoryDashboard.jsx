@@ -121,25 +121,27 @@ const InventoryDashboard = () => {
     >
       {/* Cabecera con título y fecha de actualización */}
       <FadeInUp>
-        <div className="bg-white rounded-xl shadow-sm p-5 mb-5 border border-gray-100">
-          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-5">
+        <div className="bg-white rounded-xl shadow-sm p-5 mb-5 border border-gray-100 text-center">
+          <div className="flex flex-col items-center gap-4 mb-5">
             <div>
-              <h1 className="text-xl sm:text-2xl font-bold text-gray-800 flex items-center">
+              <h1 className="text-xl sm:text-2xl font-bold text-gray-800 flex items-center justify-center">
                 Dashboard de Inventario
                 <span className="ml-2 px-2 py-0.5 bg-indigo-50 text-indigo-600 text-xs rounded-md font-normal">v1.0</span>
               </h1>
-              <p className="text-gray-500 text-sm mt-1 flex items-center">
+              <p className="text-gray-500 text-sm mt-1 flex items-center justify-center">
                 <FiClock className="mr-1.5" size={14} />
                 Última actualización: {new Date().toLocaleTimeString()}
               </p>
             </div>
           </div>
           
-          {/* Navegación por pestañas */}
-          <TabNav 
-            activeTab={activeTab}
-            setActiveTab={setActiveTab}
-          />
+          {/* Navegación por pestañas centrada */}
+          <div className="flex justify-center">
+            <TabNav
+              activeTab={activeTab}
+              setActiveTab={setActiveTab}
+            />
+          </div>
         </div>
       </FadeInUp>
 
@@ -181,11 +183,13 @@ const InventoryDashboard = () => {
       )}
 
       {/* Botón de refresco flotante */}
-      <RefreshButton 
-        onRefresh={handleRefresh}
-        isRefreshing={refreshing}
-        disabled={loading}
-      />
+      <div className="fixed bottom-6 right-6 z-10">
+        <RefreshButton
+          onRefresh={handleRefresh}
+          isRefreshing={refreshing}
+          disabled={loading}
+        />
+      </div>
     </div>
   );
 };

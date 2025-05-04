@@ -7,6 +7,7 @@ const MODEL_SCHEMAS = {
   PaqueteAlimento: 'main',
   OpcionAlimento: 'main',
   Reserva: 'main',
+  PreReserva: 'main',
   Mampara: 'main',
   Tematica: 'main',
   Extra: 'main',

@@ -29,6 +29,27 @@ CREATE INDEX IF NOT EXISTS idx_pre_reservas_usuario ON main.pre_reservas(id_usua
 CREATE INDEX IF NOT EXISTS idx_pre_reservas_estado ON main.pre_reservas(estado);
 CREATE INDEX IF NOT EXISTS idx_pre_reservas_expiracion ON main.pre_reservas(fecha_expiracion);
 
+-- Add id_pre_reserva column to finanzas.pagos table if it doesn't exist
+DO $$
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1 FROM information_schema.columns 
+        WHERE table_schema = 'finanzas' 
+        AND table_name = 'pagos' 
+        AND column_name = 'id_pre_reserva'
+    ) THEN
+        ALTER TABLE finanzas.pagos 
+        ADD COLUMN id_pre_reserva INTEGER NULL;
+        
+        COMMENT ON COLUMN finanzas.pagos.id_pre_reserva IS 'ID de la pre-reserva asociada al pago';
+    END IF;
+END
+$$;
+
+-- Make sure the index exists
+DROP INDEX IF EXISTS finanzas.idx_pagos_pre_reserva;
+CREATE INDEX idx_pagos_pre_reserva ON finanzas.pagos(id_pre_reserva);
+
 -- Add the foreign key reference in the pagos table if it doesn't exist
 DO $$
 BEGIN

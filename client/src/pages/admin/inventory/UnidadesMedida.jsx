@@ -1,11 +1,11 @@
 import { useState, useEffect, useCallback } from 'react';
 import { toast } from 'react-toastify';
 import { FiEdit2, FiTrash2, FiPlus, FiSearch, FiFilter, FiX } from 'react-icons/fi';
-import { getAllUnits, getUnitById, createUnit, updateUnit, deleteUnit } from '../../services/inventoryService';
-import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from '../../components/ui/Table';
-import { Button } from '../../components/ui/Button';
-import Modal from '../../components/ui/Modal';
-import Badge from '../../components/ui/Badge';
+import { getAllUnits, getUnitById, createUnit, updateUnit, deleteUnit } from '@/services/inventoryService';
+import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from '@/components/ui/Table';
+import { Button } from '@/components/ui/Button';
+import Modal from '@/components/ui/Modal';
+import { Badge } from '@/components/ui/Badge';
 
 const tipoBadgeColors = {
   masa: 'blue',

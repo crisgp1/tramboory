@@ -1,9 +1,9 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'react-toastify';
-import { useAuth } from '../../hooks/useAuth';
-import InventoryMenu from '../../components/inventory/InventoryMenu';
-import InventoryLoader from '../../components/inventory/InventoryLoader';
+import { useAuth } from '@/hooks/useAuth';
+import InventorySidebarLayout from '@/components/inventory/InventorySidebarLayout';
+import InventoryLoader from '@/components/inventory/InventoryLoader';
 import InventoryDashboard from './InventoryDashboard';
 import MateriasPrimas from './MateriasPrimas';
 import UnidadesMedida from './UnidadesMedida';
@@ -27,7 +27,7 @@ const InventoryIndex = () => {
       if (!isAuthenticated) {
         toast.info('Por favor inicia sesión para acceder al sistema de inventario');
         navigate('/signin', { state: { returnUrl: '/inventory' } });
-      } 
+      }
       // Verificar permisos de acceso al módulo
       else if (user && user.tipo_usuario !== 'admin' && user.tipo_usuario !== 'inventario') {
         toast.error('No tienes permisos para acceder al sistema de inventario');
@@ -37,9 +37,10 @@ const InventoryIndex = () => {
   }, [authLoading, isAuthenticated, user, navigate]);
 
   // Renderizar pantalla de carga mientras verifica autenticación
-  if (authLoading || !isAuthenticated) {
-    return <InventoryLoader />;
-  }
+  // Comentado temporalmente para pruebas
+  // if (authLoading || !isAuthenticated) {
+  //   return <InventoryLoader />;
+  // }
 
   // Renderizar el contenido basado en la sección activa
   const renderContent = () => {
@@ -68,23 +69,11 @@ const InventoryIndex = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-indigo-50 to-purple-50">
-      {isAuthenticated && (
-        <div className="flex flex-col h-screen lg:flex-row">
-          {/* Menú de navegación lateral */}
-          <InventoryMenu 
-            activeSection={activeSection}
-            setActiveSection={setActiveSection}
-          />
-          
-          {/* Contenido principal */}
-          <main className="flex-1 p-3 sm:p-4 md:p-6 overflow-auto">
-            <div className="max-w-7xl mx-auto">
-              {renderContent()}
-            </div>
-          </main>
-        </div>
-      )}
+    <div className="min-h-screen">
+      {/* Eliminado temporalmente el chequeo de autenticación para pruebas */}
+      <InventorySidebarLayout>
+        {renderContent()}
+      </InventorySidebarLayout>
     </div>
   );
 };

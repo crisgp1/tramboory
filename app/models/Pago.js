@@ -132,6 +132,15 @@ Pago.init({
     allowNull: true,
     references: { model: 'cotizaciones', key: 'id' }
   },
+  id_pre_reserva: {
+    type: DataTypes.INTEGER,
+    allowNull: true,
+    references: {
+      model: { tableName: 'pre_reservas', schema: 'main' },
+      key: 'id'
+    },
+    comment: 'ID de la pre-reserva asociada al pago'
+  },
   monto: {
     type: DataTypes.DECIMAL(10, 2),
     allowNull: false,

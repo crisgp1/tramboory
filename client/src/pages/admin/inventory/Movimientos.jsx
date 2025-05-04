@@ -14,7 +14,7 @@ import {
   FiTruck,
   FiSettings
 } from 'react-icons/fi';
-import { 
+import {
   getAllMovements,
   getMovementById,
   createMovement,
@@ -24,11 +24,11 @@ import {
   getAllAdjustmentTypes,
   getMovimientosByMateriaPrima,
   getMovimientosByLote
-} from '../../services/inventoryService';
-import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from '../../components/ui/Table';
-import { Button } from '../../components/ui/Button';
-import Modal from '../../components/ui/Modal';
-import Badge from '../../components/ui/Badge';
+} from '@/services/inventoryService';
+import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from '@/components/ui/Table';
+import { Button } from '@/components/ui/Button';
+import Modal from '@/components/ui/Modal';
+import { Badge } from '@/components/ui/Badge';
 
 const Movimientos = () => {
   const [movimientos, setMovimientos] = useState([]);

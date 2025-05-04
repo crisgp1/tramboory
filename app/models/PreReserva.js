@@ -14,7 +14,7 @@ PreReserva.init({
     type: DataTypes.INTEGER,
     allowNull: false,
     references: {
-      model: 'usuarios',
+      model: { tableName: 'usuarios', schema: 'usuarios' },
       key: 'id'
     }
   },

@@ -17,6 +17,7 @@ const Categoria = require('./Categoria');
 const ReservaExtra = require('./ReservaExtra');
 const Auditoria = require('./Auditoria');
 const GaleriaHome = require('./GaleriaHome');
+const PreReserva = require('./PreReserva');
 
 // Importar modelos de inventario
 const inventoryModels = require('./Inventory');
@@ -24,7 +25,7 @@ const inventoryModels = require('./Inventory');
 // Agregar hooks de auditoría a todos los modelos
 const modelos = [
   Paquete, PaqueteAlimento, OpcionAlimento, Usuario, Reserva,
-  Finanza, Pago, Mampara, Tematica, Extra, Categoria, GaleriaHome
+  Finanza, Pago, Mampara, Tematica, Extra, Categoria, GaleriaHome, PreReserva
 ];
 
 modelos.forEach(modelo => {
@@ -56,6 +57,10 @@ Finanza.belongsTo(Categoria, { foreignKey: 'id_categoria', as: 'categoria' });
 // Asociaciones de Pago
 Reserva.hasMany(Pago, { foreignKey: 'id_reserva', as: 'pagos' });
 Pago.belongsTo(Reserva, { foreignKey: 'id_reserva', as: 'reservaPago' });
+
+// Asociación entre Pago y PreReserva
+Pago.belongsTo(PreReserva, { foreignKey: 'id_pre_reserva', as: 'preReserva' });
+PreReserva.hasMany(Pago, { foreignKey: 'id_pre_reserva', as: 'pagos' });
 
 // Asociaciones de Tematica
 Tematica.hasMany(Reserva, { foreignKey: 'id_tematica', as: 'reservasTematica' });
@@ -109,5 +114,6 @@ module.exports = {
   ReservaExtra,
   Auditoria,
   GaleriaHome,
+  PreReserva,
   ...inventoryModels
 };

@@ -147,6 +147,45 @@ const initializeDatabase = async () => {
             // Continuamos a pesar del error en migraciones
         }
         
+        // Agregar manualmente la columna id_pre_reserva a la tabla pagos
+        try {
+            await sequelize.query(`
+                DO $$
+                BEGIN
+                    -- Add id_pre_reserva column if it doesn't exist
+                    IF NOT EXISTS (
+                        SELECT 1 FROM information_schema.columns 
+                        WHERE table_schema = 'finanzas' 
+                        AND table_name = 'pagos' 
+                        AND column_name = 'id_pre_reserva'
+                    ) THEN
+                        ALTER TABLE finanzas.pagos 
+                        ADD COLUMN id_pre_reserva INTEGER NULL;
+                        
+                        COMMENT ON COLUMN finanzas.pagos.id_pre_reserva IS 'ID de la pre-reserva asociada al pago';
+                    END IF;
+
+                    -- Add token_transaccion column if it doesn't exist
+                    IF NOT EXISTS (
+                        SELECT 1 FROM information_schema.columns 
+                        WHERE table_schema = 'finanzas' 
+                        AND table_name = 'pagos' 
+                        AND column_name = 'token_transaccion'
+                    ) THEN
+                        ALTER TABLE finanzas.pagos 
+                        ADD COLUMN token_transaccion VARCHAR(255) NULL;
+                        
+                        COMMENT ON COLUMN finanzas.pagos.token_transaccion IS 'Token de identificación de la transacción en el sistema externo';
+                    END IF;
+                END
+                $$;
+            `);
+            console.log('Columnas id_pre_reserva y token_transaccion agregadas a la tabla pagos (si no existían).');
+        } catch (columnError) {
+            console.error('Error al agregar la columna id_pre_reserva:', columnError.message);
+            // Continuamos a pesar del error
+        }
+        
         // Sincronizar los modelos con {force: false} para no sobrescribir datos
         await sequelize.sync({ force: false });
         console.log('Modelos sincronizados correctamente.');
