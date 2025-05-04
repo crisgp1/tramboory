@@ -205,9 +205,43 @@ const StepperReservation = () => {
     // El valor de tuesdayFee ya se establece en DateTimeStep
   };
   
-  // Manejar pago
-  const handlePaymentSuccess = () => {
-    handleSubmit(submitReservation)();
+  // Manejar selección de método de pago
+  const handleSelectPaymentMethod = async (paymentMethod) => {
+    try {
+      // Guardar el método de pago seleccionado
+      console.log('Método de pago seleccionado:', paymentMethod);
+      
+      // Normalizar el método de pago para asegurar compatibilidad
+      const normalizedPaymentMethod = paymentMethod === 'transfer' ? 'transferencia' : paymentMethod;
+      
+      // Guardar el método de pago en el formulario si es necesario
+      setValue('payment_method', normalizedPaymentMethod);
+      
+      // Continuar con el proceso de reserva - convertir a Promise para poder usar await
+      return new Promise((resolve, reject) => {
+        // Usar el callback de onSubmit para detectar éxito o error
+        const onSubmitSuccess = async (data) => {
+          try {
+            await submitReservation(data);
+            resolve(true);
+          } catch (error) {
+            console.error('Error en el proceso de reserva:', error);
+            reject(error);
+          }
+        };
+        
+        // Ejecutar handleSubmit con nuestro callback personalizado
+        const submitResult = handleSubmit(onSubmitSuccess)();
+        
+        // Si handleSubmit devuelve una promesa (por validación), manejarla
+        if (submitResult && typeof submitResult.catch === 'function') {
+          submitResult.catch(reject);
+        }
+      });
+    } catch (error) {
+      console.error('Error al seleccionar método de pago:', error);
+      throw error; // Re-lanzar para que PaymentModal pueda manejarlo
+    }
   };
   
   // Manejar confirmación
@@ -237,8 +271,12 @@ const StepperReservation = () => {
         color_favorito: data.color_favorito || null,
         detalles_especiales: data.detalles_especiales || null,
         extras: data.extras || [],
-        precio_total: calculateTotal()
+        total: calculateTotal(), // Cambiado de precio_total a total para coincidir con el backend
+        estado: 'pendiente', // Campo requerido por el backend
+        metodo_pago: data.payment_method || 'transferencia' // Asegurar que se envía el método de pago
       };
+      
+      console.log('Enviando datos de reserva:', reservationData);
       
       // Enviar a la API
       const result = await createReservation(reservationData);
@@ -685,14 +723,13 @@ const StepperReservation = () => {
       
       {isModalOpen && modalType === 'payment' && (
         <PaymentModal
-          isOpen={isModalOpen && modalType === 'payment'}
+          total={calculateTotal()}
           onClose={() => {
             setIsModalOpen(false);
             setModalType(null);
           }}
-          onSuccess={handlePaymentSuccess}
-          amount={calculateTotal()}
-          formData={formValues}
+          onSelectPaymentMethod={handleSelectPaymentMethod}
+          loading={isSubmitting}
         />
       )}
       

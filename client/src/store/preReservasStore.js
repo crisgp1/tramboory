@@ -20,18 +20,21 @@ const usePreReservasStore = create((set, get) => ({
     set({ loading: true, error: null });
     
     try {
+      // Normalizar el método de pago para asegurar compatibilidad
+      const metodoNormalizado = metodoPago === 'transfer' ? 'transferencia' : metodoPago;
+      
       const response = await axios.post('/api/pagos/iniciar', {
         datosReserva,
-        metodo_pago: metodoPago
+        metodo_pago: metodoNormalizado
       });
       
-      set({ 
-        preReserva: { 
+      set({
+        preReserva: {
           ...datosReserva,
-          id: response.data.pago.id_pre_reserva 
+          id: response.data.pago.id_pre_reserva
         },
         pagoEnProceso: response.data.pago,
-        loading: false 
+        loading: false
       });
       
       return response.data;

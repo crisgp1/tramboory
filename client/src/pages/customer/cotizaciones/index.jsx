@@ -61,11 +61,28 @@ const CotizacionesPage = () => {
   // Función para confirmar la conversión a reserva
   const confirmarConversion = async () => {
     try {
+      console.log('Iniciando conversión de cotización a reserva:', cotizacionSeleccionada.id);
+      
       // Convertir cotización a reserva
       const resultado = await convertirAReserva(cotizacionSeleccionada.id);
       
+      console.log('Resultado de conversión:', resultado);
+      
+      if (!resultado || !resultado.reserva) {
+        throw new Error('No se recibió información de la reserva');
+      }
+      
+      // Asegurarse de que la reserva tenga el estado correcto
+      const reservaConEstado = {
+        ...resultado.reserva,
+        estado: 'pendiente'
+      };
+      
+      console.log('Iniciando proceso de pago con reserva:', reservaConEstado);
+      
       // Iniciar proceso de pago con la reserva creada
-      await iniciarProcesoPago(resultado.reserva, 'efectivo'); // Método de pago por defecto
+      // Usar 'transferencia' como método de pago para asegurar compatibilidad
+      await iniciarProcesoPago(reservaConEstado, 'transferencia');
       
       toast.success('Cotización convertida a reserva. Proceda con el pago.');
       setModalVisible(false);

@@ -117,14 +117,28 @@ const useCotizacionesStore = create((set, get) => ({
     set({ loading: true, error: null });
     
     try {
+      console.log('Convirtiendo cotización a reserva:', id);
       const response = await axiosInstance.post(`/api/cotizaciones/${id}/convertir`);
+      
+      console.log('Respuesta de conversión:', response.data);
+      
+      // Asegurarse de que la reserva tenga todos los campos necesarios
+      if (response.data && response.data.reserva) {
+        // Asegurar que la reserva tenga el estado correcto
+        response.data.reserva.estado = 'pendiente';
+        
+        // Asegurar que el campo total esté presente (no precio_total)
+        if (response.data.reserva.precio_total && !response.data.reserva.total) {
+          response.data.reserva.total = response.data.reserva.precio_total;
+        }
+      }
       
       // Actualizar la lista de cotizaciones para reflejar el cambio de estado
       set(state => ({
         loading: false,
-        cotizaciones: state.cotizaciones.map(cotizacion => 
-          cotizacion.id === id 
-            ? { ...cotizacion, estado: 'convertida' } 
+        cotizaciones: state.cotizaciones.map(cotizacion =>
+          cotizacion.id === id
+            ? { ...cotizacion, estado: 'convertida' }
             : cotizacion
         )
       }));

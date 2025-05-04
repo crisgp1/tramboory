@@ -1,4 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
+import PropTypes from 'prop-types';
 import { gsap } from 'gsap';
 import axios from '@/components/axiosConfig';
 import { toast } from 'react-toastify';
@@ -69,10 +70,20 @@ const PaymentModal = ({ total, onClose, onSelectPaymentMethod, loading }) => {
     e.preventDefault();
     if (!paymentMethod || isProcessing) return;
     
+    // Validar que onSelectPaymentMethod sea una función
+    if (typeof onSelectPaymentMethod !== 'function') {
+      console.error('Error: onSelectPaymentMethod no es una función');
+      toast.error('Error en la configuración del proceso de pago. Por favor, intenta nuevamente.');
+      setErrorMessage('Error interno: Método de procesamiento de pago no disponible');
+      return;
+    }
+    
     setIsProcessing(true);
     setErrorMessage('');
     
     try {
+      console.log('Enviando método de pago:', paymentMethod);
+      
       // Iniciar proceso de pago con pre-reserva
       await onSelectPaymentMethod(paymentMethod);
       
@@ -265,9 +276,9 @@ const PaymentModal = ({ total, onClose, onSelectPaymentMethod, loading }) => {
           </button>
           <button
             onClick={handleSubmit}
-            disabled={!paymentMethod || isProcessing || loading}
+            disabled={!paymentMethod || isProcessing || loading || typeof onSelectPaymentMethod !== 'function'}
             className={`px-6 py-2 rounded-lg text-white flex items-center gap-2 ${
-              paymentMethod && !isProcessing
+              paymentMethod && !isProcessing && typeof onSelectPaymentMethod === 'function'
                 ? 'bg-indigo-600 hover:bg-indigo-700'
                 : 'bg-gray-400 cursor-not-allowed'
             } transition duration-300`}
@@ -279,6 +290,19 @@ const PaymentModal = ({ total, onClose, onSelectPaymentMethod, loading }) => {
       </div>
     </div>
   );
+};
+
+// Añadir validación de PropTypes
+PaymentModal.propTypes = {
+  total: PropTypes.number.isRequired,
+  onClose: PropTypes.func.isRequired,
+  onSelectPaymentMethod: PropTypes.func.isRequired,
+  loading: PropTypes.bool
+};
+
+// Valores por defecto
+PaymentModal.defaultProps = {
+  loading: false
 };
 
 export default PaymentModal;

@@ -27,11 +27,31 @@ export const initiateReservation = async () => {
  */
 export const processPayment = async ({ reservationId, amount, paymentMethod }) => {
   try {
+    // Normalizar el método de pago para asegurar compatibilidad
+    let metodoPagoNormalizado;
+    
+    switch(paymentMethod) {
+      case 'transfer':
+        metodoPagoNormalizado = 'transferencia';
+        break;
+      case 'cash':
+        metodoPagoNormalizado = 'efectivo';
+        break;
+      case 'credit':
+        metodoPagoNormalizado = 'tarjeta_credito';
+        break;
+      case 'debit':
+        metodoPagoNormalizado = 'tarjeta_debito';
+        break;
+      default:
+        metodoPagoNormalizado = paymentMethod;
+    }
+    
     const response = await axiosInstance.post('/api/pagos', {
       id_reserva: reservationId,
       monto: amount,
       fecha_pago: new Date().toISOString().split('T')[0],
-      metodo_pago: paymentMethod === 'transfer' ? 'transferencia' : 'efectivo',
+      metodo_pago: metodoPagoNormalizado,
       estado: 'completado'
     });
     return response.data;
