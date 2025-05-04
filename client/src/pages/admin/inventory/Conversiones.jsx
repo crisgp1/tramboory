@@ -8,8 +8,9 @@ import {
   FiFilter, 
   FiX, 
   FiRefreshCw,
-  FiCalculator
+  FiAlertTriangle
 } from 'react-icons/fi';
+import { MdCalculate } from 'react-icons/md';
 import {
   getAllConversiones,
   getConversionById,
@@ -42,6 +43,7 @@ const Conversiones = () => {
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [isCalculatorModalOpen, setIsCalculatorModalOpen] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
   const [filtroTipo, setFiltroTipo] = useState('');
   const [formData, setFormData] = useState({
     id_unidad_origen: '',
@@ -66,28 +68,56 @@ const Conversiones = () => {
   // Cargar datos
   const fetchData = useCallback(async () => {
     setLoading(true);
+    setError(null);
+    
     try {
-      const [conversionesData, unitsData] = await Promise.all([
-        getAllConversiones(),
-        getAllUnits()
-      ]);
+      const promises = [getAllConversiones(), getAllUnits()];
+      const results = await Promise.allSettled(promises);
       
-      setConversiones(conversionesData);
-      setUnidadesMedida(unitsData);
-      
-      // Si hay un filtro activo, aplicarlo a las unidades
-      if (filtroTipo) {
-        setUnidadesFiltradas(unitsData.filter(unidad => unidad.tipo === filtroTipo));
+      // Revisar resultado de conversiones
+      if (results[0].status === 'fulfilled') {
+        setConversiones(results[0].value);
       } else {
-        setUnidadesFiltradas(unitsData);
+        console.error('Error al cargar conversiones:', results[0].reason);
+        toast.error('Error al cargar las conversiones');
+        setConversiones([]);
+      }
+      
+      // Revisar resultado de unidades
+      if (results[1].status === 'fulfilled') {
+        const unitsData = results[1].value;
+        setUnidadesMedida(unitsData);
+        
+        // Si hay un filtro activo, aplicarlo a las unidades
+        if (filtroTipo) {
+          setUnidadesFiltradas(unitsData.filter(unidad => unidad.tipo === filtroTipo));
+        } else {
+          setUnidadesFiltradas(unitsData);
+        }
+      } else {
+        console.error('Error al cargar unidades de medida:', results[1].reason);
+        toast.error('Error al cargar las unidades de medida');
+        setUnidadesMedida([]);
+        setUnidadesFiltradas([]);
+      }
+      
+      // Si ambos fallan, mostrar error general
+      if (results[0].status === 'rejected' && results[1].status === 'rejected') {
+        setError('Error de conexión al servidor. Por favor, intente nuevamente más tarde.');
       }
     } catch (error) {
-      console.error('Error al cargar conversiones:', error);
-      toast.error('Error al cargar las conversiones');
+      console.error('Error general al cargar datos:', error);
+      toast.error('Error de conexión con el servidor');
+      setError('Error de conexión al servidor. Por favor, intente nuevamente más tarde.');
     } finally {
       setLoading(false);
     }
   }, [filtroTipo]);
+
+  // Función para reintentar la carga de datos
+  const handleRetry = () => {
+    fetchData();
+  };
 
   useEffect(() => {
     fetchData();
@@ -285,7 +315,7 @@ const Conversiones = () => {
             className="flex items-center gap-2"
             onClick={handleOpenCalculator}
           >
-            <FiCalculator size={18} /> Calculadora
+            <MdCalculate size={18} /> Calculadora
           </Button>
           <Button
             className="flex items-center gap-2"
@@ -579,7 +609,7 @@ const Conversiones = () => {
               onClick={handleConvert}
               className="px-6"
             >
-              <FiCalculator className="mr-2" /> Convertir
+              <MdCalculate className="mr-2" /> Convertir
             </Button>
           </div>
 

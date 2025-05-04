@@ -543,6 +543,18 @@ export const getMovimientosByLote = async (idLote, params = {}) => {
   }
 };
 
+/**
+ * Obtiene estadísticas de movimientos de inventario (entradas y salidas) por periodo
+ */
+export const getMovementStats = async () => {
+  try {
+    return await get('/inventory/movimientos/estadisticas/consumo');
+  } catch (error) {
+    console.error('Error al obtener estadísticas de movimiento:', error);
+    throw error;
+  }
+};
+
 // ==================== PROVEEDORES ====================
 
 /**
@@ -859,6 +871,7 @@ export default {
   deleteMovement,
   getMovimientosByMateriaPrima,
   getMovimientosByLote,
+  getMovementStats,
   
   // Proveedores
   getAllProviders,
@@ -885,5 +898,6 @@ export default {
   marcarComoLeida,
   marcarTodasComoLeidas,
   getAlertasPorTipo,
-  getResumenAlertas
+  getResumenAlertas,
+  getMovementStats
 };

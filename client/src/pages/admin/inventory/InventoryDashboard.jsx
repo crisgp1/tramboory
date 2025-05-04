@@ -1,10 +1,10 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { toast } from 'react-toastify';
 import { 
   FiClock
 } from 'react-icons/fi';
 // Asegurando que todas las importaciones usen el alias @ para resolver correctamente en Docker
-import { getInventoryStats, getLowStockItems, getActiveAlerts, getProximosACaducar } from '@/services/inventoryService';
+import { getInventoryStats, getLowStockItems, getActiveAlerts, getProximosACaducar, getMovementStats } from '@/services/inventoryService';
 
 // Importar componentes modulares del dashboard
 import {
@@ -21,25 +21,6 @@ import {
 // Importar tab de proyecciones
 import ProyeccionesTab from '@/components/inventory/dashboard/tabs/ProyeccionesTab';
 
-// Datos de ejemplo para gráficos - En una implementación real, esto vendría de la API
-const stockMovementData = [
-  { name: 'Ene', entradas: 65, salidas: 28 },
-  { name: 'Feb', entradas: 59, salidas: 48 },
-  { name: 'Mar', entradas: 80, salidas: 40 },
-  { name: 'Abr', entradas: 81, salidas: 67 },
-  { name: 'May', entradas: 56, salidas: 43 },
-  { name: 'Jun', entradas: 55, salidas: 50 },
-  { name: 'Jul', entradas: 40, salidas: 35 },
-];
-
-const categoryDistribution = [
-  { name: 'Lácteos', value: 30 },
-  { name: 'Frescos', value: 25 },
-  { name: 'Secos', value: 20 },
-  { name: 'Bebidas', value: 15 },
-  { name: 'Condimentos', value: 10 },
-];
-
 /**
  * Dashboard principal de inventario con enfoque mobile-first y diseño modular
  */
@@ -54,6 +35,8 @@ const InventoryDashboard = () => {
   const [lowStockItems, setLowStockItems] = useState([]);
   const [expiringItems, setExpiringItems] = useState([]);
   const [alerts, setAlerts] = useState([]);
+  const [movementStats, setMovementStats] = useState([]);
+  const [error, setError] = useState(null);
   
   // Estados de UI
   const [loading, setLoading] = useState(true);
@@ -80,27 +63,65 @@ const InventoryDashboard = () => {
   }, [activeTab]);
 
   // Función para obtener datos del dashboard
-  const fetchDashboardData = async () => {
+  const fetchDashboardData = useCallback(async () => {
     setLoading(true);
+    setError(null);
     try {
-      const [statsData, lowStock, expiringData, alertsData] = await Promise.all([
+      const promises = [
         getInventoryStats(),
         getLowStockItems(),
-        getProximosACaducar(7), // próximos a caducar en 7 días
-        getActiveAlerts()
-      ]);
-
-      setStats(statsData);
-      setLowStockItems(lowStock);
-      setExpiringItems(expiringData);
-      setAlerts(alertsData);
-    } catch (error) {
-      console.error('Error al cargar datos del dashboard:', error);
-      toast.error('Error al cargar los datos del dashboard');
+        getProximosACaducar(7),
+        getActiveAlerts(),
+        getMovementStats()
+      ];
+      const results = await Promise.allSettled(promises);
+      // stats
+      if (results[0].status === 'fulfilled') setStats(results[0].value);
+      else {
+        console.error('Error stats:', results[0].reason);
+        toast.error('Error al obtener estadísticas');
+        setStats({ totalItems: 0, totalProviders: 0, movementsToday: 0, activeAlerts: 0 });
+      }
+      // low stock
+      if (results[1].status === 'fulfilled') setLowStockItems(results[1].value);
+      else {
+        console.error('Error bajo stock:', results[1].reason);
+        toast.error('Error al obtener stock bajo');
+        setLowStockItems([]);
+      }
+      // expiring
+      if (results[2].status === 'fulfilled') setExpiringItems(results[2].value);
+      else {
+        console.error('Error proximos caducar:', results[2].reason);
+        toast.error('Error al obtener caducidad');
+        setExpiringItems([]);
+      }
+      // alerts
+      if (results[3].status === 'fulfilled') setAlerts(results[3].value);
+      else {
+        console.error('Error alertas:', results[3].reason);
+        toast.error('Error al obtener alertas');
+        setAlerts([]);
+      }
+      // movement stats
+      if (results[4].status === 'fulfilled') setMovementStats(results[4].value);
+      else {
+        console.error('Error stats movimientos:', results[4].reason);
+        toast.error('Error al obtener estadísticas de movimiento');
+        setMovementStats([]);
+      }
+      // if all failed
+      if (results.every(r => r.status === 'rejected')) {
+        setError('No se pudo cargar datos del servidor.');
+      }
+    } catch (err) {
+      console.error('Error general dashboard:', err);
+      toast.error('Error de conexión con el servidor');
+      setError('Error de conexión con el servidor. Intente nuevamente.');
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
   // Función para refrescar datos
   const handleRefresh = async () => {
@@ -109,9 +130,23 @@ const InventoryDashboard = () => {
     setTimeout(() => setRefreshing(false), 800); // Dar tiempo para la animación
   };
 
+  const handleRetry = () => fetchDashboardData();
+
   // Mostrar loader durante la carga inicial
   if (loading) {
     return <DashboardLoader />;
+  }
+
+  if (error) {
+    return (
+      <div className="flex flex-col items-center justify-center h-full p-6">
+        <p className="text-red-600 mb-4">{error}</p>
+        <button
+          onClick={handleRetry}
+          className="px-4 py-2 bg-indigo-600 text-white rounded hover:bg-indigo-700"
+        >Reintentar</button>
+      </div>
+    );
   }
 
   return (
@@ -153,7 +188,8 @@ const InventoryDashboard = () => {
           expiringItems={expiringItems}
           timeRange={timeRange}
           setTimeRange={setTimeRange}
-          stockMovementData={stockMovementData}
+          // movement stats para gráficas en lugar de mock
+          stockMovementData={movementStats}
         />
       )}
 
@@ -163,8 +199,7 @@ const InventoryDashboard = () => {
 
       {activeTab === 'graficos' && (
         <GraficosTab 
-          stockMovementData={stockMovementData}
-          categoryDistribution={categoryDistribution}
+          stockMovementData={movementStats}
           timeRange={timeRange}
           setTimeRange={setTimeRange}
         />
