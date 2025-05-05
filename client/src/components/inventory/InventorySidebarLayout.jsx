@@ -1,18 +1,19 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import InventorySidebar from './InventorySidebar';
+import { Breadcrumb } from '../ui'; // Import from ui components
 
 const InventorySidebarLayout = ({ children }) => {
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
+  const [breadcrumbItems, setBreadcrumbItems] = useState([]);
 
   // Detectar si es un dispositivo móvil
   useEffect(() => {
     const checkIfMobile = () => {
-      setIsMobile(window.innerWidth < 768);
-      if (window.innerWidth < 768) {
-        setIsCollapsed(true);
-      }
+      const mobile = window.innerWidth < 1024;
+      setIsMobile(mobile);
+      setIsCollapsed(mobile);
     };
 
     checkIfMobile();
@@ -23,16 +24,17 @@ const InventorySidebarLayout = ({ children }) => {
     };
   }, []);
 
-  // Alternar el estado de la barra lateral
-  const toggleSidebar = () => {
-    setIsCollapsed(!isCollapsed);
-  };
-
   // Variantes para la animación del contenido principal
   const mainContentVariants = {
-    expanded: { marginLeft: '240px', borderTopLeftRadius: '0px', borderBottomLeftRadius: '0px' },
-    collapsed: { marginLeft: '80px', borderTopLeftRadius: '20px', borderBottomLeftRadius: '20px' },
-    mobile: { marginLeft: '0px', borderRadius: '0px' }
+    expanded: { marginLeft: '240px' },
+    collapsed: { marginLeft: '72px' },
+    mobile: { marginLeft: '0px' }
+  };
+
+  // Handle navigation for breadcrumbs
+  const handleNavigate = (path) => {
+    console.log('Navigate to:', path);
+    // Implementation of navigation logic
   };
 
   return (
@@ -40,7 +42,7 @@ const InventorySidebarLayout = ({ children }) => {
       {/* Barra lateral */}
       <InventorySidebar 
         isCollapsed={isCollapsed} 
-        toggleSidebar={toggleSidebar} 
+        setIsCollapsed={setIsCollapsed} 
       />
       
       {/* Contenido principal */}
@@ -49,33 +51,20 @@ const InventorySidebarLayout = ({ children }) => {
         initial={isMobile ? "mobile" : (isCollapsed ? "collapsed" : "expanded")}
         animate={isMobile ? "mobile" : (isCollapsed ? "collapsed" : "expanded")}
         variants={mainContentVariants}
-        transition={{ duration: 0.4, ease: "easeInOut" }}
+        transition={{ duration: 0.3, ease: "easeInOut" }}
       >
-        {/* Botón para mostrar sidebar en móvil */}
-        {isMobile && isCollapsed && (
-          <button
-            onClick={toggleSidebar}
-            className="fixed top-4 left-4 z-30 bg-indigo-600 text-white p-2 rounded-md shadow-md"
-          >
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
-            </svg>
-          </button>
-        )}
-        
         {/* Contenedor centrado para el contenido */}
         <div className="max-w-7xl mx-auto px-4 sm:px-6 md:px-8 py-6">
+          {/* Breadcrumb */}
+          <Breadcrumb 
+            items={breadcrumbItems} 
+            onNavigate={handleNavigate} 
+          />
+          
+          {/* Page Content */}
           {children}
         </div>
       </motion.main>
-      
-      {/* Overlay para cerrar sidebar en móvil */}
-      {isMobile && !isCollapsed && (
-        <div 
-          className="fixed inset-0 bg-black bg-opacity-50 z-10"
-          onClick={() => setIsCollapsed(true)}
-        />
-      )}
     </div>
   );
 };

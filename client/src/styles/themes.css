@@ -1,0 +1,98 @@
+:root {
+  /* Variables para transiciones */
+  --transition-duration: 0.3s;
+  
+  /* Variables base para el tema claro (default) */
+  --color-bg-primary: #ffffff;
+  --color-bg-secondary: #f9fafb;
+  --color-bg-tertiary: #f3f4f6;
+  
+  --color-text-primary: #1f2937;
+  --color-text-secondary: #4b5563;
+  --color-text-tertiary: #6b7280;
+  
+  --color-border-primary: #e5e7eb;
+  --color-border-secondary: #d1d5db;
+  
+  --color-accent-primary: #6366f1;
+  --color-accent-secondary: #818cf8;
+  
+  --color-shadow: rgba(0, 0, 0, 0.1);
+  
+  /* Colores específicos para componentes */
+  --sidebar-bg: var(--color-bg-primary);
+  --sidebar-text: var(--color-text-primary);
+  --sidebar-border: var(--color-border-primary);
+  --sidebar-hover: #f3f4f6;
+  
+  --header-bg: var(--color-bg-primary);
+  --header-text: var(--color-text-primary);
+  
+  --card-bg: var(--color-bg-primary);
+  --card-text: var(--color-text-primary);
+  --card-border: var(--color-border-primary);
+  
+  --input-bg: var(--color-bg-primary);
+  --input-text: var(--color-text-primary);
+  --input-border: var(--color-border-primary);
+  --input-placeholder: var(--color-text-tertiary);
+  
+  --button-primary-bg: var(--color-accent-primary);
+  --button-primary-text: white;
+  
+  --modal-bg: var(--color-bg-primary);
+  --modal-text: var(--color-text-primary);
+  --modal-overlay: rgba(0, 0, 0, 0.5);
+}
+
+/* Tema oscuro */
+.dark-theme {
+  --color-bg-primary: #121212;
+  --color-bg-secondary: #1e1e1e;
+  --color-bg-tertiary: #2d2d2d;
+  
+  --color-text-primary: #e4e4e7;
+  --color-text-secondary: #a1a1aa;
+  --color-text-tertiary: #71717a;
+  
+  --color-border-primary: #3f3f46;
+  --color-border-secondary: #52525b;
+  
+  --color-accent-primary: #818cf8;
+  --color-accent-secondary: #a5b4fc;
+  
+  --color-shadow: rgba(0, 0, 0, 0.3);
+  
+  /* Colores específicos para componentes */
+  --sidebar-bg: var(--color-bg-secondary);
+  --sidebar-text: var(--color-text-primary);
+  --sidebar-border: var(--color-border-primary);
+  --sidebar-hover: #2d2d2d;
+  
+  --header-bg: var(--color-bg-secondary);
+  --header-text: var(--color-text-primary);
+  
+  --card-bg: var(--color-bg-secondary);
+  --card-text: var(--color-text-primary);
+  --card-border: var(--color-border-primary);
+  
+  --input-bg: var(--color-bg-tertiary);
+  --input-text: var(--color-text-primary);
+  --input-border: var(--color-border-primary);
+  --input-placeholder: var(--color-text-tertiary);
+  
+  --button-primary-bg: var(--color-accent-primary);
+  --button-primary-text: var(--color-bg-primary);
+  
+  --modal-bg: var(--color-bg-secondary);
+  --modal-text: var(--color-text-primary);
+  --modal-overlay: rgba(0, 0, 0, 0.7);
+}
+
+/* Transiciones suaves al cambiar de tema */
+* {
+  transition: background-color var(--transition-duration) ease,
+              color var(--transition-duration) ease,
+              border-color var(--transition-duration) ease,
+              box-shadow var(--transition-duration) ease;
+}

@@ -14,10 +14,10 @@ import TiposAjuste from './TiposAjuste';
 import Conversiones from './Conversiones';
 import Alertas from './Alertas';
 
-// La autenticación se maneja a través del componente ProtectedRoute en App.jsx
 const InventoryIndex = () => {
   const { user } = useAuth();
   const [activeSection, setActiveSection] = useState('dashboard');
+  const [loading, setLoading] = useState(false); // Set to true for initial loading animation
   const navigate = useNavigate();
   const location = useLocation();
   
@@ -46,7 +46,6 @@ const InventoryIndex = () => {
   }, [location.pathname]);
   
   // Mostrar mensaje de advertencia si el usuario no tiene permisos adecuados
-  // pero sin redirigir (ProtectedRoute ya maneja las redirecciones principales)
   useEffect(() => {
     if (user && user.tipo_usuario !== 'admin' && user.tipo_usuario !== 'inventario') {
       toast.warning('Acceso limitado: No tienes todos los permisos para el sistema de inventario');
@@ -55,6 +54,10 @@ const InventoryIndex = () => {
 
   // Renderizar el contenido basado en la sección activa
   const renderContent = () => {
+    if (loading) {
+      return <InventoryLoader />;
+    }
+    
     switch (activeSection) {
       case 'dashboard':
         return <InventoryDashboard />;
@@ -80,12 +83,9 @@ const InventoryIndex = () => {
   };
 
   return (
-    <div className="min-h-screen">
-      {/* Eliminado temporalmente el chequeo de autenticación para pruebas */}
-      <InventorySidebarLayout>
-        {renderContent()}
-      </InventorySidebarLayout>
-    </div>
+    <InventorySidebarLayout>
+      {renderContent()}
+    </InventorySidebarLayout>
   );
 };
 

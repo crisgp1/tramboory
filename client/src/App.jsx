@@ -16,8 +16,10 @@ import PublicRoute from '@/components/PublicRoute.jsx'
 import Logo from '@/img/logo.webp'
 import withTokenValidation from '@/components/withTokenValidation.jsx'
 import { AuthProvider } from '@/context/authContext.jsx'
+import { ThemeProvider } from '@/context/ThemeContext.jsx'
 import ProfileForm from '@/pages/customer/profile-service/ProfileForm.jsx'
-import { Toaster } from 'react-hot-toast'
+import { ToastContainer, toast } from 'react-toastify'
+import 'react-toastify/dist/ReactToastify.css'
 
 // Importaciones perezosas para mejorar el rendimiento
 const Home = lazy(() => import('@/pages/public/Home'))
@@ -249,24 +251,21 @@ const PageTransition = ({ children }) => {
 
 function App () {
   return (
-    <AuthProvider>
-      <Router>
-        <Toaster
-          position="top-right"
-          toastOptions={{
-            duration: 4000,
-            style: {
-              background: '#363636',
-              color: '#fff',
-            },
-            success: {
-              duration: 3000,
-              theme: {
-                primary: '#4aed88',
-              },
-            },
-          }}
-        />
+    <ThemeProvider>
+      <AuthProvider>
+        <Router>
+          <ToastContainer
+            position="top-right"
+            autoClose={3000}
+            hideProgressBar={false}
+            newestOnTop
+            closeOnClick
+            rtl={false}
+            pauseOnFocusLoss
+            draggable
+            pauseOnHover
+            theme="light"
+          />
         <Suspense fallback={<SubtleLoader />}>
           <AnimatePresence mode="wait">
             <Routes>
@@ -369,6 +368,7 @@ function App () {
         </Suspense>
       </Router>
     </AuthProvider>
+    </ThemeProvider>
   )
 }
 
