@@ -168,23 +168,35 @@ const PaymentModal = ({ total, onClose, onSelectPaymentMethod, loading }) => {
           {/* Payment Options */}
           <div className="space-y-4">
             <PaymentOption
-              value="transfer"
+              value="transferencia"
               title="Transferencia Bancaria"
               icon={FiCreditCard}
               description="Realiza una transferencia bancaria desde tu aplicación"
             />
             <PaymentOption
-              value="cash"
+              value="efectivo"
               title="Pago en Efectivo"
               icon={FiDollarSign}
               description="Paga en efectivo directamente en nuestra sucursal"
+            />
+            <PaymentOption
+              value="tarjeta_credito"
+              title="Tarjeta de Crédito"
+              icon={FiCreditCard}
+              description="Paga con tarjeta de crédito"
+            />
+            <PaymentOption
+              value="tarjeta_debito"
+              title="Tarjeta de Débito"
+              icon={FiCreditCard}
+              description="Paga con tarjeta de débito"
             />
           </div>
 
           {/* Payment Details */}
           {paymentMethod && (
             <div className="mt-6 animate-fadeIn">
-              {paymentMethod === 'transfer' ? (
+              {paymentMethod === 'transferencia' ? (
                 <div className="bg-gray-50 p-6 rounded-lg space-y-4">
                   <h3 className="font-medium text-gray-900 flex items-center gap-2">
                     <FiInfo className="text-indigo-600" />

@@ -155,7 +155,8 @@ exports.confirmarPago = async (req, res, next) => {
       ...datosReserva,
       id_usuario: pago.preReserva.id_usuario,
       estado: 'confirmada',
-      fecha_creacion: new Date()
+      fecha_creacion: new Date(),
+      codigo_seguimiento: datosReserva.codigo_seguimiento || generateTrackingCode()
     }, { transaction });
     
     // Actualizar pago con referencia a la reserva
@@ -334,6 +335,26 @@ async function verificarPagoConProveedor(token) {
       fecha: new Date().toISOString()
     }
   };
+}
+
+/**
+ * Genera un código de seguimiento de 10 caracteres
+ * @returns {string} Código de seguimiento
+ */
+function generateTrackingCode() {
+  // Obtener fecha actual
+  const now = new Date();
+  
+  // Extraer componentes de fecha (2 dígitos del año, mes y día)
+  const year = now.getFullYear().toString().slice(2); // 2 dígitos
+  const month = (now.getMonth() + 1).toString().padStart(2, '0'); // 2 dígitos
+  const day = now.getDate().toString().padStart(2, '0'); // 2 dígitos
+  
+  // Generar parte aleatoria (4 dígitos para completar 10 caracteres en total)
+  const randomPart = Math.floor(1000 + Math.random() * 9000);
+  
+  // Construir código: YYMMDDXXXX (exactamente 10 caracteres)
+  return `${year}${month}${day}${randomPart}`;
 }
 
 exports.getAllPagos = async (req, res, next) => {

@@ -69,6 +69,11 @@ Reserva.init({
       key: 'id'
     }
   },
+  codigo_seguimiento: {
+    type: DataTypes.STRING(10),
+    allowNull: false,
+    unique: true
+  },
   id_paquete: {
     type: DataTypes.INTEGER,
     allowNull: false,

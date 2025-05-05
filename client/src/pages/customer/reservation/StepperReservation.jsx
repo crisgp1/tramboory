@@ -252,31 +252,119 @@ const StepperReservation = () => {
   };
   
   // Enviar reserva
+  // Función para generar un código de seguimiento de exactamente 10 caracteres
+  const generateTrackingCode = () => {
+    // Obtener fecha actual
+    const now = new Date();
+    
+    // Extraer componentes de fecha (2 dígitos del año, mes y día)
+    const year = now.getFullYear().toString().slice(2); // 2 dígitos
+    const month = (now.getMonth() + 1).toString().padStart(2, '0'); // 2 dígitos
+    const day = now.getDate().toString().padStart(2, '0'); // 2 dígitos
+    
+    // Generar parte aleatoria (4 dígitos para completar 10 caracteres en total)
+    const randomPart = Math.floor(1000 + Math.random() * 9000);
+    
+    // Construir código: YYMMDDXXXX (exactamente 10 caracteres)
+    return `${year}${month}${day}${randomPart}`;
+  };
+
   const submitReservation = async (data) => {
     setIsSubmitting(true);
     setApiError(null);
     
     try {
+      // Generar código de seguimiento
+      const codigoSeguimiento = generateTrackingCode();
+      
+      // Preparar comentarios combinando campos adicionales
+      let comentarios = '';
+      if (data.sexo_festejado) {
+        comentarios += `Sexo: ${data.sexo_festejado}. `;
+      }
+      if (data.color_favorito) {
+        comentarios += `Color favorito: ${data.color_favorito}. `;
+      }
+      if (data.detalles_especiales) {
+        comentarios += `Detalles especiales: ${data.detalles_especiales}`;
+      }
+      
+      // Normalizar el método de pago
+      let metodoPagoNormalizado;
+      switch(data.payment_method) {
+        case 'transfer':
+          metodoPagoNormalizado = 'transferencia';
+          break;
+        case 'cash':
+          metodoPagoNormalizado = 'efectivo';
+          break;
+        case 'credit':
+          metodoPagoNormalizado = 'tarjeta_credito';
+          break;
+        case 'debit':
+          metodoPagoNormalizado = 'tarjeta_debito';
+          break;
+        default:
+          metodoPagoNormalizado = 'transferencia';
+      }
+      
+      // Convertir hora_inicio a formato correcto si es "tarde" o "mañana"
+      let horaInicio = typeof data.hora_inicio === 'object' ? data.hora_inicio.value : data.hora_inicio;
+      if (horaInicio === 'tarde') {
+        horaInicio = '14:00:00';
+      } else if (horaInicio === 'mañana' || horaInicio === 'manana') {
+        horaInicio = '10:00:00';
+      }
+      
+      // Calcular hora_fin (3 horas después de hora_inicio)
+      const [horas, minutos, segundos] = horaInicio.split(':').map(Number);
+      const horaFin = `${String(horas + 3).padStart(2, '0')}:${String(minutos).padStart(2, '0')}:${String(segundos).padStart(2, '0')}`;
+      
+      // Formatear la fecha en formato YYYY-MM-DD
+      let fechaReserva = data.fecha_reserva;
+      if (fechaReserva instanceof Date) {
+        fechaReserva = fechaReserva.toISOString().split('T')[0]; // Formato YYYY-MM-DD
+      }
+      
       // Adaptar datos para la API
       const reservationData = {
         id_paquete: data.id_paquete,
-        fecha_reserva: data.fecha_reserva,
-        hora_inicio: typeof data.hora_inicio === 'object' ? data.hora_inicio.value : data.hora_inicio,
+        fecha_reserva: fechaReserva,
+        hora_inicio: horaInicio,
+        hora_fin: horaFin, // Añadir hora_fin obligatoria
         id_tematica: data.id_tematica,
         id_mampara: data.id_mampara || null,
         id_opcion_alimento: data.id_opcion_alimento || null,
         nombre_festejado: data.nombre_festejado,
-        edad_festejado: data.edad_festejado,
-        sexo_festejado: data.sexo_festejado || null,
-        color_favorito: data.color_favorito || null,
-        detalles_especiales: data.detalles_especiales || null,
+        edad_festejado: parseInt(data.edad_festejado, 10), // Convertir a número
+        comentarios: comentarios.trim() || null, // Usar el campo comentarios para datos adicionales
         extras: data.extras || [],
         total: calculateTotal(), // Cambiado de precio_total a total para coincidir con el backend
         estado: 'pendiente', // Campo requerido por el backend
-        metodo_pago: data.payment_method || 'transferencia' // Asegurar que se envía el método de pago
+        metodo_pago: metodoPagoNormalizado, // Usar el método de pago normalizado
+        codigo_seguimiento: codigoSeguimiento // Añadir código de seguimiento
       };
       
+      // Asegurarse de que el código de seguimiento esté presente y tenga el formato correcto
+      if (!reservationData.codigo_seguimiento || reservationData.codigo_seguimiento.length !== 10) {
+        console.error('Código de seguimiento inválido, generando uno nuevo');
+        reservationData.codigo_seguimiento = generateTrackingCode();
+      }
+      
       console.log('Enviando datos de reserva:', reservationData);
+      
+      // Validar datos antes de enviar
+      if (!reservationData.hora_inicio || !reservationData.hora_fin) {
+        throw new Error('Las horas de inicio y fin son obligatorias');
+      }
+      
+      if (!reservationData.fecha_reserva || !/^\d{4}-\d{2}-\d{2}$/.test(reservationData.fecha_reserva)) {
+        throw new Error('La fecha de reserva debe estar en formato YYYY-MM-DD');
+      }
+      
+      if (isNaN(reservationData.edad_festejado)) {
+        throw new Error('La edad del festejado debe ser un número');
+      }
       
       // Enviar a la API
       const result = await createReservation(reservationData);

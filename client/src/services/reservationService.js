@@ -30,21 +30,27 @@ export const processPayment = async ({ reservationId, amount, paymentMethod }) =
     // Normalizar el método de pago para asegurar compatibilidad
     let metodoPagoNormalizado;
     
-    switch(paymentMethod) {
-      case 'transfer':
-        metodoPagoNormalizado = 'transferencia';
-        break;
-      case 'cash':
-        metodoPagoNormalizado = 'efectivo';
-        break;
-      case 'credit':
-        metodoPagoNormalizado = 'tarjeta_credito';
-        break;
-      case 'debit':
-        metodoPagoNormalizado = 'tarjeta_debito';
-        break;
-      default:
-        metodoPagoNormalizado = paymentMethod;
+    // Verificar si el método de pago ya está normalizado
+    if (['transferencia', 'efectivo', 'tarjeta_credito', 'tarjeta_debito'].includes(paymentMethod)) {
+      metodoPagoNormalizado = paymentMethod;
+    } else {
+      // Normalizar desde valores en inglés
+      switch(paymentMethod) {
+        case 'transfer':
+          metodoPagoNormalizado = 'transferencia';
+          break;
+        case 'cash':
+          metodoPagoNormalizado = 'efectivo';
+          break;
+        case 'credit':
+          metodoPagoNormalizado = 'tarjeta_credito';
+          break;
+        case 'debit':
+          metodoPagoNormalizado = 'tarjeta_debito';
+          break;
+        default:
+          metodoPagoNormalizado = 'transferencia'; // Valor por defecto
+      }
     }
     
     const response = await axiosInstance.post('/api/pagos', {
@@ -68,12 +74,38 @@ export const processPayment = async ({ reservationId, amount, paymentMethod }) =
  */
 export const confirmReservation = async (reservationData) => {
   try {
+    // Verificar que el código de seguimiento esté presente
+    if (!reservationData.codigo_seguimiento || reservationData.codigo_seguimiento.length !== 10) {
+      // Generar un código de seguimiento si no existe o no es válido
+      reservationData.codigo_seguimiento = generateTrackingCode();
+    }
+    
     const response = await axiosInstance.post(`${API_PATH}/confirm`, reservationData);
     return response.data;
   } catch (error) {
     console.error('Error al confirmar la reserva:', error);
     throw error;
   }
+};
+
+/**
+ * Genera un código de seguimiento de 10 caracteres
+ * @returns {string} Código de seguimiento
+ */
+const generateTrackingCode = () => {
+  // Obtener fecha actual
+  const now = new Date();
+  
+  // Extraer componentes de fecha (2 dígitos del año, mes y día)
+  const year = now.getFullYear().toString().slice(2); // 2 dígitos
+  const month = (now.getMonth() + 1).toString().padStart(2, '0'); // 2 dígitos
+  const day = now.getDate().toString().padStart(2, '0'); // 2 dígitos
+  
+  // Generar parte aleatoria (4 dígitos para completar 10 caracteres en total)
+  const randomPart = Math.floor(1000 + Math.random() * 9000);
+  
+  // Construir código: YYMMDDXXXX (exactamente 10 caracteres)
+  return `${year}${month}${day}${randomPart}`;
 };
 
 /**

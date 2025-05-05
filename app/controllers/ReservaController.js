@@ -47,12 +47,18 @@ exports.confirm = async (req, res, next) => {
     const reservaData = req.body;
     
     // Validación básica
-    const camposRequeridos = ['id_paquete', 'fecha_reserva', 'hora_inicio', 'estado', 'total', 'nombre_festejado', 'edad_festejado', 'reservationId'];
+    const camposRequeridos = ['id_paquete', 'fecha_reserva', 'hora_inicio', 'estado', 'total', 'nombre_festejado', 'edad_festejado', 'reservationId', 'codigo_seguimiento'];
     for (const campo of camposRequeridos) {
       if (reservaData[campo] === undefined) {
         await client.query('ROLLBACK');
         return res.status(400).json({ error: `El campo ${campo} es requerido` });
       }
+    }
+    
+    // Validar que el código de seguimiento tenga exactamente 10 caracteres
+    if (reservaData.codigo_seguimiento && reservaData.codigo_seguimiento.length !== 10) {
+      await client.query('ROLLBACK');
+      return res.status(400).json({ error: 'El código de seguimiento debe tener exactamente 10 caracteres' });
     }
     
     // Extraer el ID del usuario autenticado
@@ -201,11 +207,16 @@ exports.createReserva = async (req, res) => {
     const reservaData = req.body;
 
     // Validación básica - quitamos id_usuario de los campos requeridos ya que lo obtendremos del token
-    const camposRequeridos = ['id_paquete', 'fecha_reserva', 'hora_inicio', 'estado', 'total', 'nombre_festejado', 'edad_festejado'];
+    const camposRequeridos = ['id_paquete', 'fecha_reserva', 'hora_inicio', 'estado', 'total', 'nombre_festejado', 'edad_festejado', 'codigo_seguimiento'];
     for (const campo of camposRequeridos) {
       if (reservaData[campo] === undefined) {
         return res.status(400).json({ error: `El campo ${campo} es requerido` });
       }
+    }
+    
+    // Validar que el código de seguimiento tenga exactamente 10 caracteres
+    if (reservaData.codigo_seguimiento && reservaData.codigo_seguimiento.length !== 10) {
+      return res.status(400).json({ error: 'El código de seguimiento debe tener exactamente 10 caracteres' });
     }
 
     // Extraer el ID del usuario autenticado del objeto req.user
