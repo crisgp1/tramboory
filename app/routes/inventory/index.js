@@ -1,6 +1,10 @@
 const express = require('express');
 const router = express.Router();
 const authMiddleware = require('../../middlewares/authMiddleware');
+const databaseConnectionCheck = require('../../middleware/databaseConnectionCheck');
+
+// Aplicar middleware de verificación de conexión a la base de datos a todas las rutas
+router.use(databaseConnectionCheck);
 
 // Importar controladores
 const UnidadMedidaController = require('../../controllers/Inventory/UnidadMedidaController');

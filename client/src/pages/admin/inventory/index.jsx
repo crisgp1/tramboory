@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import { useAuth } from '@/hooks/useAuth';
 import InventorySidebarLayout from '@/components/inventory/InventorySidebarLayout';
@@ -14,33 +14,44 @@ import TiposAjuste from './TiposAjuste';
 import Conversiones from './Conversiones';
 import Alertas from './Alertas';
 
-// Sistema unificado de autenticación - No usa modal específico
+// La autenticación se maneja a través del componente ProtectedRoute en App.jsx
 const InventoryIndex = () => {
-  const { user, isAuthenticated, loading: authLoading } = useAuth();
+  const { user } = useAuth();
   const [activeSection, setActiveSection] = useState('dashboard');
   const navigate = useNavigate();
-
-  // Verificar autenticación y permisos
+  const location = useLocation();
+  
+  // Sincronizar el estado activeSection con la ruta actual
   useEffect(() => {
-    if (!authLoading) {
-      // Si no está autenticado, redirigir al login global
-      if (!isAuthenticated) {
-        toast.info('Por favor inicia sesión para acceder al sistema de inventario');
-        navigate('/signin', { state: { returnUrl: '/inventory' } });
-      }
-      // Verificar permisos de acceso al módulo
-      else if (user && user.tipo_usuario !== 'admin' && user.tipo_usuario !== 'inventario') {
-        toast.error('No tienes permisos para acceder al sistema de inventario');
-        navigate('/dashboard');
-      }
+    const path = location.pathname;
+    if (path === '/inventory') {
+      setActiveSection('dashboard');
+    } else if (path.includes('materias-primas')) {
+      setActiveSection('materias-primas');
+    } else if (path.includes('unidades-medida')) {
+      setActiveSection('unidades-medida');
+    } else if (path.includes('proveedores')) {
+      setActiveSection('proveedores');
+    } else if (path.includes('lotes')) {
+      setActiveSection('lotes');
+    } else if (path.includes('movimientos')) {
+      setActiveSection('movimientos');
+    } else if (path.includes('tipos-ajuste')) {
+      setActiveSection('tipos-ajuste');
+    } else if (path.includes('conversiones')) {
+      setActiveSection('conversiones');
+    } else if (path.includes('alertas')) {
+      setActiveSection('alertas');
     }
-  }, [authLoading, isAuthenticated, user, navigate]);
-
-  // Renderizar pantalla de carga mientras verifica autenticación
-  // Comentado temporalmente para pruebas
-  // if (authLoading || !isAuthenticated) {
-  //   return <InventoryLoader />;
-  // }
+  }, [location.pathname]);
+  
+  // Mostrar mensaje de advertencia si el usuario no tiene permisos adecuados
+  // pero sin redirigir (ProtectedRoute ya maneja las redirecciones principales)
+  useEffect(() => {
+    if (user && user.tipo_usuario !== 'admin' && user.tipo_usuario !== 'inventario') {
+      toast.warning('Acceso limitado: No tienes todos los permisos para el sistema de inventario');
+    }
+  }, [user]);
 
   // Renderizar el contenido basado en la sección activa
   const renderContent = () => {

@@ -21,6 +21,7 @@ const auditoriaRoutes = require('./routes/auditoriaRoutes');
 const galeriaHomeRoutes = require('./routes/galeriaHomeRoutes');
 const inventoryRoutes = require('./routes/inventory');
 const cotizacionesRoutes = require('./routes/cotizacionesRoutes');
+const healthRoutes = require('./routes/healthRoutes');
 const errorHandler = require('./middlewares/errorMiddleware');
 const fs = require('fs');
 const cors = require('cors');
@@ -100,6 +101,7 @@ app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 // Rutas públicas (sin autenticación ni auditoría)
 app.use('/api/auth', authRoutes);
+app.use('/api/health', healthRoutes);
 
 // Aplicar middleware de autenticación y auditoría para rutas protegidas
 const protectedRoute = (route) => {

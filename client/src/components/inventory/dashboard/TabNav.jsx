@@ -10,7 +10,7 @@ import {
 } from 'react-icons/fi';
 
 /**
- * Componente de navegación por pestañas para el dashboard
+ * Componente de navegación por pestañas para el dashboard con diseño centrado vertical
  * 
  * @param {Object} props
  * @param {string} props.activeTab - Pestaña activa actualmente
@@ -30,9 +30,32 @@ const TabNav = ({ activeTab, setActiveTab, customTabs }) => {
   // Usar pestañas personalizadas o las predeterminadas
   const tabs = customTabs || defaultTabs;
 
+  // Variantes para animación de contenedor
+  const containerVariants = {
+    hidden: { opacity: 0 },
+    visible: {
+      opacity: 1,
+      transition: {
+        staggerChildren: 0.1,
+        delayChildren: 0.1
+      }
+    }
+  };
+
+  // Variantes para animación de elemento
+  const itemVariants = {
+    hidden: { opacity: 0, y: 10 },
+    visible: { opacity: 1, y: 0 }
+  };
+
   return (
-    <div className="overflow-x-auto flex space-x-2 mb-5 pb-1 no-scrollbar justify-center">
-      <div className="bg-gray-100 rounded-xl p-1 flex space-x-1 shadow-sm">
+    <motion.div 
+      initial="hidden"
+      animate="visible"
+      variants={containerVariants}
+      className="mb-6 mt-2"
+    >
+      <div className="flex justify-center items-center flex-wrap gap-4">
         {tabs.map((tab) => (
           <TabButton
             key={tab.id}
@@ -40,52 +63,75 @@ const TabNav = ({ activeTab, setActiveTab, customTabs }) => {
             onClick={() => setActiveTab(tab.id)}
             icon={tab.icon}
             label={tab.label}
+            variants={itemVariants}
           />
         ))}
-        
-        {/* Botón de configuración (opcional) */}
-        {customTabs && (
-          <button
-            className="ml-1 whitespace-nowrap px-3 py-2 rounded-lg text-sm font-medium flex-shrink-0 flex items-center bg-white text-gray-600 hover:bg-gray-50 transition-all duration-300"
-          >
-            <FiSliders className="mr-1.5" size={16} />
-            <span className="hidden sm:inline">Configurar</span>
-          </button>
-        )}
       </div>
-    </div>
+    </motion.div>
   );
 };
 
 /**
- * Botón de pestaña individual con animaciones
+ * Botón de pestaña individual con animaciones y diseño vertical centrado
  */
-const TabButton = ({ isActive, onClick, icon: Icon, label }) => (
-  <motion.button
-    onClick={onClick}
-    className={`whitespace-nowrap px-3 py-2 rounded-lg text-sm font-medium flex-shrink-0 flex items-center transition-all duration-300 relative
-      ${isActive
-        ? 'bg-indigo-600 text-white shadow-sm'
-        : 'text-gray-600 hover:bg-gray-200'}`}
-    whileTap={{ scale: 0.97 }}
-    layout
-  >
-    <Icon className="mr-1.5" size={16} />
-    {label}
-    
-    {isActive && (
-      <motion.div
-        className="absolute inset-0 rounded-lg"
-        layoutId="activeTab"
-        initial={false}
-        transition={{
-          type: "spring",
-          stiffness: 500,
-          damping: 35
-        }}
-      />
-    )}
-  </motion.button>
-);
+const TabButton = ({ isActive, onClick, icon: Icon, label, variants }) => {
+  // Gradientes para el botón activo
+  const activeGradient = "bg-gradient-to-br from-indigo-500 to-blue-600";
+  const hoverGradient = "bg-gradient-to-br from-gray-100 to-gray-200 hover:from-gray-200 hover:to-gray-300";
+  
+  return (
+    <motion.div
+      variants={variants}
+      whileHover={{ scale: 1.05 }}
+      whileTap={{ scale: 0.95 }}
+      className="relative"
+    >
+      <motion.button
+        onClick={onClick}
+        className={`relative flex flex-col items-center justify-center w-20 h-20 rounded-xl ${
+          isActive 
+            ? `${activeGradient} text-white shadow-lg` 
+            : `${hoverGradient} text-gray-700 shadow-sm`
+        } transition-all duration-300 overflow-hidden group`}
+      >
+        {/* Efecto de brillo para hover */}
+        <div className={`absolute inset-0 w-full h-full bg-white opacity-0 group-hover:opacity-10 transition-opacity duration-300 ${isActive ? 'hidden' : ''}`}></div>
+        
+        {/* Efecto de borde brillante para botón activo */}
+        {isActive && (
+          <div className="absolute inset-0 bg-gradient-to-br from-indigo-300 to-blue-300 opacity-20 animate-pulse"></div>
+        )}
+
+        {/* Contenido del botón */}
+        <div className="flex flex-col items-center justify-center p-2 relative z-10">
+          <motion.div 
+            animate={isActive ? { scale: [1, 1.2, 1] } : {}}
+            transition={{ duration: 0.5 }}
+            className="flex items-center justify-center mb-2"
+          >
+            <Icon className={`${isActive ? 'text-white' : 'text-gray-700'}`} size={24} />
+          </motion.div>
+          <p className={`text-xs font-medium text-center leading-tight ${isActive ? 'text-white' : 'text-gray-700'}`}>
+            {label}
+          </p>
+        </div>
+      </motion.button>
+      
+      {/* Indicador de posición activa */}
+      {isActive && (
+        <motion.div
+          layoutId="activeTabIndicator"
+          className="absolute -bottom-1 left-1/2 transform -translate-x-1/2 w-10 h-1 bg-white rounded-full shadow-lg"
+          initial={false}
+          transition={{
+            type: "spring",
+            stiffness: 500,
+            damping: 30
+          }}
+        />
+      )}
+    </motion.div>
+  );
+};
 
 export default TabNav;

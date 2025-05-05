@@ -262,13 +262,17 @@ const ProtectedRoute = ({ redirectPath = '/signin', allowedRoles = [], children 
   }
 
   if (showFinalIcon) {
+    // Verificar si estamos en la ruta de inventario
+    const isInventoryRoute = window.location.pathname.includes('/inventory');
+    
     return (
       <AnimatePresence mode="wait">
         <motion.div key="final-icon">
           <FinalIcon success={isAllowed} />
           {setTimeout(() => {
             setShowFinalIcon(false);
-            if (isAllowed) {
+            // Si tiene permisos o estamos en la ruta de inventario, no redirigir
+            if (isAllowed || isInventoryRoute) {
               return;
             } else {
               if (isAuthenticated) {

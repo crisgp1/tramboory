@@ -30,9 +30,9 @@ const InventorySidebarLayout = ({ children }) => {
 
   // Variantes para la animación del contenido principal
   const mainContentVariants = {
-    expanded: { marginLeft: '240px' },
-    collapsed: { marginLeft: '70px' },
-    mobile: { marginLeft: '0px' }
+    expanded: { marginLeft: '240px', borderTopLeftRadius: '0px', borderBottomLeftRadius: '0px' },
+    collapsed: { marginLeft: '80px', borderTopLeftRadius: '20px', borderBottomLeftRadius: '20px' },
+    mobile: { marginLeft: '0px', borderRadius: '0px' }
   };
 
   return (
@@ -45,11 +45,11 @@ const InventorySidebarLayout = ({ children }) => {
       
       {/* Contenido principal */}
       <motion.main 
-        className="flex-1 overflow-auto"
+        className="flex-1 overflow-auto bg-gray-50"
         initial={isMobile ? "mobile" : (isCollapsed ? "collapsed" : "expanded")}
         animate={isMobile ? "mobile" : (isCollapsed ? "collapsed" : "expanded")}
         variants={mainContentVariants}
-        transition={{ duration: 0.3 }}
+        transition={{ duration: 0.4, ease: "easeInOut" }}
       >
         {/* Botón para mostrar sidebar en móvil */}
         {isMobile && isCollapsed && (

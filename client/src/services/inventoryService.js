@@ -8,6 +8,8 @@ const apiClient = axios.create({
   headers: {
     'Content-Type': 'application/json',
   },
+  // Añadir timeout para evitar esperas infinitas
+  timeout: 15000, // 15 segundos
 });
 
 // Interceptor para añadir el token de autenticación a todas las peticiones
@@ -24,35 +26,125 @@ apiClient.interceptors.request.use(
   }
 );
 
+// Función para determinar si un error es de conexión
+const isConnectionError = (error) => {
+  return (
+    error.code === 'ECONNABORTED' || // Timeout
+    error.message.includes('Network Error') || // Error de red
+    !error.response || // Sin respuesta
+    error.response.status === 503 || // Servicio no disponible
+    error.response.status === 504 // Gateway timeout
+  );
+};
+
 // Interceptor para manejar errores generales
 apiClient.interceptors.response.use(
   (response) => response,
-  (error) => {
+  async (error) => {
     // Si el error es de autenticación (401), podríamos redirigir a login
     if (error.response && error.response.status === 401) {
       toast.error('Sesión expirada. Por favor, inicie sesión de nuevo.');
       // window.location.href = '/login';
+      return Promise.reject(error);
     }
     
-    // Otros errores generales
-    const errorMessage = 
-      error.response?.data?.error || 
-      error.response?.data?.message || 
-      'Error al comunicarse con el servidor';
+    // Manejo específico para errores de conexión a la base de datos
+    if (error.response && error.response.status === 503) {
+      toast.error('Servicio de base de datos no disponible. Reintentando conexión...', {
+        autoClose: 5000, // Mostrar por más tiempo
+        toastId: 'db-error', // Prevenir duplicados
+      });
+      
+      // Esperar 2 segundos antes de reintentar
+      await new Promise(resolve => setTimeout(resolve, 2000));
+      
+      // Reintentar la solicitud
+      return apiClient.request(error.config);
+    }
+    
+    // Manejo de errores de conexión
+    if (isConnectionError(error) && error.config && !error.config.__isRetry) {
+      // Marcar como reintento para evitar bucles infinitos
+      error.config.__isRetry = true;
+      
+      // No mostrar toast para cada reintento para evitar saturar la interfaz
+      console.log('Problema de conexión detectado. Reintentando...');
+      
+      // Esperar 3 segundos antes de reintentar
+      await new Promise(resolve => setTimeout(resolve, 3000));
+      
+      // Reintentar la solicitud
+      return apiClient.request(error.config);
+    }
+    
+    // Control de toasts de error para reducir la cantidad mostrada
+    // y usar toastId para prevenir duplicados
+    const errorMessage =
+      error.response?.data?.error ||
+      error.response?.data?.message ||
+      (isConnectionError(error) ? 'Error de conexión con el servidor' : 'Error al comunicarse con el servidor');
     
     if (!error.config?.suppressErrorToast) {
-      toast.error(errorMessage);
+      // Usando toastId basado en la URL y el tipo de error para evitar duplicados
+      const toastId = `error-${error.config?.url?.split('/').pop() || 'general'}`;
+      toast.error(errorMessage, {
+        toastId,
+        autoClose: 3000,
+      });
     }
     
     return Promise.reject(error);
   }
 );
 
-// Funciones auxiliares para simplificar las llamadas API
-const get = (url) => apiClient.get(url).then(response => response.data);
-const post = (url, data) => apiClient.post(url, data).then(response => response.data);
-const put = (url, data) => apiClient.put(url, data).then(response => response.data);
-const del = (url) => apiClient.delete(url).then(response => response.data);
+// Función para reintentar una operación con un número máximo de intentos y datos de fallback
+const retryOperation = async (operation, maxRetries = 2, delay = 2000, fallbackData = null) => {
+  let lastError;
+  
+  for (let attempt = 1; attempt <= maxRetries; attempt++) {
+    try {
+      return await operation();
+    } catch (error) {
+      lastError = error;
+      
+      // Si no es un error de conexión o es el último intento, no reintentar
+      if (!isConnectionError(error) || attempt === maxRetries) {
+        // Si es el último intento y tenemos datos de fallback, regresarlos
+        if (attempt === maxRetries && fallbackData !== null) {
+          console.warn('Usando datos de fallback para', operation.name || 'operación desconocida');
+          return fallbackData;
+        }
+        throw error;
+      }
+      
+      console.log(`Intento ${attempt} fallido, reintentando en ${delay}ms...`);
+      await new Promise(resolve => setTimeout(resolve, delay));
+      
+      // Aumentar el delay para el próximo intento (backoff exponencial)
+      delay = Math.min(delay * 1.5, 10000); // Máximo 10 segundos
+    }
+  }
+  
+  // Si tenemos datos de fallback y llegamos aquí, usarlos
+  if (fallbackData !== null) {
+    console.warn('Usando datos de fallback después de agotar intentos');
+    return fallbackData;
+  }
+  
+  throw lastError;
+};
+
+// Funciones auxiliares para simplificar las llamadas API con reintentos
+const get = (url, fallbackData = []) => 
+  retryOperation(
+    () => apiClient.get(url).then(response => response.data),
+    2, // Máximo 2 reintentos
+    2000, // Delay inicial
+    fallbackData // Datos de fallback
+  );
+const post = (url, data) => retryOperation(() => apiClient.post(url, data).then(response => response.data));
+const put = (url, data) => retryOperation(() => apiClient.put(url, data).then(response => response.data));
+const del = (url) => retryOperation(() => apiClient.delete(url).then(response => response.data));
 
 // ==================== SERVICIOS PARA DASHBOARD ====================
 
@@ -61,32 +153,62 @@ const del = (url) => apiClient.delete(url).then(response => response.data);
  */
 export const getInventoryStats = async () => {
   try {
-    // Este endpoint no existe aún, habría que crearlo en el backend
-    // return await get('/inventory/stats');
+    // Intentamos obtener datos reales, pero proporcionamos fallbacks para cada llamada
+    let materiasPrimas = [];
+    let proveedores = [];
+    let movimientos = [];
+    let alertas = [];
     
-    // Mientras tanto, usamos datos simulados
-    const [materiasPrimas, proveedores, movimientos, alertas] = await Promise.all([
-      getAllItems(),
-      getAllProviders(),
-      getAllMovements(),
-      getActiveAlerts()
-    ]);
+    try {
+      materiasPrimas = await get('/inventory/materias-primas', []);
+    } catch (error) {
+      console.warn('Error al obtener materias primas, usando datos fallback:', error);
+      materiasPrimas = [];
+    }
+    
+    try {
+      proveedores = await get('/inventory/proveedores', []);
+    } catch (error) {
+      console.warn('Error al obtener proveedores, usando datos fallback:', error);
+      proveedores = [];
+    }
+    
+    try {
+      movimientos = await get('/inventory/movimientos', []);
+    } catch (error) {
+      console.warn('Error al obtener movimientos, usando datos fallback:', error);
+      movimientos = [];
+    }
+    
+    try {
+      alertas = await get('/inventory/alertas?leida=false', []);
+    } catch (error) {
+      console.warn('Error al obtener alertas, usando datos fallback:', error);
+      alertas = [];
+    }
     
     // Filtramos movimientos de hoy
     const hoy = new Date().toISOString().split('T')[0];
     const movimientosHoy = movimientos.filter(m => 
-      m.fecha.startsWith(hoy)
+      m?.fecha?.startsWith?.(hoy) || false
     ).length;
     
     return {
       totalItems: materiasPrimas.length,
       totalProviders: proveedores.length,
       movementsToday: movimientosHoy,
-      activeAlerts: alertas.filter(a => !a.leida).length
+      activeAlerts: alertas.filter(a => !a?.leida || false).length
     };
   } catch (error) {
     console.error('Error al obtener estadísticas de inventario:', error);
-    throw error;
+    // Retornamos datos fallback básicos en caso de error
+    return {
+      totalItems: 0,
+      totalProviders: 0,
+      movementsToday: 0,
+      activeAlerts: 0,
+      isUsingFallbackData: true
+    };
   }
 };
 
@@ -95,10 +217,11 @@ export const getInventoryStats = async () => {
  */
 export const getLowStockItems = async () => {
   try {
-    return await get('/inventory/materias-primas/bajo-stock');
+    return await get('/inventory/materias-primas/bajo-stock', []);
   } catch (error) {
     console.error('Error al obtener elementos con bajo stock:', error);
-    throw error;
+    // Retornar arreglo vacío en lugar de lanzar excepción
+    return [];
   }
 };
 
@@ -107,10 +230,11 @@ export const getLowStockItems = async () => {
  */
 export const getActiveAlerts = async () => {
   try {
-    return await get('/inventory/alertas?leida=false');
+    return await get('/inventory/alertas?leida=false', []);
   } catch (error) {
     console.error('Error al obtener alertas activas:', error);
-    throw error;
+    // Retornar arreglo vacío en lugar de lanzar excepción
+    return [];
   }
 };
 
@@ -182,10 +306,11 @@ export const deleteItem = async (id) => {
  */
 export const getProximosACaducar = async (dias = 7) => {
   try {
-    return await get(`/inventory/materias-primas/proximos-caducar?dias=${dias}`);
+    return await get(`/inventory/materias-primas/proximos-caducar?dias=${dias}`, []);
   } catch (error) {
     console.error('Error al obtener elementos próximos a caducar:', error);
-    throw error;
+    // Retornar arreglo vacío en lugar de lanzar excepción
+    return [];
   }
 };
 
@@ -444,10 +569,11 @@ export const getLotsByMateriaPrima = async (idMateriaPrima, params = {}) => {
  */
 export const getLotesProximosACaducar = async (dias = 7) => {
   try {
-    return await get(`/inventory/lotes/proximos-caducar?dias=${dias}`);
+    return await get(`/inventory/lotes/proximos-caducar?dias=${dias}`, []);
   } catch (error) {
     console.error('Error al obtener lotes próximos a caducar:', error);
-    throw error;
+    // Retornar arreglo vacío en lugar de lanzar excepción
+    return [];
   }
 };
 
@@ -548,10 +674,21 @@ export const getMovimientosByLote = async (idLote, params = {}) => {
  */
 export const getMovementStats = async () => {
   try {
-    return await get('/inventory/movimientos/estadisticas/consumo');
+    return await get('/inventory/movimientos/estadisticas/consumo', {
+      // Datos fallback para estadísticas de movimientos
+      entradas: [],
+      salidas: [],
+      periodos: []
+    });
   } catch (error) {
     console.error('Error al obtener estadísticas de movimiento:', error);
-    throw error;
+    // Retornar datos fallback para que la UI pueda mostrar algo
+    return {
+      entradas: [],
+      salidas: [],
+      periodos: [],
+      isUsingFallbackData: true
+    };
   }
 };
 
