@@ -1,13 +1,14 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
+import { useTheme } from '../../context/ThemeContext';
 import InventorySidebar from './InventorySidebar';
 import { Breadcrumb } from '../ui'; // Import from ui components
-
 const InventorySidebarLayout = ({ children }) => {
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
   const [breadcrumbItems, setBreadcrumbItems] = useState([]);
-
+  const { theme } = useTheme();
+  const isDark = theme === 'dark';
   // Detectar si es un dispositivo móvil
   useEffect(() => {
     const checkIfMobile = () => {
@@ -38,7 +39,7 @@ const InventorySidebarLayout = ({ children }) => {
   };
 
   return (
-    <div className="flex h-screen bg-gray-50">
+    <div className="flex h-screen" style={{ backgroundColor: 'var(--crm-bg)' }}>
       {/* Barra lateral */}
       <InventorySidebar 
         isCollapsed={isCollapsed} 
@@ -47,7 +48,11 @@ const InventorySidebarLayout = ({ children }) => {
       
       {/* Contenido principal */}
       <motion.main 
-        className="flex-1 overflow-auto bg-gray-50"
+        className="flex-1 overflow-auto"
+        style={{ 
+          backgroundColor: 'var(--crm-bg)',
+          color: 'var(--crm-text)'
+        }}
         initial={isMobile ? "mobile" : (isCollapsed ? "collapsed" : "expanded")}
         animate={isMobile ? "mobile" : (isCollapsed ? "collapsed" : "expanded")}
         variants={mainContentVariants}

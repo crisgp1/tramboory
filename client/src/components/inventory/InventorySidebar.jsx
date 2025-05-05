@@ -207,7 +207,12 @@ const InventorySidebar = ({ isCollapsed, setIsCollapsed }) => {
   return (
     <motion.div 
       ref={sidebarRef}
-      className={`h-screen ${isDark ? 'bg-gray-900 text-gray-200' : 'bg-white text-gray-700'} flex flex-col shadow-lg z-30 fixed left-0 top-0 overflow-hidden ${isDark ? 'border-r border-gray-700' : 'border-r border-gray-200'}`}
+      className="h-screen flex flex-col shadow-lg z-30 fixed left-0 top-0 overflow-hidden"
+      style={{ 
+        backgroundColor: 'var(--sidebar-bg)',
+        color: 'var(--sidebar-text)',
+        borderRight: '1px solid var(--sidebar-border)'
+      }}
       initial={isCollapsed ? "collapsed" : "expanded"}
       animate={isCollapsed ? "collapsed" : "expanded"}
       variants={sidebarVariants}
@@ -216,9 +221,12 @@ const InventorySidebar = ({ isCollapsed, setIsCollapsed }) => {
       onMouseLeave={handleMouseLeave}
     >
       {/* Cabecera de la barra lateral */}
-      <div className={`sticky top-0 z-10 ${isDark ? 'bg-gray-900' : 'bg-white'}`}>
-        <div className={`px-4 py-3 flex ${isCollapsed ? 'justify-center' : 'justify-between'} 
-          border-b ${isDark ? 'border-gray-700 bg-gray-900' : 'border-gray-200 bg-white'}`}>
+      <div className="sticky top-0 z-10" style={{ backgroundColor: 'var(--sidebar-bg)' }}>
+        <div className={`px-4 py-3 flex ${isCollapsed ? 'justify-center' : 'justify-between'}`}
+          style={{ 
+            borderBottom: '1px solid var(--sidebar-border)',
+            backgroundColor: 'var(--sidebar-bg)'
+          }}>
           <Link to="/inventory" className="flex items-center">
             <img src={Logo} alt="Logo" className="h-10 w-auto" />
             
@@ -248,23 +256,32 @@ const InventorySidebar = ({ isCollapsed, setIsCollapsed }) => {
         </div>
 
         {/* Barra de búsqueda */}
-        <div className={`px-3 py-2 border-b ${isCollapsed ? 'hidden' : 'block'} ${isDark ? 'border-gray-700' : 'border-gray-200'}`}>
+        <div className={`px-3 py-2 ${isCollapsed ? 'hidden' : 'block'}`} 
+          style={{ borderBottom: '1px solid var(--sidebar-border)' }}
+        >
           <div className="relative">
             <input
               type="text"
               placeholder="Buscar..."
-              className={`w-full pl-8 pr-3 py-1.5 text-sm rounded-lg focus:outline-none focus:ring-1 focus:ring-indigo-500 ${
-                isDark 
-                  ? 'bg-gray-800 text-gray-200 border-gray-700'
-                  : 'bg-gray-50 text-gray-700 border-gray-200'
-              }`}
+              className="w-full pl-8 pr-3 py-1.5 text-sm rounded-lg focus:outline-none focus:ring-1"
+              style={{ 
+                backgroundColor: 'var(--input-bg)', 
+                color: 'var(--input-text)', 
+                borderColor: 'var(--input-border)',
+                ":focus": { 
+                  borderColor: 'var(--color-accent-primary)',
+                  ringColor: 'var(--color-accent-primary)' 
+                }
+              }}
             />
-            <FiSearch className={`absolute left-2.5 top-2.5 ${isDark ? 'text-gray-400' : 'text-gray-500'}`} size={16} />
+            <FiSearch className="absolute left-2.5 top-2.5" style={{ color: 'var(--icon-color)' }} size={16} />
           </div>
         </div>
 
         {/* User profile section (Movido desde TopBar) */}
-        <div className={`px-3 py-2 border-b ${isCollapsed ? 'justify-center' : 'flex items-center'} ${isDark ? 'border-gray-700' : 'border-gray-200'}`}>
+        <div className={`px-3 py-2 ${isCollapsed ? 'justify-center' : 'flex items-center'}`}
+          style={{ borderBottom: '1px solid var(--sidebar-border)' }}
+        >
           {isCollapsed ? (
             <div className="flex justify-center py-2">
               <div className="w-8 h-8 rounded-full bg-indigo-100 flex items-center justify-center">
@@ -278,13 +295,17 @@ const InventorySidebar = ({ isCollapsed, setIsCollapsed }) => {
                   <FiUser className="text-indigo-600" size={16} />
                 </div>
                 <div className="ml-2">
-                  <p className="text-sm font-medium">Admin User</p>
-                  <p className={`text-xs ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>admin@example.com</p>
+                  <p className="text-sm font-medium" style={{ color: 'var(--text-primary)' }}>Admin User</p>
+                  <p className="text-xs" style={{ color: 'var(--text-secondary)' }}>admin@example.com</p>
                 </div>
               </div>
               <div className="relative">
                 <button 
-                  className={`p-1.5 rounded-full ${isDark ? 'hover:bg-gray-800 text-gray-400' : 'hover:bg-gray-100 text-gray-500'} relative`}
+                  className="p-1.5 rounded-full relative"
+                  style={{ 
+                    color: 'var(--icon-color)',
+                    ':hover': { backgroundColor: 'var(--component-hover)' } 
+                  }}
                   onClick={() => setShowNotifications(!showNotifications)}
                 >
                   <FiBell size={18} />
@@ -297,10 +318,10 @@ const InventorySidebar = ({ isCollapsed, setIsCollapsed }) => {
       </div>
       
       {/* Elementos de navegación principal */}
-      <div className={`flex-1 overflow-y-auto py-3 px-2 ${isDark ? 'scrollbar-dark' : 'scrollbar-light'}`}>
+      <div className="flex-1 overflow-y-auto py-3 px-2">
         <div className="mb-6">
           {!isCollapsed && (
-            <h3 className={`px-3 my-2 text-xs font-semibold uppercase ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>Principal</h3>
+            <h3 className="px-3 my-2 text-xs font-semibold uppercase" style={{ color: 'var(--text-secondary)' }}>Principal</h3>
           )}
           
           {mainNavItems.map((item, index) => (
@@ -319,7 +340,7 @@ const InventorySidebar = ({ isCollapsed, setIsCollapsed }) => {
         {/* Navegación secundaria */}
         <div className="mb-6">
           {!isCollapsed && (
-            <h3 className={`px-3 my-2 text-xs font-semibold uppercase ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>Configuración</h3>
+            <h3 className="px-3 my-2 text-xs font-semibold uppercase" style={{ color: 'var(--text-secondary)' }}>Configuración</h3>
           )}
           
           {secondaryNavItems.map((item, index) => (
@@ -336,7 +357,10 @@ const InventorySidebar = ({ isCollapsed, setIsCollapsed }) => {
       </div>
       
       {/* Pie de la barra lateral */}
-      <div className={`mt-auto ${isDark ? 'border-t border-gray-700 bg-gray-900' : 'border-t border-gray-100 bg-white'} pt-2 pb-4 px-2`}>
+      <div className="mt-auto pt-2 pb-4 px-2" style={{ 
+        borderTop: '1px solid var(--sidebar-border)',
+        backgroundColor: 'var(--sidebar-footer-bg)'
+      }}>
         {/* Estado de conexión a la base de datos */}
         <div className="mb-2 px-1">
           {isCollapsed ? (
@@ -351,12 +375,19 @@ const InventorySidebar = ({ isCollapsed, setIsCollapsed }) => {
         <div className="flex flex-col gap-1">
           {/* Botón de alternancia de tema */}
           {!isCollapsed ? (
-            <ThemeToggle className={`flex items-center p-2 rounded-lg ${isDark ? 'hover:bg-gray-800 text-gray-300' : 'hover:bg-indigo-50 text-gray-500'}`} />
+            <ThemeToggle className="flex items-center p-2 rounded-lg" style={{ 
+              color: 'var(--text-secondary)',
+              ':hover': { 
+                backgroundColor: 'var(--component-hover)', 
+                color: 'var(--accent-color)' 
+              }
+            }} />
           ) : (
             <div className="flex justify-center">
               <button
                 onClick={toggleTheme}
-                className={`p-2 rounded-lg ${isDark ? 'text-yellow-300' : 'text-indigo-600'}`}
+                className="p-2 rounded-lg"
+                style={{ color: isDark ? 'var(--theme-toggle-light)' : 'var(--theme-toggle-dark)' }}
               >
                 {isDark ? <FiSun size={20} /> : <FiMoon size={20} />}
               </button>
@@ -364,7 +395,13 @@ const InventorySidebar = ({ isCollapsed, setIsCollapsed }) => {
           )}
           
           {!isCollapsed && (
-            <Link to="/help" className={`flex items-center p-2 rounded-lg ${isDark ? 'text-gray-300 hover:bg-gray-800' : 'text-gray-500 hover:bg-indigo-50 hover:text-indigo-700'}`}>
+            <Link to="/help" className="flex items-center p-2 rounded-lg" style={{ 
+              color: 'var(--text-secondary)',
+              ':hover': { 
+                backgroundColor: 'var(--component-hover)', 
+                color: 'var(--accent-color)' 
+              }
+            }}>
               <FiHelpCircle size={20} />
               <span className="ml-3">Ayuda</span>
             </Link>
@@ -372,7 +409,14 @@ const InventorySidebar = ({ isCollapsed, setIsCollapsed }) => {
           
           <button
             onClick={logout}
-            className={`flex items-center p-2 rounded-lg ${isDark ? 'text-gray-300 hover:bg-gray-800' : 'text-gray-500 hover:bg-indigo-50 hover:text-indigo-700'}`}
+            className="flex items-center p-2 rounded-lg"
+            style={{ 
+              color: 'var(--text-secondary)',
+              ':hover': { 
+                backgroundColor: 'var(--component-hover)', 
+                color: 'var(--accent-color)' 
+              }
+            }}
           >
             <FiLogOut size={20} />
             {!isCollapsed && <span className="ml-3">Cerrar Sesión</span>}
@@ -384,29 +428,32 @@ const InventorySidebar = ({ isCollapsed, setIsCollapsed }) => {
       <AnimatePresence>
         {showNotifications && !isCollapsed && (
           <motion.div 
-            className={`absolute top-20 right-3 rounded-lg shadow-lg border w-72 z-50 ${
-              isDark 
-                ? 'bg-gray-800 border-gray-700' 
-                : 'bg-white border-gray-200'
-            }`}
+            className="absolute top-20 right-3 rounded-lg shadow-lg border w-72 z-50"
+            style={{ 
+              backgroundColor: 'var(--card-bg)', 
+              borderColor: 'var(--card-border)' 
+            }}
             initial={{ opacity: 0, y: -10 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -10 }}
           >
-            <div className={`p-3 border-b ${isDark ? 'border-gray-700' : 'border-gray-200'}`}>
-              <h3 className={`font-medium ${isDark ? 'text-gray-200' : 'text-gray-800'}`}>Notificaciones</h3>
+            <div className="p-3" style={{ 
+              borderBottom: '1px solid var(--card-border)' 
+            }}>
+              <h3 className="font-medium" style={{ color: 'var(--text-primary)' }}>Notificaciones</h3>
             </div>
             <div className="max-h-80 overflow-y-auto p-2">
-              <div className={`flex items-start p-2 rounded-lg cursor-pointer transition-colors duration-200 ${
-                isDark ? 'hover:bg-gray-700' : 'hover:bg-gray-50'
-              }`}>
+              <div className="flex items-start p-2 rounded-lg cursor-pointer transition-colors duration-200"
+                style={{ 
+                  ':hover': { backgroundColor: 'var(--component-hover)' } 
+                }}>
                 <div className="p-1.5 bg-amber-100 text-amber-600 rounded-full">
                   <FiAlertTriangle size={16} />
                 </div>
                 <div className="ml-2">
-                  <p className={`text-sm font-medium ${isDark ? 'text-gray-200' : 'text-gray-800'}`}>Stock bajo</p>
-                  <p className={`text-xs ${isDark ? 'text-gray-300' : 'text-gray-600'}`}>Azúcar: por debajo del mínimo</p>
-                  <p className={`text-xs mt-1 ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>Hace 10 minutos</p>
+                  <p className="text-sm font-medium" style={{ color: 'var(--text-primary)' }}>Stock bajo</p>
+                  <p className="text-xs" style={{ color: 'var(--text-secondary)' }}>Azúcar: por debajo del mínimo</p>
+                  <p className="text-xs mt-1" style={{ color: 'var(--text-tertiary)' }}>Hace 10 minutos</p>
                 </div>
               </div>
               <div className="flex items-start p-2 rounded-lg cursor-pointer transition-colors duration-200"
@@ -417,19 +464,21 @@ const InventorySidebar = ({ isCollapsed, setIsCollapsed }) => {
                   <FiAlertTriangle size={16} />
                 </div>
                 <div className="ml-2">
-                  <p className={`text-sm font-medium ${isDark ? 'text-gray-200' : 'text-gray-800'}`}>Alerta de caducidad</p>
-                  <p className={`text-xs ${isDark ? 'text-gray-300' : 'text-gray-600'}`}>Lote L0023 caducará en 3 días</p>
-                  <p className={`text-xs mt-1 ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>Hace 35 minutos</p>
+                  <p className="text-sm font-medium" style={{ color: 'var(--text-primary)' }}>Alerta de caducidad</p>
+                  <p className="text-xs" style={{ color: 'var(--text-secondary)' }}>Lote L0023 caducará en 3 días</p>
+                  <p className="text-xs mt-1" style={{ color: 'var(--text-tertiary)' }}>Hace 35 minutos</p>
                 </div>
               </div>
             </div>
-            <div className={`p-2 border-t ${isDark ? 'border-gray-700' : 'border-gray-200'}`}>
+            <div className="p-2" style={{ borderTop: '1px solid var(--card-border)' }}>
               <button 
-                className={`w-full text-center text-xs font-medium p-1 rounded transition-colors duration-200 
-                  ${isDark 
-                    ? 'text-indigo-400 hover:bg-gray-700' 
-                    : 'text-indigo-600 hover:bg-gray-50'
-                  }`}
+                className="w-full text-center text-xs font-medium p-1 rounded transition-colors duration-200"
+                style={{ 
+                  color: 'var(--accent-color)',
+                  ':hover': { 
+                    backgroundColor: 'var(--component-hover)' 
+                  }
+                }}
               >
                 Ver todas las notificaciones
               </button>
@@ -441,7 +490,11 @@ const InventorySidebar = ({ isCollapsed, setIsCollapsed }) => {
       {/* Mobile menu button */}
       {isCollapsed && (
         <button
-          className={`lg:hidden fixed bottom-4 right-4 z-30 p-3 rounded-full shadow-lg bg-indigo-600 text-white`}
+          className="lg:hidden fixed bottom-4 right-4 z-30 p-3 rounded-full shadow-lg"
+          style={{ 
+            backgroundColor: 'var(--accent-color)', 
+            color: 'var(--accent-text)' 
+          }}
           onClick={() => setIsCollapsed(false)}
         >
           <FiMenu size={20} />

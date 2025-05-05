@@ -1,7 +1,73 @@
 :root {
   /* Variables para transiciones */
   --transition-duration: 0.3s;
+}
+
+/* Tema claro (default) */
+.light-theme {
+  /* Variables base para el tema claro */
+  --color-bg-primary: #ffffff;
+  --color-bg-secondary: #f9fafb;
+  --color-bg-tertiary: #f3f4f6;
   
+  --color-text-primary: #1f2937;
+  --color-text-secondary: #4b5563;
+  --color-text-tertiary: #6b7280;
+  
+  --color-border-primary: #e5e7eb;
+  --color-border-secondary: #d1d5db;
+  
+  --color-accent-primary: #6366f1;
+  --color-accent-secondary: #818cf8;
+  
+  --color-shadow: rgba(0, 0, 0, 0.1);
+  
+  /* Colores específicos para componentes */
+  --sidebar-bg: var(--color-bg-primary);
+  --sidebar-text: var(--color-text-primary);
+  --sidebar-border: var(--color-border-primary);
+  --sidebar-hover: #f3f4f6;
+  --sidebar-footer-bg: var(--color-bg-secondary);
+  
+  /* Variables para componentes */
+  --component-bg: var(--color-bg-primary);
+  --component-hover: var(--color-bg-tertiary);
+  
+  /* Variables para alternador de tema */
+  --theme-toggle-light: #f59e0b;
+  --theme-toggle-dark: var(--color-accent-primary);
+  
+  /* Variables para textos adaptables */
+  --text-primary: var(--color-text-primary);
+  --text-secondary: var(--color-text-secondary);
+  --text-tertiary: var(--color-text-tertiary);
+  
+  /* Variables para acentos */
+  --accent-color: var(--color-accent-primary);
+  --accent-text: white;
+  
+  --header-bg: var(--color-bg-primary);
+  --header-text: var(--color-text-primary);
+  
+  --card-bg: var(--color-bg-primary);
+  --card-text: var(--color-text-primary);
+  --card-border: var(--color-border-primary);
+  
+  --input-bg: var(--color-bg-primary);
+  --input-text: var(--color-text-primary);
+  --input-border: var(--color-border-primary);
+  --input-placeholder: var(--color-text-tertiary);
+  
+  --button-primary-bg: var(--color-accent-primary);
+  --button-primary-text: white;
+  
+  --modal-bg: var(--color-bg-primary);
+  --modal-text: var(--color-text-primary);
+  --modal-overlay: rgba(0, 0, 0, 0.5);
+}
+
+/* For backwards compatibility - apply light theme to root */
+:root {
   /* Variables base para el tema claro (default) */
   --color-bg-primary: #ffffff;
   --color-bg-secondary: #f9fafb;
@@ -24,6 +90,24 @@
   --sidebar-text: var(--color-text-primary);
   --sidebar-border: var(--color-border-primary);
   --sidebar-hover: #f3f4f6;
+  --sidebar-footer-bg: var(--color-bg-secondary);
+  
+  /* Variables para componentes */
+  --component-bg: var(--color-bg-primary);
+  --component-hover: var(--color-bg-tertiary);
+  
+  /* Variables para alternador de tema */
+  --theme-toggle-light: #f59e0b;
+  --theme-toggle-dark: var(--color-accent-primary);
+  
+  /* Variables para textos adaptables */
+  --text-primary: var(--color-text-primary);
+  --text-secondary: var(--color-text-secondary);
+  --text-tertiary: var(--color-text-tertiary);
+  
+  /* Variables para acentos */
+  --accent-color: var(--color-accent-primary);
+  --accent-text: white;
   
   --header-bg: var(--color-bg-primary);
   --header-text: var(--color-text-primary);
@@ -51,9 +135,9 @@
   --color-bg-secondary: #1e1e1e;
   --color-bg-tertiary: #2d2d2d;
   
-  --color-text-primary: #e4e4e7;
-  --color-text-secondary: #a1a1aa;
-  --color-text-tertiary: #71717a;
+  --color-text-primary: #f3f4f6; /* Más claro para mejor legibilidad */
+  --color-text-secondary: #d1d5db; /* Más claro para mejor legibilidad */
+  --color-text-tertiary: #9ca3af; /* Más claro para mejor legibilidad */
   
   --color-border-primary: #3f3f46;
   --color-border-secondary: #52525b;
@@ -68,6 +152,24 @@
   --sidebar-text: var(--color-text-primary);
   --sidebar-border: var(--color-border-primary);
   --sidebar-hover: #2d2d2d;
+  --sidebar-footer-bg: var(--color-bg-primary);
+  
+  /* Variables para componentes */
+  --component-bg: var(--color-bg-secondary);
+  --component-hover: var(--color-bg-tertiary);
+  
+  /* Variables para alternador de tema */
+  --theme-toggle-light: #fbbf24;
+  --theme-toggle-dark: var(--color-accent-primary);
+  
+  /* Variables para textos adaptables */
+  --text-primary: var(--color-text-primary);
+  --text-secondary: var(--color-text-secondary);
+  --text-tertiary: var(--color-text-tertiary);
+  
+  /* Variables para acentos */
+  --accent-color: var(--color-accent-primary);
+  --accent-text: var(--color-bg-primary);
   
   --header-bg: var(--color-bg-secondary);
   --header-text: var(--color-text-primary);
@@ -87,6 +189,44 @@
   --modal-bg: var(--color-bg-secondary);
   --modal-text: var(--color-text-primary);
   --modal-overlay: rgba(0, 0, 0, 0.7);
+  
+  /* Variables específicas para componentes de CRM */
+  --crm-bg: var(--color-bg-primary);
+  --crm-card-bg: var(--color-bg-secondary);
+  --crm-text: var(--color-text-primary);
+  --crm-text-secondary: var(--color-text-secondary);
+  --crm-border: var(--color-border-primary);
+  --crm-hover-bg: var(--color-bg-tertiary);
+  --crm-active-bg: rgba(99, 102, 241, 0.15);
+  --crm-active-text: var(--color-accent-primary);
+  
+  /* Variables para iconos y elementos interactivos */
+  --icon-color: var(--color-text-secondary);
+  --icon-hover-color: var(--color-text-primary);
+  
+  /* Variables para tablas */
+  --table-header-bg: var(--color-bg-secondary);
+  --table-header-text: var(--color-text-primary);
+  --table-row-bg: var(--color-bg-primary);
+  --table-row-alt-bg: var(--color-bg-tertiary);
+  --table-border: var(--color-border-primary);
+  
+  /* Variables para formularios */
+  --form-bg: var(--color-bg-tertiary);
+  --form-text: var(--color-text-primary);
+  --form-label: var(--color-text-secondary);
+  --form-border: var(--color-border-secondary);
+  --form-placeholder: var(--color-text-tertiary);
+  
+  /* Variables para notificaciones y alertas */
+  --alert-info-bg: rgba(59, 130, 246, 0.2);
+  --alert-info-text: #93c5fd;
+  --alert-success-bg: rgba(16, 185, 129, 0.2);
+  --alert-success-text: #6ee7b7;
+  --alert-warning-bg: rgba(245, 158, 11, 0.2);
+  --alert-warning-text: #fcd34d;
+  --alert-error-bg: rgba(239, 68, 68, 0.2);
+  --alert-error-text: #fca5a5;
 }
 
 /* Transiciones suaves al cambiar de tema */

@@ -44,6 +44,15 @@ export const ThemeProvider = ({ children }) => {
     // Actualizar el atributo data-theme para CSS
     root.setAttribute('data-theme', theme);
     
+    // Para asegurar que los estilos se apliquen correctamente en todas las páginas
+    if (theme === 'dark') {
+      document.body.classList.add('dark-theme');
+      document.body.classList.remove('light-theme');
+    } else {
+      document.body.classList.add('light-theme');
+      document.body.classList.remove('dark-theme');
+    }
+    
   }, [theme]);
 
   return (

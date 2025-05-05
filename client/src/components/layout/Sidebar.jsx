@@ -115,17 +115,20 @@ const Sidebar = ({ open, setOpen, isMobile }) => {
   }, [activeTab]);
   
   return (
-    <div className={`${open ? 'w-64' : 'w-0 lg:w-20'} transition-all duration-300 bg-white h-full shadow-lg z-50 ${isMobile && open ? 'fixed' : ''} flex flex-col`}>
+    <div 
+      className={`${open ? 'w-64' : 'w-0 lg:w-20'} transition-all duration-300 h-full shadow-lg z-50 ${isMobile && open ? 'fixed' : ''} flex flex-col`}
+      style={{ backgroundColor: 'var(--sidebar-bg)' }}
+    >
       {isMobile && open && (
         <div className="flex justify-end p-4">
-          <button onClick={() => setOpen(false)}>
-            <HiX className="h-6 w-6 text-gray-500" />
+          <button onClick={() => setOpen(false)} style={{ color: 'var(--icon-color)' }}>
+            <HiX className="h-6 w-6" />
           </button>
         </div>
       )}
       
       <div className="flex flex-col h-full">
-        <div className="p-4 border-b">
+        <div className="p-4" style={{ borderBottom: '1px solid var(--sidebar-border)' }}>
           <img
             src={open ? "/img/LogoComplete.webp" : "/img/logo.webp"}
             alt=""
@@ -135,7 +138,12 @@ const Sidebar = ({ open, setOpen, isMobile }) => {
         
         {/* Ruta de navegación actual (breadcrumb) */}
         {open && (
-          <div className="text-xs text-gray-600 px-4 py-2 border-b">
+          <div className="text-xs px-4 py-2" 
+            style={{ 
+              color: 'var(--color-text-secondary)', 
+              borderBottom: '1px solid var(--sidebar-border)' 
+            }}
+          >
             {getCurrentPath()}
           </div>
         )}
@@ -147,11 +155,15 @@ const Sidebar = ({ open, setOpen, isMobile }) => {
                 {/* Encabezado de categoría */}
                 <button
                   onClick={() => toggleCategory(category.id)}
-                  className={`flex items-center justify-between w-full p-2 rounded-md ${
-                    category.items.some(item => item.id === activeTab)
-                      ? 'bg-indigo-50 text-indigo-600'
-                      : 'text-gray-600 hover:bg-gray-100'
-                  } transition-colors duration-200`}
+                  className="flex items-center justify-between w-full p-2 rounded-md transition-colors duration-200"
+                  style={{ 
+                    backgroundColor: category.items.some(item => item.id === activeTab) 
+                      ? 'var(--crm-active-bg)' 
+                      : 'transparent',
+                    color: category.items.some(item => item.id === activeTab)
+                      ? 'var(--crm-active-text)'
+                      : 'var(--sidebar-text)'
+                  }}
                 >
                   <div className="flex items-center">
                     <category.icon className="w-5 h-5 mr-3" />
@@ -171,11 +183,15 @@ const Sidebar = ({ open, setOpen, isMobile }) => {
                       <button
                         key={item.id}
                         onClick={() => handleNavClick(item.id)}
-                        className={`flex items-center w-full p-2 rounded-md ${
-                          activeTab === item.id
-                            ? 'bg-indigo-100 text-indigo-700 font-medium'
-                            : 'text-gray-600 hover:bg-gray-50'
-                        } transition-colors duration-200`}
+                        className="flex items-center w-full p-2 rounded-md transition-colors duration-200"
+                        style={{ 
+                          backgroundColor: activeTab === item.id 
+                            ? 'var(--crm-active-bg)' 
+                            : 'transparent',
+                          color: activeTab === item.id
+                            ? 'var(--crm-active-text)'
+                            : 'var(--sidebar-text)'
+                        }}
                       >
                         <item.icon className="w-4 h-4 mr-3" />
                         <span>{item.label}</span>
@@ -188,15 +204,24 @@ const Sidebar = ({ open, setOpen, isMobile }) => {
           </nav>
         </div>
         
-        <div className="p-4 border-t">
+        <div className="p-4" style={{ borderTop: '1px solid var(--sidebar-border)' }}>
           <div className="flex items-center">
-            <div className="w-8 h-8 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-500">
+            <div className="w-8 h-8 rounded-full flex items-center justify-center" 
+              style={{ 
+                backgroundColor: 'var(--color-accent-primary)', 
+                color: 'var(--color-bg-primary)' 
+              }}
+            >
               <HiOutlineUsers className="w-4 h-4" />
             </div>
             {open && (
               <div className="ml-3">
-                <p className="text-sm font-medium">Admin User</p>
-                <p className="text-xs text-gray-500">admin@example.com</p>
+                <p className="text-sm font-medium" style={{ color: 'var(--sidebar-text)' }}>
+                  Admin User
+                </p>
+                <p className="text-xs" style={{ color: 'var(--color-text-tertiary)' }}>
+                  admin@example.com
+                </p>
               </div>
             )}
           </div>

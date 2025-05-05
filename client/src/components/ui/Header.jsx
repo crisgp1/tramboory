@@ -2,6 +2,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/context/authContext';
 import Logo from '@/img/logo.webp';
 import InventoryLoader from '@/components/inventory/InventoryLoader';
+import ThemeToggle from '@/components/ui/ThemeToggle';
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { toast } from 'react-toastify';
@@ -171,11 +172,23 @@ export const Header = () => {
       initial={{ opacity: 0, y: -10 }}
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, y: -10 }}
-      className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg py-2 border border-gray-100"
+      className="absolute right-0 mt-2 w-48 rounded-lg py-2"
+      style={{ 
+        backgroundColor: 'var(--card-bg)',
+        boxShadow: '0 4px 12px var(--shadow-color)',
+        border: '1px solid var(--border-color)'
+      }}
     >
       <Link
         to="/profile"
-        className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-2"
+        className="block px-4 py-2 text-sm flex items-center gap-2"
+        style={{ 
+          color: 'var(--text-secondary)',
+          ':hover': { 
+            backgroundColor: 'var(--component-hover)',
+            color: 'var(--text-primary)'
+          }
+        }}
         onClick={() => setIsUserMenuOpen(false)}
       >
         <FiUser className="w-4 h-4" />
@@ -183,7 +196,13 @@ export const Header = () => {
       </Link>
       <button
         onClick={handleLogout}
-        className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 flex items-center gap-2"
+        className="w-full text-left px-4 py-2 text-sm flex items-center gap-2"
+        style={{ 
+          color: 'var(--danger-color)',
+          ':hover': { 
+            backgroundColor: 'var(--danger-hover)'
+          }
+        }}
       >
         <FiLogOut className="w-4 h-4" />
         Cerrar sesión
@@ -209,10 +228,13 @@ export const Header = () => {
         {showLoader && <InventoryLoader />}
       </AnimatePresence>
       <header
-        className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
-          isScrolled ? 'bg-white/95 backdrop-blur-sm shadow-md' : 'bg-white shadow-sm'
-        }`}
-        style={{ height: 'var(--header-height)' }}
+        className="fixed top-0 left-0 right-0 z-50 transition-all duration-300"
+        style={{ 
+          height: 'var(--header-height)',
+          backgroundColor: isScrolled ? 'var(--header-bg)/95' : 'var(--header-bg)',
+          backdropFilter: isScrolled ? 'blur(8px)' : 'none',
+          boxShadow: isScrolled ? 'var(--shadow-color) 0 4px 12px' : '0 1px 3px var(--shadow-color)'
+        }}
       >
         <nav className="container mx-auto px-4 sm:px-6 lg:px-8 h-full">
           <div className="flex items-center justify-between h-full">
@@ -227,6 +249,8 @@ export const Header = () => {
             </Link>
 
             <div className="hidden lg:flex items-center space-x-6">
+              <ThemeToggle className="mr-2" />
+              
               {isAuthenticated ? (
                 <>
                   <div className="flex items-center space-x-4">
@@ -235,7 +259,14 @@ export const Header = () => {
                         <button
                           key={link.text}
                           onClick={link.onClick}
-                          className="px-4 py-2 text-gray-600 hover:text-gray-900 hover:bg-gray-50 rounded-lg transition-colors duration-200 flex items-center gap-2"
+                          className="px-4 py-2 rounded-lg transition-colors duration-200 flex items-center gap-2"
+                          style={{
+                            color: 'var(--text-secondary)',
+                            ':hover': {
+                              backgroundColor: 'var(--component-hover)',
+                              color: 'var(--text-primary)'
+                            }
+                          }}
                         >
                           {link.icon}
                           <span>{link.text}</span>
@@ -244,7 +275,14 @@ export const Header = () => {
                         <Link
                           key={link.link}
                           to={link.link}
-                          className="px-4 py-2 text-gray-600 hover:text-gray-900 hover:bg-gray-50 rounded-lg transition-colors duration-200 flex items-center gap-2"
+                          className="px-4 py-2 rounded-lg transition-colors duration-200 flex items-center gap-2"
+                          style={{
+                            color: 'var(--text-secondary)',
+                            ':hover': {
+                              backgroundColor: 'var(--component-hover)',
+                              color: 'var(--text-primary)'
+                            }
+                          }}
                         >
                           {link.icon}
                           <span>{link.text}</span>
@@ -255,20 +293,24 @@ export const Header = () => {
 
                   <div className="relative" ref={menuRef}>
                     <motion.button
-                      className="flex items-center space-x-3 px-4 py-2 rounded-lg hover:bg-gray-50 transition-colors duration-200"
+                      className="flex items-center space-x-3 px-4 py-2 rounded-lg transition-colors duration-200"
+                      style={{
+                        ':hover': { backgroundColor: 'var(--component-hover)' }
+                      }}
                       onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
                     >
                       <UserAvatar user={user} />
                       <div className="text-left">
-                        <p className="text-sm font-medium text-gray-700">
+                        <p className="text-sm font-medium" style={{ color: 'var(--text-primary)' }}>
                           {user?.nombre?.split(' ')[0] || 'Usuario'}
                         </p>
-                        <p className="text-xs text-gray-500">{userType}</p>
+                        <p className="text-xs" style={{ color: 'var(--text-secondary)' }}>{userType}</p>
                       </div>
                       <FiChevronDown 
                         className={`transition-transform duration-200 ${
                           isUserMenuOpen ? 'rotate-180' : ''
                         }`}
+                        style={{ color: 'var(--text-secondary)' }}
                       />
                     </motion.button>
 
@@ -301,12 +343,15 @@ export const Header = () => {
               whileHover={{ scale: 1.1 }}
               whileTap={{ scale: 0.9 }}
               onClick={() => setIsMenuOpen(!isMenuOpen)}
-              className="lg:hidden relative z-10 p-2 rounded-lg hover:bg-gray-100 transition-colors duration-200"
+              className="lg:hidden relative z-10 p-2 rounded-lg transition-colors duration-200"
+              style={{
+                ':hover': { backgroundColor: 'var(--component-hover)' }
+              }}
             >
               {isMenuOpen ? (
-                <FiX className="w-6 h-6 text-gray-600" />
+                <FiX className="w-6 h-6" style={{ color: 'var(--text-secondary)' }} />
               ) : (
-                <FiMenu className="w-6 h-6 text-gray-600" />
+                <FiMenu className="w-6 h-6" style={{ color: 'var(--text-secondary)' }} />
               )}
             </motion.button>
           </div>
@@ -333,7 +378,11 @@ export const Header = () => {
             initial="closed"
             animate="open"
             exit="closed"
-            className="fixed top-0 right-0 bottom-0 w-full max-w-sm bg-white shadow-2xl z-50 lg:hidden overflow-y-auto"
+            className="fixed top-0 right-0 bottom-0 w-full max-w-sm z-50 lg:hidden overflow-y-auto"
+            style={{
+              backgroundColor: 'var(--card-bg)',
+              boxShadow: '0 10px 25px -5px var(--shadow-color)'
+            }}
           >
             <div className="flex flex-col h-full">
               {isAuthenticated && (
@@ -359,26 +408,40 @@ export const Header = () => {
                         link.onClick(e);
                         setIsMenuOpen(false);
                       }}
-                      className="w-full flex items-center space-x-4 px-4 py-3 rounded-lg hover:bg-gray-50 transition-colors duration-200"
+                      className="w-full flex items-center space-x-4 px-4 py-3 rounded-lg transition-colors duration-200"
+                      style={{
+                        ':hover': { backgroundColor: 'var(--component-hover)' }
+                      }}
                     >
-                      <span className="text-gray-500">{link.icon}</span>
-                      <span className="text-gray-700 font-medium">{link.text}</span>
+                      <span style={{ color: 'var(--text-secondary)' }}>{link.icon}</span>
+                      <span style={{ color: 'var(--text-primary)', fontWeight: 'medium' }}>{link.text}</span>
                     </button>
                   ) : (
                     <Link
                       key={link.link}
                       to={link.link}
                       onClick={() => setIsMenuOpen(false)}
-                      className="flex items-center space-x-4 px-4 py-3 rounded-lg hover:bg-gray-50 transition-colors duration-200"
+                      className="flex items-center space-x-4 px-4 py-3 rounded-lg transition-colors duration-200"
+                      style={{
+                        ':hover': { backgroundColor: 'var(--component-hover)' }
+                      }}
                     >
-                      <span className="text-gray-500">{link.icon}</span>
-                      <span className="text-gray-700 font-medium">{link.text}</span>
+                      <span style={{ color: 'var(--text-secondary)' }}>{link.icon}</span>
+                      <span style={{ color: 'var(--text-primary)', fontWeight: 'medium' }}>{link.text}</span>
                     </Link>
                   )
                 ))}
               </div>
 
-              <div className="p-4 border-t">
+              {/* Theme Toggle in Mobile Menu */}
+              <div className="px-4 py-3 border-t" style={{ borderColor: 'var(--border-color)' }}>
+                <div className="flex items-center justify-between">
+                  <span style={{ color: 'var(--text-primary)', fontWeight: 'medium' }}>Cambiar tema</span>
+                  <ThemeToggle />
+                </div>
+              </div>
+
+              <div className="p-4 border-t" style={{ borderColor: 'var(--border-color)' }}>
                 {isAuthenticated ? (
                   <button
                     onClick={handleLogout}
@@ -438,11 +501,15 @@ export const Header = () => {
             initial={{ opacity: 0, x: 100 }}
             animate={{ opacity: 1, x: 0 }}
             exit={{ opacity: 0, x: 100 }}
-            className="fixed bottom-4 right-4 z-50 bg-white rounded-lg shadow-lg p-4 border border-gray-200"
+            className="fixed bottom-4 right-4 z-50 rounded-lg p-4 shadow-lg"
+            style={{
+              backgroundColor: 'var(--card-bg)',
+              border: '1px solid var(--border-color)'
+            }}
           >
             <div className="flex items-center space-x-2 text-sm">
               <FiUserCheck className="text-green-500" />
-              <span className="text-gray-700">Sesión activa</span>
+              <span style={{ color: 'var(--text-primary)' }}>Sesión activa</span>
             </div>
           </motion.div>
         )}

@@ -2,7 +2,7 @@ import React, { useEffect } from 'react';
 import PropTypes from 'prop-types';
 import { motion, AnimatePresence } from 'framer-motion';
 import { FiX, FiAlertCircle, FiInfo, FiCheckCircle, FiHelpCircle } from 'react-icons/fi';
-
+import { useTheme } from '../../context/ThemeContext';
 const Modal = ({
   isOpen,
   onClose,
@@ -14,6 +14,9 @@ const Modal = ({
   type = 'default', // 'default', 'info', 'warning', 'success', 'error'
   description = '',
 }) => {
+  const { theme } = useTheme();
+  const isDark = theme === 'dark';
+  
   // Add event listener for escape key
   useEffect(() => {
     const handleEscKey = (event) => {
@@ -21,7 +24,6 @@ const Modal = ({
         onClose();
       }
     };
-
     // Add event listener
     document.addEventListener('keydown', handleEscKey);
 
@@ -61,7 +63,8 @@ const Modal = ({
         <>
           {/* Backdrop */}
           <motion.div 
-            className="fixed inset-0 z-50 bg-black bg-opacity-50 backdrop-blur-sm flex items-center justify-center p-2 sm:p-4"
+            className="fixed inset-0 z-50 backdrop-blur-sm flex items-center justify-center p-2 sm:p-4"
+            style={{ backgroundColor: 'var(--modal-overlay)' }}
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
@@ -76,14 +79,24 @@ const Modal = ({
           >
             {/* Modal Container */}
             <motion.div 
-              className={`bg-white rounded-lg shadow-xl w-full max-w-${maxWidth} flex flex-col max-h-[90vh] overflow-hidden`}
+              className={`rounded-lg shadow-xl w-full max-w-${maxWidth} flex flex-col max-h-[90vh] overflow-hidden`}
+              style={{ 
+                backgroundColor: 'var(--modal-bg)',
+                color: 'var(--modal-text)',
+                borderColor: 'var(--color-border-primary)'
+              }}
               initial={{ scale: 0.9, opacity: 0, y: 20 }}
               animate={{ scale: 1, opacity: 1, y: 0 }}
               exit={{ scale: 0.9, opacity: 0, y: 20 }}
               transition={{ type: "spring", damping: 25, stiffness: 300 }}
             >
               {/* Header */}
-              <div className="px-4 sm:px-6 py-3 sm:py-4 border-b border-gray-200 flex justify-between items-center sticky top-0 bg-white z-10">
+              <div className="px-4 sm:px-6 py-3 sm:py-4 flex justify-between items-center sticky top-0 z-10"
+                style={{
+                  borderBottom: '1px solid var(--color-border-primary)',
+                  backgroundColor: 'var(--modal-bg)'
+                }}
+              >
                 <div className="flex items-center">
                   {getModalIcon() && (
                     <div className="mr-3">
@@ -91,18 +104,25 @@ const Modal = ({
                     </div>
                   )}
                   <div>
-                    <h2 className="text-xl font-semibold text-gray-800">
+                    <h2 className="text-xl font-semibold" style={{ color: 'var(--color-text-primary)' }}>
                       {title}
                     </h2>
                     {description && (
-                      <p className="text-sm text-gray-500 mt-1">{description}</p>
+                      <p className="text-sm mt-1" style={{ color: 'var(--color-text-secondary)' }}>{description}</p>
                     )}
                   </div>
                 </div>
                 {showCloseButton && (
                   <button
                     onClick={onClose}
-                    className="text-gray-400 hover:text-gray-600 transition duration-150 ease-in-out p-1 rounded-full hover:bg-gray-100"
+                    className="transition duration-150 ease-in-out p-1 rounded-full"
+                    style={{ 
+                      color: 'var(--color-text-tertiary)',
+                      ':hover': {
+                        color: 'var(--color-text-secondary)',
+                        backgroundColor: 'var(--color-bg-tertiary)'
+                      }
+                    }}
                     aria-label="Cerrar"
                   >
                     <FiX size={24} />
@@ -117,7 +137,12 @@ const Modal = ({
 
               {/* Footer */}
               {footer && (
-                <div className="px-4 sm:px-6 py-3 sm:py-4 border-t border-gray-200 sticky bottom-0 bg-white z-10">
+                <div className="px-4 sm:px-6 py-3 sm:py-4 sticky bottom-0 z-10"
+                  style={{
+                    borderTop: '1px solid var(--color-border-primary)',
+                    backgroundColor: 'var(--modal-bg)'
+                  }}
+                >
                   {footer}
                 </div>
               )}
