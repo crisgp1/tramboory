@@ -111,13 +111,13 @@ const CotizacionesPage = () => {
   const getEstadoColor = (estado) => {
     switch (estado) {
       case 'creada':
-        return 'bg-green-100 text-green-800';
+        return 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300';
       case 'expirada':
-        return 'bg-red-100 text-red-800';
+        return 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300';
       case 'convertida':
-        return 'bg-blue-100 text-blue-800';
+        return 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300';
       default:
-        return 'bg-gray-100 text-gray-800';
+        return 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300';
     }
   };
   
@@ -130,26 +130,26 @@ const CotizacionesPage = () => {
         <motion.div 
           initial={{ scale: 0.9, opacity: 0 }}
           animate={{ scale: 1, opacity: 1 }}
-          className="bg-white rounded-lg shadow-xl max-w-md w-full p-6"
+          className="bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-md w-full p-6"
         >
-          <h2 className="text-2xl font-bold mb-4 text-indigo-800">Confirmar Reserva</h2>
+          <h2 className="text-2xl font-bold mb-4 text-indigo-800 dark:text-indigo-400">Confirmar Reserva</h2>
           
-          <p className="mb-6 text-gray-600">
+          <p className="mb-6 text-gray-600 dark:text-gray-300">
             ¿Estás seguro de que deseas convertir esta cotización en una reserva? 
             Una vez confirmada, procederás al proceso de pago.
           </p>
           
-          <div className="bg-indigo-50 p-4 rounded-lg mb-6">
-            <p><strong>Cotización:</strong> #{cotizacionSeleccionada.codigo_seguimiento}</p>
-            <p><strong>Fecha del evento:</strong> {formatearFecha(cotizacionSeleccionada.fecha_evento)}</p>
-            <p><strong>Horario:</strong> {cotizacionSeleccionada.hora_inicio} - {cotizacionSeleccionada.hora_fin}</p>
-            <p><strong>Total:</strong> ${parseFloat(cotizacionSeleccionada.total).toFixed(2)}</p>
+          <div className="bg-indigo-50 dark:bg-indigo-900/30 p-4 rounded-lg mb-6">
+            <p className="dark:text-gray-200"><strong>Cotización:</strong> #{cotizacionSeleccionada.codigo_seguimiento}</p>
+            <p className="dark:text-gray-200"><strong>Fecha del evento:</strong> {formatearFecha(cotizacionSeleccionada.fecha_evento)}</p>
+            <p className="dark:text-gray-200"><strong>Horario:</strong> {cotizacionSeleccionada.hora_inicio} - {cotizacionSeleccionada.hora_fin}</p>
+            <p className="dark:text-gray-200"><strong>Total:</strong> ${parseFloat(cotizacionSeleccionada.total).toFixed(2)}</p>
           </div>
           
           <div className="flex justify-end space-x-4">
             <button
               onClick={() => setModalVisible(false)}
-              className="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-100"
+              className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
               disabled={procesando}
             >
               Cancelar
@@ -157,7 +157,7 @@ const CotizacionesPage = () => {
             
             <button
               onClick={confirmarConversion}
-              className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 disabled:opacity-50"
+              className="px-4 py-2 bg-indigo-600 dark:bg-indigo-700 text-white rounded-lg hover:bg-indigo-700 dark:hover:bg-indigo-600 disabled:opacity-50"
               disabled={procesando}
             >
               {procesando ? 'Procesando...' : 'Confirmar y Proceder al Pago'}
@@ -174,9 +174,9 @@ const CotizacionesPage = () => {
       <motion.div 
         key={cotizacion.id}
         whileHover={{ y: -5 }}
-        className="bg-white rounded-lg shadow-md overflow-hidden border border-gray-200"
+        className="bg-white dark:bg-gray-800 rounded-lg shadow-md overflow-hidden border border-gray-200 dark:border-gray-700"
       >
-        <div className="bg-indigo-600 text-white p-4">
+        <div className="bg-indigo-600 dark:bg-indigo-800 text-white p-4">
           <h3 className="font-bold text-lg">Cotización #{cotizacion.codigo_seguimiento}</h3>
           <p className="text-sm opacity-90">Creada: {formatearFecha(cotizacion.fecha_creacion)}</p>
         </div>
@@ -184,20 +184,20 @@ const CotizacionesPage = () => {
         <div className="p-4">
           <div className="mb-4 grid grid-cols-2 gap-2">
             <div>
-              <p className="text-sm text-gray-500">Fecha del Evento</p>
-              <p className="font-medium">{formatearFecha(cotizacion.fecha_evento)}</p>
+              <p className="text-sm text-gray-500 dark:text-gray-400">Fecha del Evento</p>
+              <p className="font-medium dark:text-white">{formatearFecha(cotizacion.fecha_evento)}</p>
             </div>
             <div>
-              <p className="text-sm text-gray-500">Horario</p>
-              <p className="font-medium">{cotizacion.hora_inicio} - {cotizacion.hora_fin}</p>
+              <p className="text-sm text-gray-500 dark:text-gray-400">Horario</p>
+              <p className="font-medium dark:text-white">{cotizacion.hora_inicio} - {cotizacion.hora_fin}</p>
             </div>
             <div>
-              <p className="text-sm text-gray-500">Paquete</p>
-              <p className="font-medium">{cotizacion.paquete_nombre || 'No especificado'}</p>
+              <p className="text-sm text-gray-500 dark:text-gray-400">Paquete</p>
+              <p className="font-medium dark:text-white">{cotizacion.paquete_nombre || 'No especificado'}</p>
             </div>
             <div>
-              <p className="text-sm text-gray-500">Total</p>
-              <p className="font-bold text-indigo-700">${parseFloat(cotizacion.total).toFixed(2)}</p>
+              <p className="text-sm text-gray-500 dark:text-gray-400">Total</p>
+              <p className="font-bold text-indigo-700 dark:text-indigo-400">${parseFloat(cotizacion.total).toFixed(2)}</p>
             </div>
           </div>
           
@@ -212,7 +212,7 @@ const CotizacionesPage = () => {
               <button
                 onClick={() => handleConvertirAReserva(cotizacion)}
                 disabled={procesando}
-                className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors disabled:opacity-50"
+                className="bg-indigo-600 hover:bg-indigo-700 dark:bg-indigo-700 dark:hover:bg-indigo-600 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors disabled:opacity-50"
               >
                 Reservar Ahora
               </button>
@@ -221,7 +221,7 @@ const CotizacionesPage = () => {
             {cotizacion.estado === 'expirada' && (
               <button
                 onClick={() => navigate('/customer/reservation')}
-                className="bg-gray-600 hover:bg-gray-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors"
+                className="bg-gray-600 hover:bg-gray-700 dark:bg-gray-700 dark:hover:bg-gray-600 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors"
               >
                 Crear Nueva
               </button>
@@ -229,14 +229,14 @@ const CotizacionesPage = () => {
           </div>
           
           {cotizacion.estado === 'expirada' && (
-            <div className="mt-3 flex items-center text-sm text-red-600">
+            <div className="mt-3 flex items-center text-sm text-red-600 dark:text-red-400">
               <FiAlertCircle className="mr-1" />
               <span>Esta cotización ha expirado</span>
             </div>
           )}
           
           {cotizacion.fecha_expiracion && cotizacion.estado === 'creada' && (
-            <div className="mt-3 text-sm text-gray-500">
+            <div className="mt-3 text-sm text-gray-500 dark:text-gray-400">
               Expira: {formatearFecha(cotizacion.fecha_expiracion)}
             </div>
           )}
@@ -246,7 +246,7 @@ const CotizacionesPage = () => {
   };
   
   return (
-    <div className="min-h-screen bg-gradient-to-br from-indigo-50 to-purple-100 relative">
+    <div className="min-h-screen bg-gradient-to-br from-indigo-50 to-purple-100 dark:from-gray-900 dark:to-indigo-950 relative">
       {/* Fondo decorativo */}
       <div className="absolute inset-0 z-0 opacity-40">
         <ParticlesBackground color="#4f46e5" />
@@ -271,17 +271,17 @@ const CotizacionesPage = () => {
         <div className="mb-10">
           <button
             onClick={() => navigate('/customer/dashboard')}
-            className="flex items-center text-indigo-600 hover:text-indigo-800 mb-6 transition-colors"
+            className="flex items-center text-indigo-600 dark:text-indigo-400 hover:text-indigo-800 dark:hover:text-indigo-300 mb-6 transition-colors"
           >
             <FiArrowLeft className="mr-2" />
             <span>Volver al Dashboard</span>
           </button>
           
-          <h1 className="text-3xl md:text-4xl font-bold text-indigo-800 mb-4">
+          <h1 className="text-3xl md:text-4xl font-bold text-indigo-800 dark:text-indigo-400 mb-4">
             Mis Cotizaciones
           </h1>
           
-          <p className="text-gray-600 max-w-2xl">
+          <p className="text-gray-600 dark:text-gray-300 max-w-2xl">
             Aquí puedes ver todas tus cotizaciones activas y convertirlas en reservas cuando estés listo para confirmar.
           </p>
         </div>
@@ -289,13 +289,13 @@ const CotizacionesPage = () => {
         {/* Estado de carga */}
         {loading && (
           <div className="flex justify-center items-center py-20">
-            <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-indigo-600"></div>
+            <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-indigo-600 dark:border-indigo-400"></div>
           </div>
         )}
         
         {/* Mensaje de error */}
         {error && !loading && (
-          <div className="bg-red-100 border-l-4 border-red-500 text-red-700 p-4 rounded mb-6">
+          <div className="bg-red-100 dark:bg-red-900/50 border-l-4 border-red-500 text-red-700 dark:text-red-300 p-4 rounded mb-6">
             <p className="font-bold">Error</p>
             <p>{error}</p>
           </div>
@@ -303,20 +303,20 @@ const CotizacionesPage = () => {
         
         {/* Sin cotizaciones */}
         {!loading && !error && cotizaciones.length === 0 && (
-          <div className="bg-white bg-opacity-80 backdrop-blur-sm rounded-xl shadow-lg p-8 text-center max-w-md mx-auto">
-            <div className="w-20 h-20 bg-indigo-100 rounded-full flex items-center justify-center mx-auto mb-6">
-              <FiCalendar className="w-10 h-10 text-indigo-600" />
+          <div className="bg-white dark:bg-gray-800 bg-opacity-80 dark:bg-opacity-80 backdrop-blur-sm rounded-xl shadow-lg p-8 text-center max-w-md mx-auto">
+            <div className="w-20 h-20 bg-indigo-100 dark:bg-indigo-900/50 rounded-full flex items-center justify-center mx-auto mb-6">
+              <FiCalendar className="w-10 h-10 text-indigo-600 dark:text-indigo-400" />
             </div>
             
-            <h2 className="text-xl font-bold text-gray-800 mb-2">No tienes cotizaciones</h2>
+            <h2 className="text-xl font-bold text-gray-800 dark:text-white mb-2">No tienes cotizaciones</h2>
             
-            <p className="text-gray-600 mb-6">
+            <p className="text-gray-600 dark:text-gray-300 mb-6">
               Crea una cotización para tu evento y recibe un presupuesto sin compromiso.
             </p>
             
             <button
               onClick={() => navigate('/customer/reservation')}
-              className="bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-3 rounded-lg font-medium transition-colors"
+              className="bg-indigo-600 dark:bg-indigo-700 hover:bg-indigo-700 dark:hover:bg-indigo-600 text-white px-6 py-3 rounded-lg font-medium transition-colors"
             >
               Crear Nueva Cotización
             </button>
@@ -333,7 +333,7 @@ const CotizacionesPage = () => {
             <div className="mt-8 text-center">
               <button
                 onClick={() => navigate('/customer/reservation')}
-                className="bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-3 rounded-lg font-medium transition-colors"
+                className="bg-indigo-600 dark:bg-indigo-700 hover:bg-indigo-700 dark:hover:bg-indigo-600 text-white px-6 py-3 rounded-lg font-medium transition-colors"
               >
                 Crear Nueva Cotización
               </button>

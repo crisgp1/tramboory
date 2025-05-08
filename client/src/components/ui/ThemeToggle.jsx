@@ -10,7 +10,7 @@ const ThemeToggle = ({ className = '' }) => {
   return (
     <motion.button
       aria-label={isDark ? "Activar modo claro" : "Activar modo oscuro"}
-      className={`relative p-2 rounded-lg overflow-hidden ${className}`}
+      className={`relative p-2 rounded-lg overflow-hidden flex items-center ${className}`}
       onClick={toggleTheme}
       whileTap={{ scale: 0.95 }}
       whileHover={{ scale: 1.05 }}

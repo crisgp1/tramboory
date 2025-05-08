@@ -51,13 +51,13 @@ const PRE_RESERVA_TIMEOUT = 30;
 const InfoCard = ({ icon: Icon, title, description }) => (
   <motion.div 
     whileHover={{ scale: 1.05 }}
-    className="bg-white/85 backdrop-blur-sm rounded-xl shadow-lg p-6 flex flex-col items-center text-center transition-all duration-300"
+    className="bg-white/85 dark:bg-gray-800/85 backdrop-blur-sm rounded-xl shadow-lg p-6 flex flex-col items-center text-center transition-all duration-300"
   >
-    <div className="bg-indigo-100 rounded-full p-3 mb-4">
-      <Icon className="text-indigo-600 w-6 h-6" />
+    <div className="bg-indigo-100 dark:bg-indigo-900/50 rounded-full p-3 mb-4">
+      <Icon className="text-indigo-600 dark:text-indigo-400 w-6 h-6" />
     </div>
-    <h3 className="text-lg font-bold text-gray-800 mb-2">{title}</h3>
-    <p className="text-gray-600 text-sm">{description}</p>
+    <h3 className="text-lg font-bold text-gray-800 dark:text-white mb-2">{title}</h3>
+    <p className="text-gray-600 dark:text-gray-300 text-sm">{description}</p>
   </motion.div>
 );
 
@@ -409,21 +409,21 @@ const ReservationPage = () => {
   // Renderizar pantalla de carga
   if (loading) {
     return (
-      <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-br from-indigo-100 to-purple-100">
+      <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-br from-indigo-100 to-purple-100 dark:from-gray-900 dark:to-indigo-950">
         <div className="w-64 h-64 relative">
-          <div className="w-full h-full rounded-full border-8 border-indigo-200"></div>
+          <div className="w-full h-full rounded-full border-8 border-indigo-200 dark:border-indigo-900"></div>
           <div 
-            className="absolute top-0 left-0 w-full h-full rounded-full border-t-8 border-l-8 border-indigo-600"
+            className="absolute top-0 left-0 w-full h-full rounded-full border-t-8 border-l-8 border-indigo-600 dark:border-indigo-400"
             style={{ 
               transform: 'rotate(0deg)',
               animation: 'spin 1.5s linear infinite'
             }}
           ></div>
-          <div className="absolute inset-0 flex items-center justify-center text-2xl font-bold text-indigo-700">
+          <div className="absolute inset-0 flex items-center justify-center text-2xl font-bold text-indigo-700 dark:text-indigo-300">
             {loadingProgress}%
           </div>
         </div>
-        <h2 className="mt-8 text-xl font-semibold text-indigo-800">Preparando tu experiencia mágica...</h2>
+        <h2 className="mt-8 text-xl font-semibold text-indigo-800 dark:text-indigo-300">Preparando tu experiencia mágica...</h2>
         <style jsx>{`
           @keyframes spin {
             0% { transform: rotate(0deg); }
@@ -435,7 +435,7 @@ const ReservationPage = () => {
   }
 
   return (
-    <div className="relative min-h-screen bg-gradient-to-br from-indigo-50 to-purple-100 overflow-hidden">
+    <div className="relative min-h-screen bg-gradient-to-br from-indigo-50 to-purple-100 dark:from-gray-900 dark:to-indigo-950 overflow-hidden">
       {/* Decoración de fondo */}
       <div className="absolute inset-0 z-0 opacity-40">
         <ParticlesBackground color="#4f46e5" />
@@ -476,32 +476,32 @@ const ReservationPage = () => {
           <div className="mb-12 flex flex-col items-center">
             <button
               onClick={() => navigate('/')}
-              className="self-start mb-6 flex items-center gap-2 text-indigo-600 hover:text-indigo-800 transition-colors"
+              className="self-start mb-6 flex items-center gap-2 text-indigo-600 dark:text-indigo-400 hover:text-indigo-800 dark:hover:text-indigo-300 transition-colors"
             >
               <FiArrowLeft className="w-5 h-5" />
               <span>Regresar al Inicio</span>
             </button>
             
-            <h1 className="text-4xl md:text-5xl font-bold text-center text-indigo-800 mb-4">
-              <span className="bg-clip-text text-transparent bg-gradient-to-r from-indigo-600 to-purple-600">
+            <h1 className="text-4xl md:text-5xl font-bold text-center text-indigo-800 dark:text-indigo-300 mb-4">
+              <span className="bg-clip-text text-transparent bg-gradient-to-r from-indigo-600 to-purple-600 dark:from-indigo-400 dark:to-purple-400">
                 {isCotizacion ? 'Crea tu Cotización' : 'Crea tu Reserva Mágica'}
               </span>
             </h1>
             
-            <p className="text-center text-gray-600 max-w-2xl">
+            <p className="text-center text-gray-600 dark:text-gray-300 max-w-2xl">
               {isCotizacion
                 ? 'Personaliza tu evento y obtén una cotización sin compromiso'
                 : 'Sigue los pasos para personalizar tu evento y crear una experiencia inolvidable'}
             </p>
             
             <div className="mt-6 flex justify-center">
-              <div className="bg-white rounded-lg shadow-md p-2 inline-flex">
+              <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-2 inline-flex">
                 <button
                   onClick={() => setIsCotizacion(true)}
                   className={`px-4 py-2 rounded-md transition-colors ${
                     isCotizacion
                       ? 'bg-indigo-600 text-white'
-                      : 'bg-transparent text-gray-700 hover:bg-gray-100'
+                      : 'bg-transparent text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'
                   }`}
                 >
                   Cotización
@@ -511,7 +511,7 @@ const ReservationPage = () => {
                   className={`px-4 py-2 rounded-md transition-colors ${
                     !isCotizacion
                       ? 'bg-indigo-600 text-white'
-                      : 'bg-transparent text-gray-700 hover:bg-gray-100'
+                      : 'bg-transparent text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'
                   }`}
                 >
                   Reserva Directa
@@ -522,7 +522,7 @@ const ReservationPage = () => {
             {hasReservations && (
               <button
                 onClick={() => navigate('/customer/reservationstatus')}
-                className="mt-6 bg-indigo-100 hover:bg-indigo-200 text-indigo-700 font-medium py-2 px-4 rounded-lg transition-colors"
+                className="mt-6 bg-indigo-100 dark:bg-indigo-900 hover:bg-indigo-200 dark:hover:bg-indigo-800 text-indigo-700 dark:text-indigo-300 font-medium py-2 px-4 rounded-lg transition-colors"
               >
                 Ver mis reservas actuales
               </button>
@@ -630,14 +630,14 @@ const ReservationPage = () => {
 
           {/* Mostrar mensajes de error */}
           {preReservaError && (
-            <div className="fixed bottom-4 right-4 bg-red-100 border-l-4 border-red-500 text-red-700 p-4 rounded shadow-lg z-50">
+            <div className="fixed bottom-4 right-4 bg-red-100 dark:bg-red-900 border-l-4 border-red-500 text-red-700 dark:text-red-300 p-4 rounded shadow-lg z-50">
               <p className="font-bold">Error</p>
               <p>{preReservaError}</p>
             </div>
           )}
           
           {cotizacionError && (
-            <div className="fixed bottom-4 right-4 bg-red-100 border-l-4 border-red-500 text-red-700 p-4 rounded shadow-lg z-50">
+            <div className="fixed bottom-4 right-4 bg-red-100 dark:bg-red-900 border-l-4 border-red-500 text-red-700 dark:text-red-300 p-4 rounded shadow-lg z-50">
               <p className="font-bold">Error</p>
               <p>{cotizacionError}</p>
             </div>
