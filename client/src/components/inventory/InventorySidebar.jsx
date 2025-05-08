@@ -237,7 +237,8 @@ const InventorySidebar = ({ isCollapsed, setIsCollapsed }) => {
                   animate={{ opacity: 1, x: 0 }}
                   exit={{ opacity: 0, x: -10 }}
                   transition={{ duration: 0.3 }}
-                  className={`ml-2 font-bold text-lg ${isDark ? 'text-gray-200' : 'text-gray-800'}`}
+                  className="ml-2 font-bold text-lg"
+                  style={{ color: 'var(--text-primary)' }}
                 >
                   Inventario
                 </motion.span>
@@ -248,7 +249,11 @@ const InventorySidebar = ({ isCollapsed, setIsCollapsed }) => {
           {!isCollapsed && (
             <button 
               onClick={() => setIsCollapsed(true)}
-              className={`p-1.5 rounded-full ${isDark ? 'hover:bg-gray-800 text-gray-400' : 'hover:bg-gray-100 text-gray-500'}`}
+              className="p-1.5 rounded-full"
+              style={{ 
+                color: 'var(--text-secondary)',
+                ':hover': { backgroundColor: 'var(--component-hover)' } 
+              }}
             >
               <FiChevronLeft size={18} />
             </button>
@@ -284,15 +289,23 @@ const InventorySidebar = ({ isCollapsed, setIsCollapsed }) => {
         >
           {isCollapsed ? (
             <div className="flex justify-center py-2">
-              <div className="w-8 h-8 rounded-full bg-indigo-100 flex items-center justify-center">
-                <FiUser className="text-indigo-600" size={16} />
+              <div className="w-8 h-8 rounded-full flex items-center justify-center" 
+                style={{ 
+                  backgroundColor: 'var(--color-accent-secondary)', 
+                  color: 'var(--accent-text)' 
+                }}>
+                <FiUser size={16} />
               </div>
             </div>
           ) : (
             <div className="flex items-center justify-between w-full">
               <div className="flex items-center">
-                <div className="w-8 h-8 rounded-full bg-indigo-100 flex items-center justify-center">
-                  <FiUser className="text-indigo-600" size={16} />
+                <div className="w-8 h-8 rounded-full flex items-center justify-center" 
+                  style={{ 
+                    backgroundColor: 'var(--color-accent-secondary)', 
+                    color: 'var(--accent-text)' 
+                  }}>
+                  <FiUser size={16} />
                 </div>
                 <div className="ml-2">
                   <p className="text-sm font-medium" style={{ color: 'var(--text-primary)' }}>Admin User</p>
@@ -365,7 +378,7 @@ const InventorySidebar = ({ isCollapsed, setIsCollapsed }) => {
         <div className="mb-2 px-1">
           {isCollapsed ? (
             <div className="flex justify-center">
-              <FiDatabase size={18} className="text-green-500" title="Conexión a base de datos: Activa" />
+              <FiDatabase size={18} style={{ color: 'var(--alert-success-text)' }} title="Conexión a base de datos: Activa" />
             </div>
           ) : (
             <DatabaseConnectionStatus />

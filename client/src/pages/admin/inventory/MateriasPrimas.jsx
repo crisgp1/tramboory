@@ -1,6 +1,21 @@
 import { useState, useEffect, useCallback } from 'react';
 import { toast } from 'react-toastify';
-import { FiEdit2, FiTrash2, FiPlus, FiSearch, FiPackage, FiFilter, FiX } from 'react-icons/fi';
+import { 
+  FiEdit2, 
+  FiTrash2, 
+  FiPlus, 
+  FiSearch, 
+  FiPackage, 
+  FiFilter, 
+  FiX, 
+  FiBox, 
+  FiAlertTriangle, 
+  FiChevronDown, 
+  FiDollarSign,
+  FiInfo,
+  FiCalendar,
+  FiShield
+} from 'react-icons/fi';
 import {
   getAllItems,
   getItemById,
@@ -322,80 +337,139 @@ const MateriasPrimas = () => {
         onClose={() => setIsModalOpen(false)}
         title={selectedItem ? `Editar: ${selectedItem.nombre}` : 'Nueva Materia Prima'}
       >
-        <form onSubmit={handleSubmit} className="space-y-6">
-          <div className="space-y-4">
+        <form onSubmit={handleSubmit} className="grid grid-cols-1 gap-6">
+          {/* Sección de información general */}
+          <div className="grid grid-cols-1 gap-5">
+            {/* Nombre */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-sm font-medium mb-1" style={{ color: 'var(--text-secondary)' }}>
                 Nombre
               </label>
-              <input
-                type="text"
-                name="nombre"
-                required
-                className="w-full px-3 py-2 border rounded-md focus:ring-indigo-500 focus:border-indigo-500"
-                value={formData.nombre}
-                onChange={handleChange}
-              />
+              <div className="relative">
+                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                  <FiPackage className="text-gray-400" size={16} />
+                </div>
+                <input
+                  type="text"
+                  name="nombre"
+                  required
+                  className="pl-10 w-full px-3 py-2 border rounded-md focus:ring-indigo-500 focus:border-indigo-500"
+                  value={formData.nombre}
+                  onChange={handleChange}
+                  style={{ 
+                    backgroundColor: 'var(--input-bg)', 
+                    color: 'var(--input-text)', 
+                    borderColor: 'var(--input-border)'
+                  }}
+                  placeholder="Nombre de la materia prima"
+                />
+              </div>
             </div>
 
+            {/* Descripción */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-sm font-medium mb-1" style={{ color: 'var(--text-secondary)' }}>
                 Descripción
               </label>
-              <textarea
-                name="descripcion"
-                rows="3"
-                className="w-full px-3 py-2 border rounded-md focus:ring-indigo-500 focus:border-indigo-500"
-                value={formData.descripcion}
-                onChange={handleChange}
-              />
+              <div className="relative">
+                <div className="absolute top-3 left-3 flex items-start pointer-events-none">
+                  <FiEdit2 className="text-gray-400" size={16} />
+                </div>
+                <textarea
+                  name="descripcion"
+                  rows="3"
+                  className="pl-10 w-full px-3 py-2 border rounded-md focus:ring-indigo-500 focus:border-indigo-500"
+                  value={formData.descripcion}
+                  onChange={handleChange}
+                  style={{ 
+                    backgroundColor: 'var(--input-bg)', 
+                    color: 'var(--input-text)', 
+                    borderColor: 'var(--input-border)'
+                  }}
+                  placeholder="Descripción detallada del producto"
+                />
+              </div>
             </div>
+          </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Stock Actual
-                </label>
+          {/* Sección de inventario - Grid responsive */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-5">
+            {/* Stock Actual */}
+            <div>
+              <label className="block text-sm font-medium mb-1" style={{ color: 'var(--text-secondary)' }}>
+                Stock Actual
+              </label>
+              <div className="relative">
+                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                  <FiBox className="text-gray-400" size={16} />
+                </div>
                 <input
                   type="number"
                   name="stock_actual"
                   min="0"
                   step="0.01"
                   required
-                  className="w-full px-3 py-2 border rounded-md focus:ring-indigo-500 focus:border-indigo-500"
+                  className="pl-10 w-full px-3 py-2 border rounded-md focus:ring-indigo-500 focus:border-indigo-500"
                   value={formData.stock_actual}
                   onChange={handleChange}
+                  style={{ 
+                    backgroundColor: 'var(--input-bg)', 
+                    color: 'var(--input-text)', 
+                    borderColor: 'var(--input-border)'
+                  }}
+                  placeholder="0.00"
                 />
               </div>
+            </div>
 
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Stock Mínimo
-                </label>
+            {/* Stock Mínimo */}
+            <div>
+              <label className="block text-sm font-medium mb-1" style={{ color: 'var(--text-secondary)' }}>
+                Stock Mínimo
+              </label>
+              <div className="relative">
+                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                  <FiAlertTriangle className="text-gray-400" size={16} />
+                </div>
                 <input
                   type="number"
                   name="stock_minimo"
                   min="0"
                   step="0.01"
                   required
-                  className="w-full px-3 py-2 border rounded-md focus:ring-indigo-500 focus:border-indigo-500"
+                  className="pl-10 w-full px-3 py-2 border rounded-md focus:ring-indigo-500 focus:border-indigo-500"
                   value={formData.stock_minimo}
                   onChange={handleChange}
+                  style={{ 
+                    backgroundColor: 'var(--input-bg)', 
+                    color: 'var(--input-text)', 
+                    borderColor: 'var(--input-border)'
+                  }}
+                  placeholder="0.00"
                 />
               </div>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Unidad de Medida
-                </label>
+            {/* Unidad de Medida */}
+            <div>
+              <label className="block text-sm font-medium mb-1" style={{ color: 'var(--text-secondary)' }}>
+                Unidad de Medida
+              </label>
+              <div className="relative">
+                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                  <FiFilter className="text-gray-400" size={16} />
+                </div>
                 <select
                   name="id_unidad_medida"
                   required
-                  className="w-full px-3 py-2 border rounded-md focus:ring-indigo-500 focus:border-indigo-500"
+                  className="pl-10 w-full px-3 py-2 border rounded-md focus:ring-indigo-500 focus:border-indigo-500 appearance-none"
                   value={formData.id_unidad_medida}
                   onChange={handleChange}
+                  style={{ 
+                    backgroundColor: 'var(--input-bg)', 
+                    color: 'var(--input-text)', 
+                    borderColor: 'var(--input-border)'
+                  }}
                 >
                   <option value="">Seleccionar unidad</option>
                   {unidadesMedida.map(unidad => (
@@ -404,40 +478,53 @@ const MateriasPrimas = () => {
                     </option>
                   ))}
                 </select>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Costo Unitario
-                </label>
-                <div className="relative">
-                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                    <span className="text-gray-500">$</span>
-                  </div>
-                  <input
-                    type="number"
-                    name="costo_unitario"
-                    min="0"
-                    step="0.01"
-                    required
-                    className="pl-7 w-full px-3 py-2 border rounded-md focus:ring-indigo-500 focus:border-indigo-500"
-                    value={formData.costo_unitario}
-                    onChange={handleChange}
-                  />
+                <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
+                  <FiChevronDown className="text-gray-400" size={16} />
                 </div>
+              </div>
+            </div>
+
+            {/* Costo Unitario */}
+            <div>
+              <label className="block text-sm font-medium mb-1" style={{ color: 'var(--text-secondary)' }}>
+                Costo Unitario
+              </label>
+              <div className="relative">
+                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                  <FiDollarSign className="text-gray-400" size={16} />
+                </div>
+                <input
+                  type="number"
+                  name="costo_unitario"
+                  min="0"
+                  step="0.01"
+                  required
+                  className="pl-10 w-full px-3 py-2 border rounded-md focus:ring-indigo-500 focus:border-indigo-500"
+                  value={formData.costo_unitario}
+                  onChange={handleChange}
+                  style={{ 
+                    backgroundColor: 'var(--input-bg)', 
+                    color: 'var(--input-text)', 
+                    borderColor: 'var(--input-border)'
+                  }}
+                  placeholder="0.00"
+                />
               </div>
             </div>
           </div>
 
-          <div className="flex justify-end gap-3 pt-4">
+          {/* Botones de acción */}
+          <div className="flex justify-end gap-3 pt-4 mt-2">
             <Button
               variant="outline"
               onClick={() => setIsModalOpen(false)}
               type="button"
+              className="flex items-center gap-2"
             >
-              Cancelar
+              <FiX size={16} /> Cancelar
             </Button>
-            <Button type="submit">
+            <Button type="submit" className="flex items-center gap-2">
+              {selectedItem ? <FiEdit2 size={16} /> : <FiPlus size={16} />}
               {selectedItem ? 'Actualizar' : 'Crear'}
             </Button>
           </div>

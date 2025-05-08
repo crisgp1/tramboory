@@ -36,13 +36,18 @@ export const ThemeProvider = ({ children }) => {
     const root = window.document.documentElement;
     
     // Limpiar clases anteriores
-    root.classList.remove('light-theme', 'dark-theme');
+    root.classList.remove('light-theme', 'dark-theme', 'dark');
     
     // Agregar la clase del tema actual
     root.classList.add(`${theme}-theme`);
     
     // Actualizar el atributo data-theme para CSS
     root.setAttribute('data-theme', theme);
+    
+    // Agregar clase 'dark' para Tailwind cuando el tema es oscuro
+    if (theme === 'dark') {
+      root.classList.add('dark');
+    }
     
     // Para asegurar que los estilos se apliquen correctamente en todas las páginas
     if (theme === 'dark') {

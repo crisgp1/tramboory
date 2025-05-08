@@ -272,52 +272,85 @@ const UnidadesMedida = () => {
         title={selectedUnit ? `Editar: ${selectedUnit.nombre}` : 'Nueva Unidad de Medida'}
         maxWidth="md"
       >
-        <form onSubmit={handleSubmit} className="space-y-6">
-          <div className="space-y-4">
+        <form onSubmit={handleSubmit} className="grid grid-cols-1 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {/* Nombre */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-sm font-medium mb-1" style={{ color: 'var(--text-secondary)' }}>
                 Nombre
               </label>
-              <input
-                type="text"
-                name="nombre"
-                required
-                className="w-full px-3 py-2 border rounded-md focus:ring-indigo-500 focus:border-indigo-500"
-                value={formData.nombre}
-                onChange={handleChange}
-                placeholder="Ej: Kilogramo"
-              />
+              <div className="relative">
+                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                  <FiEdit2 className="text-gray-400" size={16} />
+                </div>
+                <input
+                  type="text"
+                  name="nombre"
+                  required
+                  className="pl-10 w-full px-3 py-2 border rounded-md focus:ring-indigo-500 focus:border-indigo-500"
+                  value={formData.nombre}
+                  onChange={handleChange}
+                  placeholder="Ej: Kilogramo"
+                  style={{ 
+                    backgroundColor: 'var(--input-bg)', 
+                    color: 'var(--input-text)', 
+                    borderColor: 'var(--input-border)'
+                  }}
+                />
+              </div>
             </div>
 
+            {/* Abreviatura */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-sm font-medium mb-1" style={{ color: 'var(--text-secondary)' }}>
                 Abreviatura
               </label>
-              <input
-                type="text"
-                name="abreviatura"
-                required
-                className="w-full px-3 py-2 border rounded-md focus:ring-indigo-500 focus:border-indigo-500"
-                value={formData.abreviatura}
-                onChange={handleChange}
-                placeholder="Ej: kg"
-                maxLength={10}
-              />
-              <p className="mt-1 text-sm text-gray-500">
+              <div className="relative">
+                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                  <span className="text-gray-400 font-mono text-sm font-bold">Aa</span>
+                </div>
+                <input
+                  type="text"
+                  name="abreviatura"
+                  required
+                  className="pl-10 w-full px-3 py-2 border rounded-md focus:ring-indigo-500 focus:border-indigo-500"
+                  value={formData.abreviatura}
+                  onChange={handleChange}
+                  placeholder="Ej: kg"
+                  maxLength={10}
+                  style={{ 
+                    backgroundColor: 'var(--input-bg)', 
+                    color: 'var(--input-text)', 
+                    borderColor: 'var(--input-border)'
+                  }}
+                />
+              </div>
+              <p className="mt-1 text-sm" style={{ color: 'var(--text-tertiary)' }}>
                 Máximo 10 caracteres. Se recomienda usar abreviaturas estándar.
               </p>
             </div>
+          </div>
 
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Tipo de Unidad
-              </label>
+          {/* Tipo de Unidad - Ocupa una fila completa */}
+          <div>
+            <label className="block text-sm font-medium mb-1" style={{ color: 'var(--text-secondary)' }}>
+              Tipo de Unidad
+            </label>
+            <div className="relative">
+              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                <FiFilter className="text-gray-400" size={16} />
+              </div>
               <select
                 name="tipo"
                 required
-                className="w-full px-3 py-2 border rounded-md focus:ring-indigo-500 focus:border-indigo-500"
+                className="pl-10 w-full px-3 py-2 border rounded-md focus:ring-indigo-500 focus:border-indigo-500 appearance-none"
                 value={formData.tipo}
                 onChange={handleChange}
+                style={{ 
+                  backgroundColor: 'var(--input-bg)', 
+                  color: 'var(--input-text)', 
+                  borderColor: 'var(--input-border)'
+                }}
               >
                 {tiposUnidad.map(tipo => (
                   <option key={tipo.id} value={tipo.id}>
@@ -325,21 +358,27 @@ const UnidadesMedida = () => {
                   </option>
                 ))}
               </select>
-              <p className="mt-1 text-sm text-gray-500">
-                Las conversiones solo pueden realizarse entre unidades del mismo tipo.
-              </p>
+              <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
+                <FiChevronDown className="text-gray-400" size={16} />
+              </div>
             </div>
+            <p className="mt-1 text-sm" style={{ color: 'var(--text-tertiary)' }}>
+              Las conversiones solo pueden realizarse entre unidades del mismo tipo.
+            </p>
           </div>
 
-          <div className="flex justify-end gap-3 pt-4">
+          {/* Botones de acción */}
+          <div className="flex justify-end gap-3 pt-4 mt-2">
             <Button
               variant="outline"
               onClick={() => setIsModalOpen(false)}
               type="button"
+              className="flex items-center gap-2"
             >
-              Cancelar
+              <FiX size={16} /> Cancelar
             </Button>
-            <Button type="submit">
+            <Button type="submit" className="flex items-center gap-2">
+              {selectedUnit ? <FiEdit2 size={16} /> : <FiPlus size={16} />}
               {selectedUnit ? 'Actualizar' : 'Crear'}
             </Button>
           </div>

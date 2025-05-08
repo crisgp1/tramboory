@@ -131,11 +131,11 @@
 
 /* Tema oscuro */
 .dark-theme {
-  --color-bg-primary: #121212;
-  --color-bg-secondary: #1e1e1e;
+  --color-bg-primary: #000100;
+  --color-bg-secondary: #011100;
   --color-bg-tertiary: #2d2d2d;
   
-  --color-text-primary: #f3f4f6; /* Más claro para mejor legibilidad */
+  --color-text-primary: #ffffff; /* Más claro para mejor legibilidad */
   --color-text-secondary: #d1d5db; /* Más claro para mejor legibilidad */
   --color-text-tertiary: #9ca3af; /* Más claro para mejor legibilidad */
   
@@ -145,13 +145,13 @@
   --color-accent-primary: #818cf8;
   --color-accent-secondary: #a5b4fc;
   
-  --color-shadow: rgba(0, 0, 0, 0.3);
+  --color-shadow: rgb(245, 235, 235);
   
   /* Colores específicos para componentes */
   --sidebar-bg: var(--color-bg-secondary);
   --sidebar-text: var(--color-text-primary);
   --sidebar-border: var(--color-border-primary);
-  --sidebar-hover: #2d2d2d;
+  --sidebar-hover: #757373;
   --sidebar-footer-bg: var(--color-bg-primary);
   
   /* Variables para componentes */
@@ -235,4 +235,51 @@
               color var(--transition-duration) ease,
               border-color var(--transition-duration) ease,
               box-shadow var(--transition-duration) ease;
+}
+
+/* Estilos específicos para sección customer */
+.dark [class*="customer"] .bg-white,
+.dark [class*="customer"] div[class*="bg-white"],
+.dark [class*="customer"] .bg-gray-100 {
+  background-color: var(--color-bg-secondary) !important;
+  color: var(--color-text-primary) !important;
+}
+
+/* Invertir colores de texto en formularios en modo oscuro */
+.dark [class*="customer"] input,
+.dark [class*="customer"] select,
+.dark [class*="customer"] textarea {
+  background-color: var(--color-bg-tertiary) !important;
+  color: var(--color-text-primary) !important;
+  border-color: var(--color-border-primary) !important;
+}
+
+/* Asegurar que los fondos de las páginas customer tengan el color correcto en modo oscuro */
+.dark [class*="customer"] {
+  background-color: var(--color-bg-primary) !important;
+  color: var(--color-text-primary) !important;
+}
+
+/* Estilos para modales en sección customer */
+.dark [class*="customer"] [role="dialog"],
+.dark [class*="customer"] .modal,
+.dark [class*="customer"] [class*="Modal"] {
+  background-color: var(--color-bg-secondary) !important;
+  color: var(--color-text-primary) !important;
+  border-color: var(--color-border-primary) !important;
+}
+
+/* Estilos para formularios en sección customer */
+.dark [class*="customer"] form,
+.dark [class*="customer"] [class*="form"] {
+  color: var(--color-text-primary) !important;
+}
+
+/* Estilos para tarjetas en sección customer */
+.dark [class*="customer"] .card,
+.dark [class*="customer"] [class*="Card"],
+.dark [class*="customer"] [class*="card"] {
+  background-color: var(--color-bg-secondary) !important;
+  color: var(--color-text-primary) !important;
+  border-color: var(--color-border-primary) !important;
 }
