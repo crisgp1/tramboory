@@ -1,3 +1,4 @@
+// ThemeToggle.jsx
 import React from 'react';
 import { motion } from 'framer-motion';
 import { FiSun, FiMoon } from 'react-icons/fi';
@@ -6,38 +7,25 @@ import { useTheme } from '../../context/ThemeContext';
 const ThemeToggle = ({ className = '' }) => {
   const { theme, toggleTheme } = useTheme();
   const isDark = theme === 'dark';
-
+  
   return (
-    <motion.button
-      aria-label={isDark ? "Activar modo claro" : "Activar modo oscuro"}
-      className={`relative p-2 rounded-lg overflow-hidden flex items-center ${className}`}
+    <button
       onClick={toggleTheme}
-      whileTap={{ scale: 0.95 }}
-      whileHover={{ scale: 1.05 }}
+      className={`flex items-center gap-2 px-3 py-2 rounded-md transition-colors ${
+        isDark 
+          ? 'bg-gray-800 text-gray-300 hover:bg-gray-700' 
+          : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+      } ${className}`}
     >
-      <div className="relative z-10 flex items-center justify-center">
-        {isDark ? (
-          <motion.div
-            initial={{ rotate: -45, opacity: 0 }}
-            animate={{ rotate: 0, opacity: 1 }}
-            transition={{ duration: 0.2 }}
-          >
-            <FiSun className="text-yellow-300" size={20} />
-          </motion.div>
-        ) : (
-          <motion.div
-            initial={{ rotate: 45, opacity: 0 }}
-            animate={{ rotate: 0, opacity: 1 }}
-            transition={{ duration: 0.2 }}
-          >
-            <FiMoon className="text-indigo-600" size={20} />
-          </motion.div>
-        )}
-      </div>
-      <span className="ml-2 text-sm font-medium hidden md:inline-block">
+      {isDark ? (
+        <FiSun className="text-yellow-500" />
+      ) : (
+        <FiMoon className="text-indigo-600" />
+      )}
+      <span className="text-sm font-medium">
         {isDark ? 'Modo Claro' : 'Modo Oscuro'}
       </span>
-    </motion.button>
+    </button>
   );
 };
 

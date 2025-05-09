@@ -210,7 +210,7 @@ const ServiceCard = ({
         </Link>
 
         <button
-          onClick={() => (window.location.href = 'tel:+XXXXXXXXXX')}
+          onClick={() => (window.location.href = 'tel:+523332300243')}
           className='w-full py-3 px-6 text-center rounded-lg font-semibold 
                 border-2 border-white/20 text-white hover:bg-white/10 
                 transition-all duration-300 transform hover:scale-105 hover:shadow-lg'
@@ -431,24 +431,26 @@ export default function Appointment () {
               para tu evento
             </p>
             <div className="flex flex-col sm:flex-row justify-center gap-4">
-              <Link
-                to="/contact"
+              <button
+                onClick={() => {
+                  window.open("https://wa.me/523332300243?text=Hola%2C%20me%20gustar%C3%ADa%20obtener%20m%C3%A1s%20informaci%C3%B3n%20sobre%20sus%20servicios%20para%20fiestas%20infantiles.", '_blank', 'noopener,noreferrer');
+                }}
                 className="inline-flex items-center justify-center px-6 py-3 rounded-lg 
                         bg-white text-purple-900 font-semibold hover:bg-gray-100 
                         transition-all duration-300 transform hover:scale-105"
               >
                 <FiMessageSquare className="mr-2" />
                 Contáctanos
-              </Link>
-              <a
-                href="tel:+XXXXXXXXXX"
+              </button>
+              <button
+                onClick={() => (window.location.href = 'tel:+523332300243')}
                 className="inline-flex items-center justify-center px-6 py-3 rounded-lg 
                         border-2 border-white text-white font-semibold hover:bg-white/10 
                         transition-all duration-300 transform hover:scale-105"
               >
                 <FiPhone className="mr-2" />
                 Llamar Ahora
-              </a>
+              </button>
             </div>
           </div>
         </section>

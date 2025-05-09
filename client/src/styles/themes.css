@@ -135,6 +135,9 @@
   --color-bg-secondary: #011100;
   --color-bg-tertiary: #2d2d2d;
   
+  /* Añade esta nueva variable específica */
+  --reserva-bg: #000000;
+  
   --color-text-primary: #ffffff; /* Más claro para mejor legibilidad */
   --color-text-secondary: #d1d5db; /* Más claro para mejor legibilidad */
   --color-text-tertiary: #9ca3af; /* Más claro para mejor legibilidad */
@@ -282,4 +285,24 @@
   background-color: var(--color-bg-secondary) !important;
   color: var(--color-text-primary) !important;
   border-color: var(--color-border-primary) !important;
+}
+
+/* Estilos específicos para página de reservaciones */
+.dark-theme main,
+.dark-theme [class*="reserva"],
+.dark-theme [class*="Reserva"] {
+  background-color: var(--reserva-bg) !important;
+  color: var(--color-text-primary) !important;
+}
+
+/* Corrige el fondo azul en la página de reservaciones */
+.dark-theme div[class*="bg-indigo-"],
+.dark-theme div[class*="bg-blue-"],
+.dark-theme div[class*="bg-navy-"],
+.dark-theme div[class*="bg-purple-"],
+.dark-theme [class*="cotizacion"] div[class*="bg-"],
+.dark-theme [class*="Cotizacion"] div[class*="bg-"],
+.dark-theme [class*="cotización"] div[class*="bg-"],
+.dark-theme [class*="Cotización"] div[class*="bg-"] {
+  background-color: var(--reserva-bg) !important;
 }
