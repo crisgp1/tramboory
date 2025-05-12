@@ -140,10 +140,10 @@ const InventoryDashboard = () => {
   if (error) {
     return (
       <div className="flex flex-col items-center justify-center h-full p-6">
-        <p className="text-red-600 mb-4">{error}</p>
+        <p className="text-red-600 dark:text-red-400 mb-4">{error}</p>
         <button
           onClick={handleRetry}
-          className="px-4 py-2 bg-indigo-600 text-white rounded hover:bg-indigo-700"
+          className="px-4 py-2 bg-indigo-600 dark:bg-indigo-500 text-white rounded hover:bg-indigo-700 dark:hover:bg-indigo-600"
         >Reintentar</button>
       </div>
     );
@@ -156,14 +156,14 @@ const InventoryDashboard = () => {
     >
       {/* Cabecera con título y fecha de actualización */}
       <FadeInUp>
-        <div className="bg-white rounded-xl shadow-sm p-5 mb-5 border border-gray-100 text-center">
+        <div className="bg-white dark:bg-[#1e293b] rounded-xl shadow-sm p-5 mb-5 border border-gray-100 dark:border-[#334155] text-center">
           <div className="flex flex-col items-center gap-4 mb-5">
             <div>
-              <h1 className="text-xl sm:text-2xl font-bold text-gray-800 flex items-center justify-center">
+              <h1 className="text-xl sm:text-2xl font-bold text-gray-800 dark:text-white flex items-center justify-center">
                 Dashboard de Inventario
-                <span className="ml-2 px-2 py-0.5 bg-indigo-50 text-indigo-600 text-xs rounded-md font-normal">v1.0</span>
+                <span className="ml-2 px-2 py-0.5 bg-indigo-50 dark:bg-indigo-900/70 text-indigo-600 dark:text-indigo-300 text-xs rounded-md font-normal">v1.0</span>
               </h1>
-              <p className="text-gray-500 text-sm mt-1 flex items-center justify-center">
+              <p className="text-gray-500 dark:text-gray-400 text-sm mt-1 flex items-center justify-center">
                 <FiClock className="mr-1.5" size={14} />
                 Última actualización: {new Date().toLocaleTimeString()}
               </p>

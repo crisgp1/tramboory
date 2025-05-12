@@ -23,6 +23,7 @@ import 'react-toastify/dist/ReactToastify.css'
 
 // Importaciones perezosas para mejorar el rendimiento
 const Home = lazy(() => import('@/pages/public/Home'))
+const PublicHomeContainer = lazy(() => import('@/pages/public/PublicHomeContainer'))
 const SignIn = lazy(() => import('@/pages/auth/SignIn'))
 const Signup = lazy(() => import('@/pages/auth/SignUp'))
 const Dashboard = lazy(() => import('@/pages/admin/dashboard/Dashboard.jsx'))
@@ -270,7 +271,7 @@ function App () {
           <AnimatePresence mode="wait">
             <Routes>
               {/* Rutas sin Header ni Footer */}
-              <Route path='/' element={<PageTransition><Home /></PageTransition>} />
+              <Route path='/' element={<PageTransition><PublicHomeContainer /></PageTransition>} />
               <Route path='/appointments' element={<PageTransition><PublicAppointment /></PageTransition>} />
               <Route path='/about' element={<PageTransition><AboutTramboory /></PageTransition>} />
             

@@ -30,14 +30,14 @@ const StatCard = ({
   const textColor = TEXT_COLORS[color] || TEXT_COLORS.primary;
 
   // Clases para la tendencia
-  const trendColor = trend === 'up' 
-    ? 'text-emerald-500 bg-emerald-50' 
-    : 'text-rose-500 bg-rose-50';
+  const trendColor = trend === 'up'
+    ? 'text-emerald-500 bg-emerald-50 dark:text-emerald-300 dark:bg-emerald-900/40'
+    : 'text-rose-500 bg-rose-50 dark:text-rose-300 dark:bg-rose-900/40';
   
   return (
     <FadeInUp delay={delay} className="h-full">
-      <motion.div 
-        className={`bg-white rounded-xl shadow-sm hover:shadow-lg transition-all duration-300 p-4 h-full border-l-4 ${borderColor} overflow-hidden relative group`}
+      <motion.div
+        className={`bg-white dark:bg-[#1e293b] rounded-xl shadow-sm hover:shadow-lg transition-all duration-300 p-4 h-full border-l-4 ${borderColor} overflow-hidden relative group`}
         whileHover={{ scale: 1.02, transition: { duration: 0.2 } }}
       >
         {/* Elemento decorativo de fondo */}
@@ -49,8 +49,8 @@ const StatCard = ({
               <Icon className={textColor} size={18} />
             </div>
             <div>
-              <h3 className="text-gray-500 text-xs font-medium">{title}</h3>
-              <p className="text-xl font-bold mt-0.5">{value}</p>
+              <h3 className="text-gray-500 dark:text-gray-400 text-xs font-medium">{title}</h3>
+              <p className="text-xl font-bold mt-0.5 dark:text-white">{value}</p>
             </div>
           </div>
           
@@ -67,7 +67,7 @@ const StatCard = ({
         
         {/* Indicador de tendencia en la parte inferior */}
         {trend && (
-          <div className="w-full h-1 mt-3 bg-gray-100 rounded-full overflow-hidden">
+          <div className="w-full h-1 mt-3 bg-gray-100 dark:bg-gray-700 rounded-full overflow-hidden">
             <motion.div 
               className={trend === 'up' ? 'bg-emerald-500' : 'bg-rose-500'} 
               initial={{ width: 0 }}

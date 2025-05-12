@@ -211,15 +211,52 @@ const Home = () => {
     };
   }, []);
 
-  // Handlers
-  const toggleVideo = () => {
-    if (sectionRefs.video.current) {
+  // Función toggleVideo mejorada
+  const toggleVideo = (e) => {
+    if (e) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
+    
+    console.log("Toggle Video clicked in Home:", !!sectionRefs.video.current);
+    
+    if (!sectionRefs.video.current) {
+      console.error("No video reference available");
+      return;
+    }
+    
+    try {
       if (isVideoPlaying) {
+        // Pausar video
         sectionRefs.video.current.pause();
+        console.log("Video pausado en Home.jsx");
+        setIsVideoPlaying(false);
       } else {
-        sectionRefs.video.current.play();
+        // Reproducir video - forma simplificada
+        sectionRefs.video.current.play()
+          .then(() => {
+            console.log("Video reproducido exitosamente en Home.jsx");
+            setIsVideoPlaying(true);
+          })
+          .catch(err => {
+            console.error("Error reproduciendo video en Home.jsx:", err);
+            
+            // Solo agregar listener para interacción de usuario si es necesario
+            const handleUserInteraction = () => {
+              sectionRefs.video.current.play()
+                .then(() => {
+                  setIsVideoPlaying(true);
+                  document.removeEventListener('click', handleUserInteraction);
+                  console.log("Video reproducido tras interacción del usuario");
+                })
+                .catch(e => console.error("Fallo en reproducción forzada:", e));
+            };
+            
+            document.addEventListener('click', handleUserInteraction, { once: true });
+          });
       }
-      setIsVideoPlaying(!isVideoPlaying);
+    } catch (error) {
+      console.error("Error al cambiar estado del video:", error);
     }
   };
 

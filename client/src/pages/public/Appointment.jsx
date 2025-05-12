@@ -16,7 +16,9 @@ import {
   FiPhone,
   FiMessageSquare,
   FiPlus,
-  FiMinus
+  FiMinus,
+  FiPlay,
+  FiPause
 } from 'react-icons/fi'
 
 // Componentes decorativos
@@ -231,6 +233,68 @@ export default function Appointment () {
   const videoRef = useRef(null);
   const [isVideoPlaying, setIsVideoPlaying] = useState(true);
   
+  // Efecto para inicializar el video de manera segura
+  useEffect(() => {
+    const initializeVideo = async () => {
+      if (!videoRef.current) {
+        console.warn("Video element not available on mount");
+        return;
+      }
+      
+      console.log("Initializing video element");
+      
+      try {
+        // Forzar carga del video
+        videoRef.current.load();
+        
+        // Verificar si el navegador permite autoplay
+        const canAutoplay = await testAutoplayCapability();
+        console.log("Autoplay capability:", canAutoplay);
+        
+        if (canAutoplay) {
+          await videoRef.current.play();
+          console.log("Video started playing automatically");
+          setIsVideoPlaying(true);
+        } else {
+          console.log("Autoplay not supported - video paused");
+          videoRef.current.pause();
+          setIsVideoPlaying(false);
+        }
+      } catch (error) {
+        console.error("Error initializing video:", error);
+        setIsVideoPlaying(false);
+      }
+    };
+    
+    // Función para probar capacidad de autoplay
+    const testAutoplayCapability = () => {
+      return new Promise(resolve => {
+        // Crear un video temporal para probar autoplay
+        const testVideo = document.createElement('video');
+        testVideo.muted = true;
+        testVideo.playsInline = true;
+        testVideo.src = "data:video/mp4;base64,AAAAIGZ0eXBtcDQyAAAAAG1wNDJtcDQxaXNvbWF2YzEAAATKbW9vdgAAAGxtdmhkAAAAANLEP5XSxD+VAAB1MAAAdU4AAQAAAQAAAAAAAAAAAAAAAAEAAAAAAAAAAAAAAAAAAAABAAAAAAAAAAAAAAAAAABAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAgAAACFpb2RzAAAAABCAgIAQAE////9//w6AgIAEAAAAAQAABDV0cmFrAAAAXHRraGQAAAAH0sQ/ldLEP5UAAAABAAAAAAAAdU4AAAAAAAAAAAAAAAABAQAAAAABAAAAAAAAAAAAAAAAAAAAAQAAAAAAAAAAAAAAAAAAQAAAAAAAAAAAAAAAAAABbG1kaWEAAAAgbWRoZAAAAADSxD+V0sQ/lQAAVcQAAK1lAAAAAAAAAABiaWRpAAAAAG1keGQAAAAAAAAAAAAAAAAAAD5tZGlhAAAAO21kYXQAAAAAAAEBIAACEAUQAA==";
+        
+        // Si el video puede reproducirse, entonces autoplay está permitido
+        const playPromise = testVideo.play();
+        if (playPromise !== undefined) {
+          playPromise
+            .then(() => resolve(true))
+            .catch(() => resolve(false));
+        } else {
+          resolve(false);
+        }
+      });
+    };
+    
+    // Inicializar con un pequeño retraso para asegurar que el DOM está listo
+    const timer = setTimeout(() => {
+      initializeVideo();
+    }, 500);
+    
+    return () => clearTimeout(timer);
+  }, []);
+  
   // Efecto GSAP para elementos animados en scroll
   useLayoutEffect(() => {
     const ctx = gsap.context(() => {
@@ -251,15 +315,54 @@ export default function Appointment () {
     return () => ctx.revert()
   }, [])
 
-  // Toggle para el video de fondo
-  const toggleVideo = () => {
-    if (videoRef.current) {
+  // Función toggleVideo simplificada y mejorada
+  const toggleVideo = (e) => {
+    if (e) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
+    
+    console.log("Toggle Video clicked with event:", e);
+    console.log("Video ref exists:", !!videoRef.current);
+    console.log("Current playing state:", isVideoPlaying);
+    
+    if (!videoRef.current) {
+      console.error("No video reference available");
+      return;
+    }
+    
+    try {
       if (isVideoPlaying) {
+        // Pausar video
         videoRef.current.pause();
+        console.log("Video pause command sent");
+        setIsVideoPlaying(false);
       } else {
-        videoRef.current.play();
+        // Reproducir video - forma simplificada
+        videoRef.current.play()
+          .then(() => {
+            console.log("Video play successful");
+            setIsVideoPlaying(true);
+          })
+          .catch(err => {
+            console.error("Error playing video:", err);
+            
+            // Solo agregar listener para interacción de usuario si es necesario
+            const handleUserInteraction = () => {
+              videoRef.current.play()
+                .then(() => {
+                  setIsVideoPlaying(true);
+                  document.removeEventListener('click', handleUserInteraction);
+                  console.log("Video reproducido tras interacción del usuario");
+                })
+                .catch(e => console.error("Fallo en reproducción forzada:", e));
+            };
+            
+            document.addEventListener('click', handleUserInteraction, { once: true });
+          });
       }
-      setIsVideoPlaying(!isVideoPlaying);
+    } catch (error) {
+      console.error("Error al cambiar estado del video:", error);
     }
   };
 
@@ -371,23 +474,26 @@ export default function Appointment () {
 
   return (
     <div className="relative min-h-screen overflow-hidden bg-gradient-to-br from-purple-950 to-indigo-950">
-      {/* Elementos decorativos de fondo */}
+      {/* Primero los elementos decorativos de fondo */}
       <ParticlesBackground />
       <AnimatedBalloons />
       
-      {/* Video de Fondo */}
+      {/* Video de Fondo - Asegúrate de que esté antes de otros elementos de contenido */}
       <BackgroundVideoComponent
         videoRef={videoRef}
         isVideoPlaying={isVideoPlaying}
         toggleVideo={toggleVideo}
       />
 
-      {/* Navbar público */}
-      <NavbarPublic />
+      {/* Contenido principal con mayor z-index para estar por encima del video */}
+      <div className="relative z-10 pointer-events-none">
+        {/* Navbar público */}
+        <div className="pointer-events-auto">
+          <NavbarPublic />
+        </div>
 
-      <div className="relative z-10">
         {/* Hero Section */}
-        <section className="relative pt-32 pb-20 px-4 sm:px-6 lg:px-8 animate-on-scroll">
+        <section className="relative pt-32 pb-20 px-4 sm:px-6 lg:px-8 animate-on-scroll pointer-events-auto">
           <div className="max-w-7xl mx-auto text-center">
             <motion.h1
               initial={{ opacity: 0, y: -20 }}
@@ -410,7 +516,7 @@ export default function Appointment () {
         </section>
 
         {/* Services Section */}
-        <section className="py-12 px-4 sm:px-6 lg:px-8">
+        <section className="py-12 px-4 sm:px-6 lg:px-8 pointer-events-auto">
           <div className="max-w-7xl mx-auto">
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
               <ServiceCard {...services.normal} />
@@ -420,7 +526,7 @@ export default function Appointment () {
         </section>
 
         {/* Contact Section */}
-        <section className="py-16 px-4 sm:px-6 lg:px-8 relative overflow-hidden">
+        <section className="py-16 px-4 sm:px-6 lg:px-8 relative overflow-hidden pointer-events-auto">
           <div className="absolute inset-0 bg-gradient-to-r from-purple-800/90 to-indigo-800/90 backdrop-blur-sm" />
           <div className="max-w-7xl mx-auto relative z-10 text-center">
             <h2 className="text-3xl font-bold text-white mb-6 font-funhouse">

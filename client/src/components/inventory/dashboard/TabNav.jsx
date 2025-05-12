@@ -76,8 +76,8 @@ const TabNav = ({ activeTab, setActiveTab, customTabs }) => {
  */
 const TabButton = ({ isActive, onClick, icon: Icon, label, variants }) => {
   // Gradientes para el botón activo
-  const activeGradient = "bg-gradient-to-br from-indigo-500 to-blue-600";
-  const hoverGradient = "bg-gradient-to-br from-gray-100 to-gray-200 hover:from-gray-200 hover:to-gray-300";
+  const activeGradient = "bg-gradient-to-br from-indigo-500 to-blue-600 dark:from-indigo-600 dark:to-indigo-800";
+  const hoverGradient = "bg-gradient-to-br from-gray-100 to-gray-200 hover:from-gray-200 hover:to-gray-300 dark:from-[#1e293b] dark:to-[#263449] dark:hover:from-[#263449] dark:hover:to-[#334155]";
   
   return (
     <motion.div
@@ -89,9 +89,9 @@ const TabButton = ({ isActive, onClick, icon: Icon, label, variants }) => {
       <motion.button
         onClick={onClick}
         className={`relative flex flex-col items-center justify-center w-20 h-20 rounded-xl ${
-          isActive 
-            ? `${activeGradient} text-white shadow-lg` 
-            : `${hoverGradient} text-gray-700 shadow-sm`
+          isActive
+            ? `${activeGradient} text-white shadow-lg`
+            : `${hoverGradient} text-gray-700 dark:text-gray-200 shadow-sm`
         } transition-all duration-300 overflow-hidden group`}
       >
         {/* Efecto de brillo para hover */}
@@ -109,9 +109,9 @@ const TabButton = ({ isActive, onClick, icon: Icon, label, variants }) => {
             transition={{ duration: 0.5 }}
             className="flex items-center justify-center mb-2"
           >
-            <Icon className={`${isActive ? 'text-white' : 'text-gray-700'}`} size={24} />
+            <Icon className={`${isActive ? 'text-white' : 'text-gray-700 dark:text-gray-200'}`} size={24} />
           </motion.div>
-          <p className={`text-xs font-medium text-center leading-tight ${isActive ? 'text-white' : 'text-gray-700'}`}>
+          <p className={`text-xs font-medium text-center leading-tight ${isActive ? 'text-white' : 'text-gray-700 dark:text-gray-200'}`}>
             {label}
           </p>
         </div>

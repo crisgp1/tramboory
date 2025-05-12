@@ -1,4 +1,163 @@
 :root {
+  --transition-duration: 0.3s;
+}
+
+.light-theme {
+  --color-bg-primary: #ffffff;
+  --color-bg-secondary: #f9fafb;
+  --color-bg-tertiary: #f3f4f6;
+  
+  --color-text-primary: #1f2937;
+  --color-text-secondary: #4b5563;
+  --color-text-tertiary: #6b7280;
+  
+  --color-border-primary: #e5e7eb;
+  --color-border-secondary: #d1d5db;
+  
+  --color-accent-primary: #6366f1;
+  --color-accent-secondary: #818cf8;
+  
+  --color-shadow: rgba(0, 0, 0, 0.1);
+  
+  --panel-bg: #ffffff;
+  --panel-header-bg: #f9fafb;
+  --panel-border: #e5e7eb;
+  --table-header-bg: #f9fafb;
+  --table-row-bg: #ffffff;
+  --table-row-alt-bg: #f3f4f6;
+}
+
+:root {
+  /* Copy of light-theme variables for backwards compatibility */
+  --color-bg-primary: #ffffff;
+  --color-bg-secondary: #f9fafb;
+  --color-bg-tertiary: #f3f4f6;
+  
+  --color-text-primary: #1f2937;
+  --color-text-secondary: #4b5563;
+  --color-text-tertiary: #6b7280;
+  
+  --color-border-primary: #e5e7eb;
+  --color-border-secondary: #d1d5db;
+  
+  --color-accent-primary: #6366f1;
+  --color-accent-secondary: #818cf8;
+  
+  --color-shadow: rgba(0, 0, 0, 0.1);
+}
+
+.dark-theme {
+  --color-bg-primary: #000000;
+  --color-bg-secondary: #0c0c0c;
+  --color-bg-tertiary: #181818;
+  
+  --panel-bg: #1e293b; 
+  --panel-header-bg: #172033;
+  --panel-border: #334155;
+  --table-header-bg: #172033;
+  --table-row-bg: #1e293b;
+  --table-row-alt-bg: #263449;
+  
+  --color-text-primary: #ffffff;
+  --color-text-secondary: #f0f0f0;
+  --color-text-tertiary: #e0e0e0;
+  
+  --color-border-primary: #4b4b4b;
+  --color-border-secondary: #606060;
+  
+  --color-accent-primary: #818cf8;
+  --color-accent-secondary: #a5b4fc;
+  
+  --color-shadow: rgba(255, 255, 255, 0.1);
+  
+  --sidebar-bg: #0c0c0c;
+  --sidebar-text: #ffffff;
+  --sidebar-border: #333333;
+  --sidebar-hover: #222222;
+  --sidebar-footer-bg: #000000;
+  
+  --component-bg: #1a1a1a;
+  --component-hover: #333333;
+  
+  --input-bg: #333333;
+  --input-text: #ffffff;
+  --input-border: #4d4d4d;
+  --input-placeholder: #bbbbbb;
+  
+  --button-primary-bg: var(--color-accent-primary);
+  --button-primary-text: #000000;
+  
+  --modal-bg: #1e293b;
+  --modal-text: #ffffff;
+  --modal-overlay: rgba(0, 0, 0, 0.8);
+}
+
+* {
+  transition: background-color var(--transition-duration) ease,
+              color var(--transition-duration) ease,
+              border-color var(--transition-duration) ease,
+              box-shadow var(--transition-duration) ease;
+}
+
+/* Table styling */
+.dark [role="table"],
+.dark table,
+.dark .table {
+  background-color: var(--table-row-bg) !important;
+  color: var(--color-text-primary) !important;
+  border-color: var(--panel-border) !important;
+}
+
+.dark [role="table"] th,
+.dark table th,
+.dark .table th,
+.dark [role="columnheader"],
+.dark thead tr {
+  background-color: var(--table-header-bg) !important;
+  color: var(--color-text-primary) !important;
+  border-color: var(--panel-border) !important;
+}
+
+.dark [role="table"] tr:nth-child(odd),
+.dark table tr:nth-child(odd) {
+  background-color: var(--table-row-bg) !important;
+}
+
+.dark [role="table"] tr:nth-child(even),
+.dark table tr:nth-child(even) {
+  background-color: var(--table-row-alt-bg) !important;
+}
+
+/* Panels and cards */
+.dark .bg-white,
+.dark [class*="panel"],
+.dark [class*="Panel"],
+.dark [class*="card"],
+.dark [class*="Card"] {
+  background-color: var(--panel-bg) !important;
+  color: var(--color-text-primary) !important;
+  border-color: var(--panel-border) !important;
+}
+
+/* Form elements */
+.dark input,
+.dark select,
+.dark textarea {
+  background-color: var(--input-bg) !important;
+  color: var(--input-text) !important;
+  border-color: var(--input-border) !important;
+}
+
+.dark input::placeholder,
+.dark textarea::placeholder {
+  color: var(--input-placeholder) !important;
+}
+
+/* Text colors */
+.dark .text-gray-800,
+.dark .text-gray-700 {
+  color: var(--color-text-primary) !important;
+}:root {
   /* Variables para transiciones */
   --transition-duration: 0.3s;
 }
@@ -22,7 +181,15 @@
   
   --color-shadow: rgba(0, 0, 0, 0.1);
   
-  /* Colores específicos para componentes */
+  /* Panel y tablas - SIEMPRE BLANCO en tema claro */
+  --panel-bg: #ffffff;
+  --panel-header-bg: #f9fafb;
+  --panel-border: #e5e7eb;
+  --table-header-bg: #f9fafb;
+  --table-row-bg: #ffffff;
+  --table-row-alt-bg: #f3f4f6;
+  
+  /* Colores para elementos específicos */
   --sidebar-bg: var(--color-bg-primary);
   --sidebar-text: var(--color-text-primary);
   --sidebar-border: var(--color-border-primary);
@@ -131,105 +298,94 @@
 
 /* Tema oscuro */
 .dark-theme {
-  --color-bg-primary: #000100;
-  --color-bg-secondary: #011100;
-  --color-bg-tertiary: #2d2d2d;
+  /* Fondo NEGRO PURO y PANEL INDIGO */
+  --color-bg-primary: #000000;
+  --color-bg-secondary: #0c0c0c;
+  --color-bg-tertiary: #181818;
   
-  /* Añade esta nueva variable específica */
-  --reserva-bg: #000000;
+  /* PANELES Y TABLAS - ÍNDIGO en tema oscuro */
+  --panel-bg: #1e293b; /* Indigo 900 */
+  --panel-header-bg: #172033; /* Ligeramente más oscuro */
+  --panel-border: #334155; /* Indigo 700 */
+  --table-header-bg: #172033; /* Indigo 900 */
+  --table-row-bg: #1e293b; /* Indigo 900 */
+  --table-row-alt-bg: #263449; /* Ligeramente más claro */
   
-  --color-text-primary: #ffffff; /* Más claro para mejor legibilidad */
-  --color-text-secondary: #d1d5db; /* Más claro para mejor legibilidad */
-  --color-text-tertiary: #9ca3af; /* Más claro para mejor legibilidad */
+  /* TEXTO BLANCO para máxima visibilidad */
+  --color-text-primary: #ffffff;
+  --color-text-secondary: #f0f0f0;
+  --color-text-tertiary: #e0e0e0;
   
-  --color-border-primary: #3f3f46;
-  --color-border-secondary: #52525b;
+  /* Bordes más visibles */
+  --color-border-primary: #4b4b4b;
+  --color-border-secondary: #606060;
   
+  /* Colores de acento */
   --color-accent-primary: #818cf8;
   --color-accent-secondary: #a5b4fc;
   
-  --color-shadow: rgb(245, 235, 235);
+  --color-shadow: rgba(255, 255, 255, 0.1);
   
-  /* Colores específicos para componentes */
-  --sidebar-bg: var(--color-bg-secondary);
-  --sidebar-text: var(--color-text-primary);
-  --sidebar-border: var(--color-border-primary);
-  --sidebar-hover: #757373;
-  --sidebar-footer-bg: var(--color-bg-primary);
+  /* Componentes específicos */
+  --sidebar-bg: #0c0c0c;
+  --sidebar-text: #ffffff;
+  --sidebar-border: #333333;
+  --sidebar-hover: #222222;
+  --sidebar-footer-bg: #000000;
   
-  /* Variables para componentes */
-  --component-bg: var(--color-bg-secondary);
-  --component-hover: var(--color-bg-tertiary);
+  /* Variables para componentes con mejor contraste */
+  --component-bg: #1a1a1a;
+  --component-hover: #333333;
   
-  /* Variables para alternador de tema */
+  /* Toggle de tema */
   --theme-toggle-light: #fbbf24;
   --theme-toggle-dark: var(--color-accent-primary);
   
-  /* Variables para textos adaptables */
-  --text-primary: var(--color-text-primary);
-  --text-secondary: var(--color-text-secondary);
-  --text-tertiary: var(--color-text-tertiary);
+  /* Textos adaptables */
+  --text-primary: #ffffff;
+  --text-secondary: #f0f0f0;
+  --text-tertiary: #e0e0e0;
   
-  /* Variables para acentos */
+  /* Acentos y elementos interactivos */
   --accent-color: var(--color-accent-primary);
-  --accent-text: var(--color-bg-primary);
+  --accent-text: #000000;
   
-  --header-bg: var(--color-bg-secondary);
-  --header-text: var(--color-text-primary);
+  /* Headers y tarjetas */
+  --header-bg: #0c0c0c;
+  --header-text: #ffffff;
   
-  --card-bg: var(--color-bg-secondary);
-  --card-text: var(--color-text-primary);
-  --card-border: var(--color-border-primary);
+  --card-bg: #1a1a1a;
+  --card-text: #ffffff;
+  --card-border: #333333;
   
-  --input-bg: var(--color-bg-tertiary);
-  --input-text: var(--color-text-primary);
-  --input-border: var(--color-border-primary);
-  --input-placeholder: var(--color-text-tertiary);
+  /* Elementos de formulario */
+  --input-bg: #333333;
+  --input-text: #ffffff;
+  --input-border: #4d4d4d;
+  --input-placeholder: #bbbbbb;
   
+  /* Botones */
   --button-primary-bg: var(--color-accent-primary);
-  --button-primary-text: var(--color-bg-primary);
+  --button-primary-text: #000000;
   
-  --modal-bg: var(--color-bg-secondary);
-  --modal-text: var(--color-text-primary);
-  --modal-overlay: rgba(0, 0, 0, 0.7);
+  /* Modales */
+  --modal-bg: #1e293b;
+  --modal-text: #ffffff;
+  --modal-overlay: rgba(0, 0, 0, 0.8);
   
-  /* Variables específicas para componentes de CRM */
-  --crm-bg: var(--color-bg-primary);
-  --crm-card-bg: var(--color-bg-secondary);
-  --crm-text: var(--color-text-primary);
-  --crm-text-secondary: var(--color-text-secondary);
-  --crm-border: var(--color-border-primary);
-  --crm-hover-bg: var(--color-bg-tertiary);
-  --crm-active-bg: rgba(99, 102, 241, 0.15);
+  /* Variables específicas para CRM */
+  --crm-bg: #000000;
+  --crm-card-bg: #1a1a1a;
+  --crm-text: #ffffff;
+  --crm-text-secondary: #f0f0f0;
+  --crm-border: #333333;
+  --crm-hover-bg: #333333;
+  --crm-active-bg: rgba(99, 102, 241, 0.25);
   --crm-active-text: var(--color-accent-primary);
   
-  /* Variables para iconos y elementos interactivos */
-  --icon-color: var(--color-text-secondary);
-  --icon-hover-color: var(--color-text-primary);
-  
-  /* Variables para tablas */
-  --table-header-bg: var(--color-bg-secondary);
-  --table-header-text: var(--color-text-primary);
-  --table-row-bg: var(--color-bg-primary);
-  --table-row-alt-bg: var(--color-bg-tertiary);
-  --table-border: var(--color-border-primary);
-  
-  /* Variables para formularios */
-  --form-bg: var(--color-bg-tertiary);
-  --form-text: var(--color-text-primary);
-  --form-label: var(--color-text-secondary);
-  --form-border: var(--color-border-secondary);
-  --form-placeholder: var(--color-text-tertiary);
-  
-  /* Variables para notificaciones y alertas */
-  --alert-info-bg: rgba(59, 130, 246, 0.2);
-  --alert-info-text: #93c5fd;
-  --alert-success-bg: rgba(16, 185, 129, 0.2);
-  --alert-success-text: #6ee7b7;
-  --alert-warning-bg: rgba(245, 158, 11, 0.2);
-  --alert-warning-text: #fcd34d;
-  --alert-error-bg: rgba(239, 68, 68, 0.2);
-  --alert-error-text: #fca5a5;
+  /* Iconos y elementos interactivos con mejor contraste */
+  --icon-color: #ffffff;
+  --icon-hover-color: var(--color-accent-primary);
 }
 
 /* Transiciones suaves al cambiar de tema */
@@ -238,71 +394,309 @@
               color var(--transition-duration) ease,
               border-color var(--transition-duration) ease,
               box-shadow var(--transition-duration) ease;
+/* Agregue estas reglas al final de themes.css */
+
+/* RESERVACIONES - Modo Oscuro Específico */
+.dark [class*="reservation"],
+.dark [class*="Reservation"],
+.dark [class*="reserva"],
+.dark [class*="Reserva"] {
+  background-color: #000000 !important;
+  color: #ffffff !important;
 }
 
-/* Estilos específicos para sección customer */
-.dark [class*="customer"] .bg-white,
-.dark [class*="customer"] div[class*="bg-white"],
-.dark [class*="customer"] .bg-gray-100 {
-  background-color: var(--color-bg-secondary) !important;
+/* Paneles laterales y de contenido en reservaciones */
+.dark [class*="reservation"] .rounded-lg:not(.bg-green-100):not(.bg-amber-100):not(.bg-red-100),
+.dark [class*="Reservation"] .rounded-lg:not(.bg-green-100):not(.bg-amber-100):not(.bg-red-100),
+.dark [class*="reserva"] .rounded-lg:not(.bg-green-100):not(.bg-amber-100):not(.bg-red-100),
+.dark [class*="Reserva"] .rounded-lg:not(.bg-green-100):not(.bg-amber-100):not(.bg-red-100) {
+  background-color: #1e293b !important; /* Fondo índigo */
+  color: #ffffff !important; /* Texto blanco */
+  border-color: #334155 !important; /* Bordes más claros */
+}
+
+/* Paneles de resumen específicos */
+.dark [class*="resumen"],
+.dark [class*="Resumen"],
+.dark [class*="summary"],
+.dark [class*="Summary"] {
+  background-color: #1e293b !important;
+  color: #ffffff !important;
+  border-color: #334155 !important;
+}
+
+/* Headers de secciones en reservaciones */
+.dark [class*="reservation"] h1,
+.dark [class*="Reservation"] h1,
+.dark [class*="reserva"] h1,
+.dark [class*="Reserva"] h1,
+.dark [class*="reservation"] h2,
+.dark [class*="Reservation"] h2,
+.dark [class*="reserva"] h2,
+.dark [class*="Reserva"] h2,
+.dark [class*="reservation"] h3,
+.dark [class*="Reservation"] h3,
+.dark [class*="reserva"] h3,
+.dark [class*="Reserva"] h3 {
+  color: #ffffff !important;
+}
+
+/* Pasos numerados en reservaciones */
+.dark [class*="reservation"] [class*="step"],
+.dark [class*="Reservation"] [class*="step"],
+.dark [class*="reserva"] [class*="step"],
+.dark [class*="Reserva"] [class*="step"],
+.dark [class*="reservation"] .rounded-full,
+.dark [class*="Reservation"] .rounded-full,
+.dark [class*="reserva"] .rounded-full,
+.dark [class*="Reserva"] .rounded-full {
+  background-color: #2d3748 !important;
+  color: #ffffff !important;
+  border-color: #4a5568 !important;
+}
+
+/* Pasos activos */
+.dark [class*="reservation"] [class*="step"].active,
+.dark [class*="Reservation"] [class*="step"].active,
+.dark [class*="reserva"] [class*="step"].active,
+.dark [class*="Reserva"] [class*="step"].active,
+.dark [class*="reservation"] .rounded-full.active,
+.dark [class*="Reservation"] .rounded-full.active,
+.dark [class*="reserva"] .rounded-full.active,
+.dark [class*="Reserva"] .rounded-full.active {
+  background-color: #7c3aed !important; /* Púrpura activo */
+  color: #ffffff !important;
+}
+
+/* Inputs en reservaciones */
+.dark [class*="reservation"] input,
+.dark [class*="Reservation"] input,
+.dark [class*="reserva"] input,
+.dark [class*="Reserva"] input,
+.dark [class*="reservation"] select,
+.dark [class*="Reservation"] select,
+.dark [class*="reserva"] select,
+.dark [class*="Reserva"] select,
+.dark [class*="reservation"] textarea,
+.dark [class*="Reservation"] textarea,
+.dark [class*="reserva"] textarea,
+.dark [class*="Reserva"] textarea {
+  background-color: #1e293b !important;
+  color: #ffffff !important;
+  border-color: #4a5568 !important;
+}
+
+/* Botones en reservaciones */
+.dark [class*="reservation"] button,
+.dark [class*="Reservation"] button,
+.dark [class*="reserva"] button,
+.dark [class*="Reserva"] button {
+  color: #ffffff !important;
+}
+
+/* Contenedores principales de reserva */
+.dark main[class*="reservation"],
+.dark main[class*="Reservation"],
+.dark main[class*="reserva"],
+.dark main[class*="Reserva"],
+.dark .reservation-container,
+.dark .reserva-container {
+  background-color: #000000 !important;
+  color: #ffffff !important;
+}
+
+/* Específico para elementos con fondo blanco que deben ser índigo */
+.dark [class*="reservation"] .bg-white,
+.dark [class*="Reservation"] .bg-white,
+.dark [class*="reserva"] .bg-white,
+.dark [class*="Reserva"] .bg-white {
+  background-color: #1e293b !important;
+  color: #ffffff !important;
+  border-color: #334155 !important;
+}
+
+/* REGLAS ESPECÍFICAS PARA ELEMENTOS DE UI */
+
+/* Table styling */
+.dark [role="table"],
+.dark table,
+.dark .table {
+  background-color: var(--table-row-bg) !important;
+  color: var(--color-text-primary) !important;
+  border-color: var(--panel-border) !important;
+}
+
+.dark [role="table"] th,
+.dark table th,
+.dark .table th,
+.dark [role="columnheader"],
+.dark thead tr {
+  background-color: var(--table-header-bg) !important;
+  color: var(--color-text-primary) !important;
+  border-color: var(--panel-border) !important;
+}
+
+.dark [role="table"] tr:nth-child(odd),
+.dark table tr:nth-child(odd) {
+  background-color: var(--table-row-bg) !important;
+}
+
+.dark [role="table"] tr:nth-child(even),
+.dark table tr:nth-child(even) {
+  background-color: var(--table-row-alt-bg) !important;
+}
+
+/* Panels and cards - TODOS con fondo INDIGO */
+.dark .bg-white,
+.dark .rounded-lg.bg-white,
+.dark .rounded-xl.bg-white,
+.dark .shadow-sm.bg-white,
+.dark .shadow-md.bg-white,
+.dark .p-4.bg-white,
+.dark .p-6.bg-white,
+.dark [class*="panel"],
+.dark [class*="Panel"],
+.dark [class*="card"],
+.dark [class*="Card"] {
+  background-color: var(--panel-bg) !important;
+  color: var(--color-text-primary) !important;
+  border-color: var(--panel-border) !important;
+}
+
+/* Form elements */
+.dark input,
+.dark select,
+.dark textarea {
+  background-color: var(--input-bg) !important;
+  color: var(--input-text) !important;
+  border-color: var(--input-border) !important;
+}
+
+.dark input::placeholder,
+.dark textarea::placeholder {
+  color: var(--input-placeholder) !important;
+}
+
+/* Text colors - TODOS BLANCOS */
+.dark .text-gray-800,
+.dark .text-gray-700,
+.dark .text-gray-900,
+.dark h1,
+.dark h2,
+.dark h3,
+.dark h4,
+.dark h5,
+.dark h6,
+.dark p,
+.dark span:not(.bg-green-100):not(.bg-amber-100):not(.bg-red-100) {
   color: var(--color-text-primary) !important;
 }
 
-/* Invertir colores de texto en formularios en modo oscuro */
-.dark [class*="customer"] input,
-.dark [class*="customer"] select,
-.dark [class*="customer"] textarea {
-  background-color: var(--color-bg-tertiary) !important;
-  color: var(--color-text-primary) !important;
-  border-color: var(--color-border-primary) !important;
+.dark .text-gray-600,
+.dark .text-gray-500 {
+  color: var(--color-text-secondary) !important;
 }
 
-/* Asegurar que los fondos de las páginas customer tengan el color correcto en modo oscuro */
-.dark [class*="customer"] {
+.dark .text-gray-400 {
+  color: var(--color-text-tertiary) !important;
+}
+
+/* Estilos específicos para dashboard y métricas */
+.dark .text-2xl.font-bold,
+.dark .text-xl.font-bold,
+.dark .text-lg.font-bold,
+.dark .text-base.font-bold {
+  color: #ffffff !important;
+}
+
+/* Números en paneles de dashboard */
+.dark .p-3 .text-base,
+.dark .p-3 .text-xl,
+.dark .p-4 .text-base,
+.dark .p-4 .text-xl {
+  color: #ffffff !important;
+}
+
+/* Asegurar que todos los textos en paneles indigo sean blancos */
+.dark [style*="background-color: var(--panel-bg)"]:not(.bg-green-100):not(.bg-amber-100):not(.bg-red-100),
+.dark [style*="background-color: var(--panel-bg)"] * {
+  color: #ffffff !important;
+}
+
+/* Modales y overlays */
+.dark [role="dialog"],
+.dark .modal,
+.dark [class*="Modal"] {
+  background-color: var(--modal-bg) !important;
+  color: var(--modal-text) !important;
+  border-color: var(--panel-border) !important;
+}
+
+/* Estilos específicos para la navbar pública */
+.dark [class*="NavbarPublic"],
+.dark nav {
   background-color: var(--color-bg-primary) !important;
   color: var(--color-text-primary) !important;
 }
 
-/* Estilos para modales en sección customer */
-.dark [class*="customer"] [role="dialog"],
-.dark [class*="customer"] .modal,
-.dark [class*="customer"] [class*="Modal"] {
-  background-color: var(--color-bg-secondary) !important;
-  color: var(--color-text-primary) !important;
-  border-color: var(--color-border-primary) !important;
+/* Fix para elementos con gradientes que deberían cambiar */
+.dark .bg-gradient-to-r.from-green-500 {
+  background: linear-gradient(to right, #065f46, #064e3b) !important;
 }
 
-/* Estilos para formularios en sección customer */
-.dark [class*="customer"] form,
-.dark [class*="customer"] [class*="form"] {
-  color: var(--color-text-primary) !important;
+.dark .bg-gradient-to-r.from-indigo-500 {
+  background: linear-gradient(to right, #362c6b, #2d2a52) !important;
 }
 
-/* Estilos para tarjetas en sección customer */
-.dark [class*="customer"] .card,
-.dark [class*="customer"] [class*="Card"],
-.dark [class*="customer"] [class*="card"] {
-  background-color: var(--color-bg-secondary) !important;
-  color: var(--color-text-primary) !important;
-  border-color: var(--color-border-primary) !important;
+.dark .text-gray-600,
+.dark .text-gray-500 {
+  color: var(--color-text-secondary) !important;
 }
 
-/* Estilos específicos para página de reservaciones */
-.dark-theme main,
-.dark-theme [class*="reserva"],
-.dark-theme [class*="Reserva"] {
-  background-color: var(--reserva-bg) !important;
+.dark .text-gray-400 {
+  color: var(--color-text-tertiary) !important;
+
+  
+  background-color: var(--color-bg-primary) !important;
+  color: var(--color-text-primary) !important;
+  border-color: var(--panel-border) !important;
+}
+}
+.dark .text-gray-300 {
+  color: var(--color-text-tertiary) !important;
+}
+.dark .text-gray-200 {
+  color: var(--color-text-tertiary) !important;
+}
+.dark .text-gray-100 {
+  color: var(--color-text-tertiary) !important;
+}
+.dark .text-gray-50 {
+  color: var(--color-text-tertiary) !important;
+} 
+.dark .text-gray-900 {
   color: var(--color-text-primary) !important;
 }
+.dark .text-gray-200 {
+  color: var(--color-text-tertiary) !important;
+}
+.dark .text-gray-100 {
+  color: var(--color-text-tertiary) !important;
+}
+.dark .text-gray-50 {
+  color: var(--color-text-tertiary) !important;
+}
+.dark .text-gray-900 {
+  color: var(--color-text-primary) !important;
+}
+.dark .text-gray-800 {
+  color: var(--color-text-primary) !important;
+}
+.dark .text-gray-700 {
+  color: var(--color-text-primary) !important;
+  
 
-/* Corrige el fondo azul en la página de reservaciones */
-.dark-theme div[class*="bg-indigo-"],
-.dark-theme div[class*="bg-blue-"],
-.dark-theme div[class*="bg-navy-"],
-.dark-theme div[class*="bg-purple-"],
-.dark-theme [class*="cotizacion"] div[class*="bg-"],
-.dark-theme [class*="Cotizacion"] div[class*="bg-"],
-.dark-theme [class*="cotización"] div[class*="bg-"],
-.dark-theme [class*="Cotización"] div[class*="bg-"] {
-  background-color: var(--reserva-bg) !important;
+
+
+  
 }

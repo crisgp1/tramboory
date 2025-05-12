@@ -1,68 +1,72 @@
-import React, { createContext, useState, useEffect, useContext } from 'react';
+import React, { createContext, useContext, useState, useEffect } from 'react';
 
-// Crear el contexto
 const ThemeContext = createContext();
 
-// Hook personalizado para acceder al contexto del tema
-export const useTheme = () => useContext(ThemeContext);
-
-export const ThemeProvider = ({ children }) => {
-  // Verificar si hay una preferencia guardada o usar la preferencia del sistema
-  const getInitialTheme = () => {
+export function ThemeProvider({ children }) {
+  // Check localStorage first, then system preference
+  const [theme, setTheme] = useState(() => {
     const savedTheme = localStorage.getItem('theme');
-    
     if (savedTheme) {
       return savedTheme;
     }
     
-    // Verificar si el sistema prefiere el modo oscuro
-    return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
-  };
+    // Check system preference
+    if (window.matchMedia) {
+      return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+    }
+    
+    return 'light';
+  });
 
-  const [theme, setTheme] = useState(getInitialTheme);
-
-  // Función para cambiar el tema
-  const toggleTheme = () => {
-    setTheme(prevTheme => {
-      const newTheme = prevTheme === 'light' ? 'dark' : 'light';
-      // Guardar en localStorage
-      localStorage.setItem('theme', newTheme);
-      return newTheme;
-    });
-  };
-
-  // Aplicar el tema al documento
+  // Apply theme class to document
   useEffect(() => {
-    const root = window.document.documentElement;
+    document.documentElement.classList.remove('light-theme', 'dark-theme');
+    document.documentElement.classList.add(`${theme}-theme`);
     
-    // Limpiar clases anteriores
-    root.classList.remove('light-theme', 'dark-theme', 'dark');
-    
-    // Agregar la clase del tema actual
-    root.classList.add(`${theme}-theme`);
-    
-    // Actualizar el atributo data-theme para CSS
-    root.setAttribute('data-theme', theme);
-    
-    // Agregar clase 'dark' para Tailwind cuando el tema es oscuro
+    // Add dark class for Tailwind dark: variants
     if (theme === 'dark') {
-      root.classList.add('dark');
-    }
-    
-    // Para asegurar que los estilos se apliquen correctamente en todas las páginas
-    if (theme === 'dark') {
-      document.body.classList.add('dark-theme');
-      document.body.classList.remove('light-theme');
+      document.documentElement.classList.add('dark');
     } else {
-      document.body.classList.add('light-theme');
-      document.body.classList.remove('dark-theme');
+      document.documentElement.classList.remove('dark');
     }
     
+    localStorage.setItem('theme', theme);
   }, [theme]);
+
+  // Listen to system theme changes
+  useEffect(() => {
+    const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
+    
+    const handleChange = (event) => {
+      // Only update if user hasn't manually set a preference
+      const savedTheme = localStorage.getItem('theme');
+      if (!savedTheme) {
+        setTheme(event.matches ? 'dark' : 'light');
+      }
+    };
+
+    mediaQuery.addEventListener('change', handleChange);
+    
+    return () => {
+      mediaQuery.removeEventListener('change', handleChange);
+    };
+  }, []);
+
+  const toggleTheme = () => {
+    setTheme(prevTheme => prevTheme === 'light' ? 'dark' : 'light');
+  };
 
   return (
     <ThemeContext.Provider value={{ theme, toggleTheme }}>
       {children}
     </ThemeContext.Provider>
   );
-};
+}
+
+export function useTheme() {
+  const context = useContext(ThemeContext);
+  if (!context) {
+    throw new Error('useTheme must be used within a ThemeProvider');
+  }
+  return context;
+}

@@ -43,20 +43,20 @@ export const BORDER_COLORS = {
 
 // Mapeo de colores para fondos
 export const BG_COLORS = {
-  primary: 'bg-indigo-50',
-  success: 'bg-emerald-50',
-  warning: 'bg-amber-50',
-  danger: 'bg-rose-50',
-  purple: 'bg-violet-50',
-  pink: 'bg-pink-50',
+  primary: 'bg-indigo-50 dark:bg-indigo-900/40',
+  success: 'bg-emerald-50 dark:bg-emerald-900/40',
+  warning: 'bg-amber-50 dark:bg-amber-900/40',
+  danger: 'bg-rose-50 dark:bg-rose-900/40',
+  purple: 'bg-violet-50 dark:bg-violet-900/40',
+  pink: 'bg-pink-50 dark:bg-pink-900/40',
 };
 
 // Mapeo de colores para texto
 export const TEXT_COLORS = {
-  primary: 'text-indigo-500',
-  success: 'text-emerald-500',
-  warning: 'text-amber-500',
-  danger: 'text-rose-500',
-  purple: 'text-violet-500',
-  pink: 'text-pink-500',
+  primary: 'text-indigo-500 dark:text-indigo-300',
+  success: 'text-emerald-500 dark:text-emerald-300',
+  warning: 'text-amber-500 dark:text-amber-300',
+  danger: 'text-rose-500 dark:text-rose-300',
+  purple: 'text-violet-500 dark:text-violet-300',
+  pink: 'text-pink-500 dark:text-pink-300',
 };
