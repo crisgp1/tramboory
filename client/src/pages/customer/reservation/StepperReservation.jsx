@@ -597,7 +597,7 @@ const StepperReservation = () => {
           }`}
         >
           <FiChevronLeft className="w-5 h-5" />
-          <span className="hidden sm:inline">Anterior</span>
+          <span className="hidden sm:inline dark:text-white">Anterior</span>
         </button>
         
         <div className="flex gap-3">
@@ -606,7 +606,7 @@ const StepperReservation = () => {
             onClick={() => setIsExitWarningOpen(true)}
             className="text-gray-500 hover:text-gray-700 px-4 py-2 hover:bg-gray-100 rounded-lg transition-colors"
           >
-            <span className="hidden sm:inline">Cancelar</span>
+            <span className="hidden sm:inline dark:text-white">Cancelar</span>
             <FiX className="w-5 h-5 inline sm:hidden" />
           </button>
           
@@ -629,7 +629,7 @@ const StepperReservation = () => {
             ) : (
               <FiChevronRight className="w-5 h-5" />
             )}
-            <span className="hidden sm:inline">{isLastStep ? 'Confirmar y Pagar' : 'Siguiente'}</span>
+            <span className="hidden sm:inline dark:text-white">{isLastStep ? 'Confirmar y Pagar' : 'Siguiente'}</span>
           </button>
         </div>
       </div>
@@ -638,19 +638,19 @@ const StepperReservation = () => {
 
   return (
     <FormProvider {...methods}>
-      <div className={`bg-gradient-to-b from-indigo-50 to-gray-50 min-h-screen transition-all duration-300 ${isFullscreen ? 'fixed inset-0 z-50' : ''}`}>
+      <div className={`bg-gradient-to-b from-indigo-50 to-gray-50 dark:from-gray-900 dark:to-black min-h-screen transition-all duration-300 ${isFullscreen ? 'fixed inset-0 z-50' : ''}`}>
         <div className="container mx-auto px-0 sm:px-4 max-w-7xl">
           {/* Header con título y controles */}
-          <div className="bg-white shadow-sm p-4 md:rounded-lg md:mt-4 sticky top-0 z-30 border-b md:border border-gray-200">
+          <div className="bg-white dark:bg-gray-800 shadow-sm p-4 md:rounded-lg md:mt-4 sticky top-0 z-30 border-b md:border border-gray-200 dark:border-gray-700">
             <div className="flex justify-between items-center">
-              <h1 className="text-xl font-bold text-gray-900">Reserva tu Evento</h1>
+              <h1 className="text-xl font-bold text-gray-900 dark:text-white">Reserva tu Evento</h1>
               
               <div className="flex items-center gap-2">
                 {/* Toggle del resumen en móvil */}
                 <button
                   type="button"
                   onClick={() => setIsSummaryOpen(!isSummaryOpen)}
-                  className="p-2 text-gray-700 hover:text-indigo-700 rounded-full hover:bg-indigo-100 transition-colors lg:hidden"
+                  className="p-2 text-gray-700 dark:text-gray-300 hover:text-indigo-700 dark:hover:text-indigo-400 rounded-full hover:bg-indigo-100 dark:hover:bg-indigo-900 transition-colors lg:hidden"
                   aria-label={isSummaryOpen ? "Ocultar resumen" : "Mostrar resumen"}
                 >
                   <FiMenu className="w-5 h-5" />
@@ -660,7 +660,7 @@ const StepperReservation = () => {
                 <button
                   type="button"
                   onClick={toggleFullscreen}
-                  className="p-2 text-gray-700 hover:text-indigo-700 rounded-full hover:bg-indigo-100 transition-colors hidden sm:flex"
+                  className="p-2 text-gray-700 dark:text-gray-300 hover:text-indigo-700 dark:hover:text-indigo-400 rounded-full hover:bg-indigo-100 dark:hover:bg-indigo-900 transition-colors hidden sm:flex"
                   aria-label={isFullscreen ? "Salir de pantalla completa" : "Pantalla completa"}
                 >
                   {isFullscreen ? (
@@ -731,12 +731,12 @@ const StepperReservation = () => {
             </div>
             
             {/* Área principal de contenido */}
-            <div id="step-content" className="md:col-span-3 bg-white md:rounded-xl shadow-sm">
+            <div id="step-content" className="md:col-span-3 bg-white dark:bg-gray-800 md:rounded-xl shadow-sm">
               {/* Indicador de progreso para móviles */}
               <div className="p-4 md:hidden">
                 {renderMobileProgress()}
-                <h2 className="text-lg font-semibold text-gray-900">
-                  Paso {currentStepIndex + 1}: {STEPS[currentStepIndex].label}
+                <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
+                  Paso {currentStepIndex + 1}: <span className="dark:text-white">{STEPS[currentStepIndex].label}</span>
                 </h2>
               </div>
               
@@ -763,17 +763,17 @@ const StepperReservation = () => {
           
           {/* Información contextual */}
           <div className="p-4 md:mt-8 md:mb-12">
-            <div className="bg-gradient-to-r from-blue-50 to-indigo-50 p-4 rounded-xl border border-blue-200 shadow-sm">
+            <div className="bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900 dark:to-indigo-900 p-4 rounded-xl border border-blue-200 dark:border-blue-800 shadow-sm">
               <div className="flex gap-3">
                 <FiInfo className="w-6 h-6 text-blue-600 flex-shrink-0" />
                 <div>
-                  <h4 className="font-medium text-blue-800">¿Necesitas ayuda?</h4>
-                  <p className="text-blue-700 text-sm mt-1">
+                  <h4 className="font-medium text-blue-800 dark:text-blue-300">¿Necesitas ayuda?</h4>
+                  <p className="text-blue-700 dark:text-blue-400 text-sm mt-1">
                     Puedes <motion.button
                       onClick={() => {
                         window.open("https://wa.me/523332300243?text=Hola%2C%20necesito%20ayuda%20con%20mi%20reservaci%C3%B3n%20en%20Tramboory.", '_blank', 'noopener,noreferrer');
                       }}
-                      className="text-blue-800 font-medium hover:text-green-600 transition-colors duration-300 inline cursor-pointer"
+                      className="text-blue-800 dark:text-blue-300 font-medium hover:text-green-600 dark:hover:text-green-400 transition-colors duration-300 inline cursor-pointer"
                       whileHover={{ scale: 1.05 }}
                       whileTap={{ scale: 0.95 }}
                     >
@@ -791,10 +791,10 @@ const StepperReservation = () => {
       <button
         type="button"
         onClick={() => setIsSummaryOpen(true)}
-        className={`fixed bottom-4 right-4 z-20 flex items-center gap-2 px-4 py-3 rounded-full shadow-lg bg-indigo-600 text-white lg:hidden ${isSummaryOpen ? 'hidden' : 'flex animate-bounce-subtle'}`}
+        className={`fixed bottom-4 right-4 z-20 flex items-center gap-2 px-4 py-3 rounded-full shadow-lg bg-indigo-600 dark:bg-indigo-700 text-white lg:hidden ${isSummaryOpen ? 'hidden' : 'flex animate-bounce-subtle'}`}
       >
         <FiShoppingCart className="w-5 h-5" />
-        <span className="font-medium">Ver resumen ({formatters.formatCurrency(calculateTotal())})</span>
+        <span className="font-medium dark:text-white">Ver resumen (<span className="dark:text-white">{formatters.formatCurrency(calculateTotal())}</span>)</span>
       </button>
       
       {/* Modales */}
@@ -831,20 +831,20 @@ const StepperReservation = () => {
       {/* Modal de advertencia de salida */}
       {isExitWarningOpen && (
         <div className="fixed inset-0 bg-gray-900/70 backdrop-blur-sm flex items-center justify-center z-50">
-          <div className="bg-white rounded-2xl p-6 max-w-md w-full mx-4 shadow-2xl animate-zoom-in">
+          <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 max-w-md w-full mx-4 shadow-2xl animate-zoom-in">
             <div className="flex items-center gap-3 mb-4">
               <div className="bg-amber-100 p-2 rounded-full">
                 <FiAlertTriangle className="w-6 h-6 text-amber-600" />
               </div>
-              <h3 className="text-lg font-bold text-gray-900">¿Seguro que deseas salir?</h3>
+              <h3 className="text-lg font-bold text-gray-900 dark:text-white">¿Seguro que deseas salir?</h3>
             </div>
-            <p className="text-gray-600 mb-6">
+            <p className="text-gray-600 dark:text-gray-300 mb-6">
               Si sales ahora, perderás toda la información que has ingresado.
             </p>
             <div className="flex flex-col sm:flex-row sm:justify-end gap-3">
               <button
                 onClick={() => setIsExitWarningOpen(false)}
-                className="px-4 py-2 bg-gray-100 text-gray-800 rounded-lg hover:bg-gray-200 transition-colors sm:order-1"
+                className="px-4 py-2 bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-200 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors sm:order-1"
               >
                 Cancelar
               </button>
@@ -861,12 +861,12 @@ const StepperReservation = () => {
       
       {/* Error API */}
       {apiError && (
-        <div className="fixed bottom-4 left-1/2 transform -translate-x-1/2 bg-red-50 border border-red-300 p-4 rounded-xl shadow-lg max-w-sm w-full animate-slide-up">
+        <div className="fixed bottom-4 left-1/2 transform -translate-x-1/2 bg-red-50 dark:bg-red-900 border border-red-300 dark:border-red-700 p-4 rounded-xl shadow-lg max-w-sm w-full animate-slide-up">
           <div className="flex items-start gap-3">
             <FiAlertTriangle className="text-red-500 w-6 h-6 flex-shrink-0" />
             <div className="flex-1">
-              <h3 className="font-medium text-red-800">Error</h3>
-              <p className="text-red-700 text-sm mt-1">{apiError}</p>
+              <h3 className="font-medium text-red-800 dark:text-red-300">Error</h3>
+              <p className="text-red-700 dark:text-red-400 text-sm mt-1">{apiError}</p>
             </div>
             <button
               onClick={() => setApiError(null)}

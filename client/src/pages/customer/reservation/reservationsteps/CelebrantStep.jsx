@@ -22,7 +22,7 @@ const FormField = ({
 }) => {
   return (
     <div className="space-y-1">
-      <label htmlFor={name} className="flex items-center gap-2 text-gray-700 font-medium">
+      <label htmlFor={name} className="flex items-center gap-2 text-gray-700 dark:text-white font-medium">
         {Icon && <Icon className="text-indigo-600 w-5 h-5" />}
         <span>{label}</span>
         {required && <span className="text-red-500">*</span>}
@@ -31,7 +31,7 @@ const FormField = ({
       {children}
       
       {hint && (
-        <p className="text-xs text-gray-500 mt-1">{hint}</p>
+        <p className="text-xs text-gray-500 dark:text-gray-300 mt-1">{hint}</p>
       )}
       
       {error && (
@@ -83,8 +83,8 @@ const CelebrantStep = () => {
   return (
     <div className="space-y-8">
       <div className="text-center">
-        <h2 className="text-2xl font-bold text-gray-900 mb-3">Información del Festejado</h2>
-        <p className="text-gray-600 max-w-2xl mx-auto">
+        <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-3">Información del Festejado</h2>
+        <p className="text-gray-600 dark:text-gray-200 max-w-2xl mx-auto">
           Cuéntanos sobre la persona que va a celebrar este día especial para que podamos personalizar tu evento.
         </p>
       </div>
@@ -102,7 +102,7 @@ const CelebrantStep = () => {
         variants={containerVariants}
         initial="hidden"
         animate="visible"
-        className="bg-white p-6 rounded-xl shadow-sm border border-gray-200"
+        className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700"
       >
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <motion.div variants={itemVariants}>
@@ -131,10 +131,10 @@ const CelebrantStep = () => {
                     placeholder="Ej. María Fernanda"
                     className={`w-full p-3 rounded-lg border focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 ${
                       errors.nombre_festejado
-                        ? 'border-red-300 bg-red-50'
+                        ? 'border-red-300 bg-red-50 dark:bg-red-900/20 dark:border-red-700'
                         : field.value
-                          ? 'border-green-300 bg-green-50'
-                          : 'border-gray-300'
+                          ? 'border-green-300 bg-green-50 dark:bg-green-900/20 dark:border-green-700'
+                          : 'border-gray-300 dark:border-gray-600 dark:bg-gray-700'
                     }`}
                   />
                 )}
@@ -178,10 +178,10 @@ const CelebrantStep = () => {
                     placeholder="Ej. 7"
                     className={`w-full p-3 rounded-lg border focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 ${
                       errors.edad_festejado
-                        ? 'border-red-300 bg-red-50'
+                        ? 'border-red-300 bg-red-50 dark:bg-red-900/20 dark:border-red-700'
                         : field.value
-                          ? 'border-green-300 bg-green-50'
-                          : 'border-gray-300'
+                          ? 'border-green-300 bg-green-50 dark:bg-green-900/20 dark:border-green-700'
+                          : 'border-gray-300 dark:border-gray-600 dark:bg-gray-700'
                     }`}
                   />
                 )}
@@ -204,8 +204,8 @@ const CelebrantStep = () => {
                     <div className="flex gap-4 mt-2">
                       <label className={`flex items-center gap-2 p-3 rounded-lg border cursor-pointer transition-colors ${
                         field.value === 'femenino'
-                          ? 'bg-pink-50 border-pink-300 text-pink-700'
-                          : 'bg-white border-gray-300 hover:bg-gray-50'
+                          ? 'bg-pink-50 border-pink-300 text-pink-700 dark:bg-pink-900/20 dark:border-pink-700 dark:text-pink-300'
+                          : 'bg-white border-gray-300 hover:bg-gray-50 dark:bg-gray-800 dark:border-gray-600 dark:hover:bg-gray-700'
                       }`}>
                         <input
                           {...field}
@@ -229,8 +229,8 @@ const CelebrantStep = () => {
                       
                       <label className={`flex items-center gap-2 p-3 rounded-lg border cursor-pointer transition-colors ${
                         field.value === 'masculino'
-                          ? 'bg-blue-50 border-blue-300 text-blue-700'
-                          : 'bg-white border-gray-300 hover:bg-gray-50'
+                          ? 'bg-blue-50 border-blue-300 text-blue-700 dark:bg-blue-900/20 dark:border-blue-700 dark:text-blue-300'
+                          : 'bg-white border-gray-300 hover:bg-gray-50 dark:bg-gray-800 dark:border-gray-600 dark:hover:bg-gray-700'
                       }`}>
                         <input
                           {...field}
@@ -254,8 +254,8 @@ const CelebrantStep = () => {
 
                       <label className={`flex items-center gap-2 p-3 rounded-lg border cursor-pointer transition-colors ${
                         field.value === 'otro'
-                          ? 'bg-purple-50 border-purple-300 text-purple-700'
-                          : 'bg-white border-gray-300 hover:bg-gray-50'
+                          ? 'bg-purple-50 border-purple-300 text-purple-700 dark:bg-purple-900/20 dark:border-purple-700 dark:text-purple-300'
+                          : 'bg-white border-gray-300 hover:bg-gray-50 dark:bg-gray-800 dark:border-gray-600 dark:hover:bg-gray-700'
                       }`}>
                         <input
                           {...field}
@@ -299,7 +299,7 @@ const CelebrantStep = () => {
                               {...customField}
                               type="text"
                               placeholder="Especifica el género"
-                              className="w-full p-3 rounded-lg border border-purple-300 focus:ring-2 focus:ring-purple-500 focus:border-purple-500 bg-purple-50 transition-all duration-300"
+                              className="w-full p-3 rounded-lg border border-purple-300 focus:ring-2 focus:ring-purple-500 focus:border-purple-500 bg-purple-50 dark:bg-purple-900/20 dark:border-purple-700 transition-all duration-300"
                               onChange={(e) => {
                                 customField.onChange(e.target.value);
                                 // Ya no actualizamos el valor principal, mantenemos 'otro'
@@ -334,8 +334,8 @@ const CelebrantStep = () => {
                     placeholder="Ej. Azul, Rosa, Verde"
                     className={`w-full p-3 rounded-lg border focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 ${
                       field.value
-                        ? 'border-green-300 bg-green-50'
-                        : 'border-gray-300'
+                        ? 'border-green-300 bg-green-50 dark:bg-green-900/20 dark:border-green-700'
+                        : 'border-gray-300 dark:border-gray-600 dark:bg-gray-700'
                     }`}
                   />
                 )}
@@ -360,7 +360,7 @@ const CelebrantStep = () => {
                   id="detalles_especiales"
                   rows="3"
                   placeholder="Escribe aquí cualquier detalle o petición especial..."
-                  className="w-full p-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                  className="w-full p-3 rounded-lg border border-gray-300 dark:border-gray-600 dark:bg-gray-700 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
                 />
               )}
             />
@@ -368,19 +368,19 @@ const CelebrantStep = () => {
         </motion.div>
 
         {/* Mensaje de campos requeridos */}
-        <div className="mt-6 flex items-start gap-2 text-xs text-gray-500">
+        <div className="mt-6 flex items-start gap-2 text-xs text-gray-500 dark:text-gray-300">
           <FiInfo className="w-4 h-4 flex-shrink-0 mt-0.5" />
           <p>Los campos marcados con <span className="text-red-500">*</span> son requeridos.</p>
         </div>
       </motion.div>
 
       {/* Consejos o información adicional */}
-      <div className="bg-indigo-50 p-5 rounded-lg border border-indigo-100">
+      <div className="bg-indigo-50 dark:bg-indigo-900/20 p-5 rounded-lg border border-indigo-100 dark:border-indigo-800">
         <div className="flex gap-3">
           <FiCheckCircle className="w-6 h-6 text-indigo-600 flex-shrink-0" />
           <div>
-            <h4 className="font-medium text-indigo-800">¡Personaliza al máximo!</h4>
-            <p className="text-indigo-700 text-sm mt-1">
+            <h4 className="font-medium text-indigo-800 dark:text-indigo-300">¡Personaliza al máximo!</h4>
+            <p className="text-indigo-700 dark:text-indigo-300 text-sm mt-1">
               Cuanta más información nos brindes sobre el festejado, mejor podremos personalizar tu evento para hacerlo inolvidable. 
               Toda información es confidencial y solo será utilizada para mejorar tu experiencia.
             </p>

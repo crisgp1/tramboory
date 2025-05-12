@@ -1,0 +1,340 @@
+/* 
+  StepComponents.module.css
+  Estilos para los componentes de cada paso de reservación
+*/
+
+/* ==========================================================================
+   ESTILOS COMUNES PARA TODOS LOS PASOS
+   ========================================================================== */
+.stepContainer {
+  @apply w-full mb-8;
+}
+
+.stepTitle {
+  @apply text-xl font-bold text-gray-900 dark:text-white mb-6;
+}
+
+.stepDescription {
+  @apply text-gray-600 dark:text-gray-300 mb-6;
+}
+
+.stepSection {
+  @apply mb-8 last:mb-0;
+}
+
+.sectionTitle {
+  @apply text-base font-medium text-gray-900 dark:text-white mb-3;
+}
+
+.sectionDescription {
+  @apply text-sm text-gray-600 dark:text-gray-400 mb-4;
+}
+
+/* Formularios y campos */
+.formRow {
+  @apply flex flex-col md:flex-row gap-4 mb-6;
+}
+
+.formGroup {
+  @apply flex flex-col gap-2 w-full;
+}
+
+.formLabel {
+  @apply text-sm font-medium text-gray-700 dark:text-gray-300;
+}
+
+.formHelper {
+  @apply text-xs text-gray-500 dark:text-gray-400 mt-1;
+}
+
+.formError {
+  @apply text-xs text-red-600 dark:text-red-400 mt-1;
+}
+
+/* ==========================================================================
+   ESTILOS PARA EL PASO DE PAQUETE (PackageStep)
+   ========================================================================== */
+.packageCard {
+  @apply relative border rounded-xl p-6 transition-all duration-200 cursor-pointer;
+}
+
+.packageCardDefault {
+  @apply border-gray-200 dark:border-gray-700 hover:border-indigo-200 dark:hover:border-indigo-800 hover:bg-indigo-50 dark:hover:bg-indigo-900/30;
+}
+
+.packageCardSelected {
+  @apply border-indigo-500 bg-indigo-50 dark:bg-indigo-900/30 dark:border-indigo-700;
+}
+
+.packagePrice {
+  @apply text-xl font-bold text-indigo-600 dark:text-indigo-400;
+}
+
+.packageDetails {
+  @apply mt-3 text-sm text-gray-600 dark:text-gray-400;
+}
+
+.packageFeatures {
+  @apply mt-4 space-y-2;
+}
+
+.packageFeatureItem {
+  @apply flex items-start gap-2 text-sm;
+}
+
+/* ==========================================================================
+   ESTILOS PARA EL PASO DE FECHA Y HORA (DateTimeStep)
+   ========================================================================== */
+.calendar {
+  @apply bg-white dark:bg-gray-800 rounded-xl shadow-sm p-4 overflow-hidden;
+}
+
+.timeSelection {
+  @apply grid grid-cols-2 gap-4 mt-6;
+}
+
+.timeCard {
+  @apply flex flex-col items-center justify-center p-4 border rounded-xl transition-all duration-200 cursor-pointer;
+}
+
+.timeCardDefault {
+  @apply border-gray-200 dark:border-gray-700 hover:border-indigo-200 dark:hover:border-indigo-800 hover:bg-indigo-50 dark:hover:bg-indigo-900/30;
+}
+
+.timeCardSelected {
+  @apply border-indigo-500 bg-indigo-50 dark:bg-indigo-900/30 dark:border-indigo-700;
+}
+
+.dateInfo {
+  @apply mt-4 p-4 bg-blue-50 dark:bg-blue-900/30 rounded-lg border border-blue-200 dark:border-blue-800;
+}
+
+/* ==========================================================================
+   ESTILOS PARA EL PASO DE TEMÁTICA (ThemeStep)
+   ========================================================================== */
+.themeGrid {
+  @apply grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6;
+}
+
+.themeCard {
+  @apply relative border rounded-xl overflow-hidden transition-all duration-200 cursor-pointer;
+}
+
+.themeCardDefault {
+  @apply border-gray-200 dark:border-gray-700 hover:border-indigo-300 dark:hover:border-indigo-700;
+}
+
+.themeCardSelected {
+  @apply border-indigo-500 dark:border-indigo-600 ring-2 ring-indigo-500 dark:ring-indigo-600;
+}
+
+.themeImage {
+  @apply w-full h-48 object-cover object-center;
+}
+
+.themeContent {
+  @apply p-4;
+}
+
+.themeName {
+  @apply text-lg font-medium text-gray-900 dark:text-white;
+}
+
+.themeDescription {
+  @apply text-sm text-gray-600 dark:text-gray-400 mt-1 line-clamp-2;
+}
+
+.themePrice {
+  @apply text-indigo-600 dark:text-indigo-400 font-medium mt-2;
+}
+
+/* ==========================================================================
+   ESTILOS PARA EL PASO DE MAMPARA (MamparaStep)
+   ========================================================================== */
+.mamparaGrid {
+  @apply grid grid-cols-1 md:grid-cols-2 gap-6;
+}
+
+.mamparaCard {
+  @apply relative border rounded-xl overflow-hidden transition-all duration-200 cursor-pointer;
+}
+
+.mamparaCardDefault {
+  @apply border-gray-200 dark:border-gray-700 hover:border-indigo-300 dark:hover:border-indigo-700;
+}
+
+.mamparaCardSelected {
+  @apply border-indigo-500 dark:border-indigo-600 ring-2 ring-indigo-500 dark:ring-indigo-600;
+}
+
+.mamparaImage {
+  @apply w-full h-64 object-cover object-center;
+}
+
+.mamparaContent {
+  @apply p-4;
+}
+
+.mamparaName {
+  @apply text-lg font-medium text-gray-900 dark:text-white;
+}
+
+.mamparaDescription {
+  @apply text-sm text-gray-600 dark:text-gray-400 mt-1;
+}
+
+.mamparaPrice {
+  @apply text-indigo-600 dark:text-indigo-400 font-medium mt-2;
+}
+
+/* ==========================================================================
+   ESTILOS PARA EL PASO DE ALIMENTOS (FoodOptionsStep)
+   ========================================================================== */
+.foodGrid {
+  @apply space-y-6;
+}
+
+.foodCard {
+  @apply relative border rounded-xl p-5 transition-all duration-200 cursor-pointer;
+}
+
+.foodCardDefault {
+  @apply border-gray-200 dark:border-gray-700 hover:border-indigo-200 dark:hover:border-indigo-800 hover:bg-indigo-50 dark:hover:bg-indigo-900/30;
+}
+
+.foodCardSelected {
+  @apply border-indigo-500 bg-indigo-50 dark:bg-indigo-900/30 dark:border-indigo-700;
+}
+
+.foodName {
+  @apply text-lg font-medium text-gray-900 dark:text-white;
+}
+
+.foodDescription {
+  @apply text-sm text-gray-600 dark:text-gray-400 mt-2;
+}
+
+.foodOptions {
+  @apply mt-4 space-y-3 text-sm;
+}
+
+.foodPrice {
+  @apply text-indigo-600 dark:text-indigo-400 font-medium mt-4;
+}
+
+/* ==========================================================================
+   ESTILOS PARA EL PASO DE EXTRAS (ExtrasStep)
+   ========================================================================== */
+.extrasGrid {
+  @apply grid grid-cols-1 md:grid-cols-2 gap-6;
+}
+
+.extraCard {
+  @apply border rounded-xl p-5 transition-all duration-200;
+}
+
+.extraName {
+  @apply text-lg font-medium text-gray-900 dark:text-white;
+}
+
+.extraDescription {
+  @apply text-sm text-gray-600 dark:text-gray-400 mt-2;
+}
+
+.extraPrice {
+  @apply text-indigo-600 dark:text-indigo-400 font-medium mt-2;
+}
+
+.extraControls {
+  @apply flex items-center justify-between mt-4;
+}
+
+.extraQuantity {
+  @apply flex items-center gap-3;
+}
+
+.quantityButton {
+  @apply w-8 h-8 flex items-center justify-center rounded-full bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-indigo-100 dark:hover:bg-indigo-900 transition-colors;
+}
+
+/* ==========================================================================
+   ESTILOS PARA EL PASO DE FESTEJADO (CelebrantStep)
+   ========================================================================== */
+.celebrantForm {
+  @apply space-y-6;
+}
+
+.colorPicker {
+  @apply mt-6;
+}
+
+.colorGrid {
+  @apply grid grid-cols-6 sm:grid-cols-8 gap-3 mt-3;
+}
+
+.colorSwatch {
+  @apply w-8 h-8 rounded-full cursor-pointer transition-transform hover:scale-110;
+}
+
+.colorSwatchSelected {
+  @apply ring-2 ring-offset-2 ring-indigo-600 dark:ring-offset-gray-800;
+}
+
+.colorCustom {
+  @apply mt-4;
+}
+
+/* ==========================================================================
+   ESTILOS PARA EL PASO DE REVISIÓN (ReviewStep)
+   ========================================================================== */
+.reviewContainer {
+  @apply space-y-8;
+}
+
+.reviewSection {
+  @apply border-b border-gray-200 dark:border-gray-700 pb-6 last:border-0;
+}
+
+.reviewSectionTitle {
+  @apply flex items-center justify-between;
+}
+
+.reviewSectionHeading {
+  @apply text-lg font-medium text-gray-900 dark:text-white;
+}
+
+.editButton {
+  @apply text-sm text-indigo-600 dark:text-indigo-400 hover:text-indigo-700 dark:hover:text-indigo-300 font-medium;
+}
+
+.reviewDetail {
+  @apply mt-4 space-y-4 text-gray-600 dark:text-gray-400;
+}
+
+.reviewItem {
+  @apply flex items-start gap-3;
+}
+
+.reviewItemLabel {
+  @apply font-medium text-gray-700 dark:text-gray-300;
+}
+
+.reviewItemValue {
+  @apply text-gray-600 dark:text-gray-400;
+}
+
+.alert {
+  @apply p-4 rounded-lg mt-6;
+}
+
+.alertWarning {
+  @apply bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800;
+}
+
+.alertSuccess {
+  @apply bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800;
+}
+
+.alertError {
+  @apply bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800;
+}

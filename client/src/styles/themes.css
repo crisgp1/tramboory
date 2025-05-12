@@ -515,6 +515,85 @@
   border-color: #334155 !important;
 }
 
+/* STEPPER - Reglas específicas para el modo oscuro */
+.dark [id="step-content"] {
+  background-color: var(--panel-bg) !important;
+  color: var(--color-text-primary) !important;
+  border-color: var(--panel-border) !important;
+}
+
+/* Formularios en pasos del Stepper */
+.dark [class*="step"] input,
+.dark [class*="step"] select,
+.dark [class*="step"] textarea {
+  background-color: var(--input-bg) !important;
+  color: var(--input-text) !important;
+  border-color: var(--input-border) !important;
+}
+
+/* Fondo principal del Stepper */
+.dark .bg-gradient-to-b.from-indigo-50.to-gray-50 {
+  background: linear-gradient(to bottom, #0c0c0c, #000000) !important;
+}
+
+/* Contenedores de información en pasos */
+.dark [class*="step"] .bg-white {
+  background-color: var(--panel-bg) !important;
+  color: var(--color-text-primary) !important;
+  border-color: var(--panel-border) !important;
+}
+
+/* Tarjetas y paneles dentro del Stepper */
+.dark [class*="step"] .rounded-lg,
+.dark [class*="step"] .rounded-xl {
+  background-color: var(--panel-bg) !important;
+  color: var(--color-text-primary) !important;
+  border-color: var(--panel-border) !important;
+}
+
+/* Estados de error y éxito en inputs */
+.dark [class*="step"] .border-red-300.bg-red-50 {
+  background-color: rgba(239, 68, 68, 0.15) !important;
+  border-color: rgba(239, 68, 68, 0.5) !important;
+}
+
+.dark [class*="step"] .border-green-300.bg-green-50 {
+  background-color: rgba(34, 197, 94, 0.15) !important;
+  border-color: rgba(34, 197, 94, 0.5) !important;
+}
+
+/* Etiquetas de formulario */
+.dark [class*="step"] label {
+  color: var(--color-text-primary) !important;
+}
+
+.dark [class*="step"] .text-gray-500,
+.dark [class*="step"] .text-gray-600,
+.dark [class*="step"] .text-gray-700 {
+  color: var(--color-text-secondary) !important;
+}
+
+/* Headers en pasos */
+.dark [class*="step"] h1,
+.dark [class*="step"] h2,
+.dark [class*="step"] h3,
+.dark [class*="step"] h4 {
+  color: var(--color-text-primary) !important;
+}
+
+/* Selectores de radio y checkbox */
+.dark [class*="step"] .bg-white.border-gray-300 {
+  background-color: var(--input-bg) !important;
+  border-color: var(--input-border) !important;
+}
+
+/* Reforzar contraste de tipografías en modo oscuro - REGLA GLOBAL */
+.dark {
+  --color-text-primary: #ffffff !important; /* Blanco puro para máximo contraste */
+  --color-text-secondary: #e0e0e0 !important; /* Gris muy claro */
+  --color-text-tertiary: #c0c0c0 !important; /* Gris claro */
+}
+
 /* REGLAS ESPECÍFICAS PARA ELEMENTOS DE UI */
 
 /* Table styling */
@@ -577,7 +656,7 @@
   color: var(--input-placeholder) !important;
 }
 
-/* Text colors - TODOS BLANCOS */
+/* Text colors - TODOS BLANCOS con mayor contraste */
 .dark .text-gray-800,
 .dark .text-gray-700,
 .dark .text-gray-900,
@@ -588,17 +667,18 @@
 .dark h5,
 .dark h6,
 .dark p,
+.dark label,
 .dark span:not(.bg-green-100):not(.bg-amber-100):not(.bg-red-100) {
-  color: var(--color-text-primary) !important;
+  color: #ffffff !important; /* Blanco puro en vez de variable para máximo contraste */
 }
 
 .dark .text-gray-600,
 .dark .text-gray-500 {
-  color: var(--color-text-secondary) !important;
+  color: #e0e0e0 !important; /* Gris muy claro para mejor contraste */
 }
 
 .dark .text-gray-400 {
-  color: var(--color-text-tertiary) !important;
+  color: #c0c0c0 !important; /* Gris claro para mejor contraste */
 }
 
 /* Estilos específicos para dashboard y métricas */
@@ -609,11 +689,16 @@
   color: #ffffff !important;
 }
 
-/* Números en paneles de dashboard */
+/* Números en paneles de dashboard y formularios */
 .dark .p-3 .text-base,
 .dark .p-3 .text-xl,
 .dark .p-4 .text-base,
-.dark .p-4 .text-xl {
+.dark .p-4 .text-xl,
+.dark [class*="step"] .text-base,
+.dark [class*="step"] .text-xl,
+.dark [class*="step"] .text-lg,
+.dark [class*="step"] .text-sm,
+.dark [class*="step"] .text-xs {
   color: #ffffff !important;
 }
 

@@ -1,0 +1,91 @@
+import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { useForm, FormProvider } from 'react-hook-form';
+import { AnimatePresence, motion } from 'framer-motion';
+import { 
+  FiArrowLeft, 
+  FiArrowRight, 
+  FiCheck, 
+  FiX, 
+  FiAlertTriangle, 
+  FiInfo, 
+  FiShoppingCart, 
+  FiMenu,
+  FiChevronLeft,
+  FiChevronRight,
+  FiMaximize,
+  FiMinimize
+} from 'react-icons/fi';
+
+// Importaciones organizadas por dominio
+// Pasos del formulario
+import STEPS, { isStepValid, areAllRequiredStepsValid } from './reservationsteps';
+
+// Componentes auxiliares
+import { 
+  StepIndicator, 
+  SummarySidebar, 
+  calculateProgress, 
+  isStepNavigable 
+} from './reservationcomponents';
+
+// Modales
+import TuesdayModal from './TuesdayModal';
+import PaymentModal from './PaymentModal';
+import ConfirmationModal from './ConfirmationModal';
+
+// Servicios y utilidades
+import { useReservationData } from '../../../hooks/useReservationData';
+import { formatters } from '../../../utils/formatters';
+
+// Estilos organizados
+import styles, { cn, cond } from './styles';
+const StepperReservation = () => {
+  const navigate = useNavigate();
+  const [currentStepIndex, setCurrentStepIndex] = useState(0);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [modalType, setModalType] = useState(null); // 'tuesday', 'payment', 'confirmation'
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [apiError, setApiError] = useState(null);
+  const [isExitWarningOpen, setIsExitWarningOpen] = useState(false);
+  const [isSummaryOpen, setIsSummaryOpen] = useState(false); // Para toggle del resumen en móvil
+  const [isFullscreen, setIsFullscreen] = useState(false); // Para modo pantalla completa
+
+  // Obtener datos para el formulario de reserva
+  const { 
+    packages, 
+    tematicas, 
+    mamparas, 
+    foodOptions,
+    extras,
+    loading, 
+    error, 
+    unavailableDates,
+    existingReservations,
+    createReservation,
+  } = useReservationData();
+  
+  // Configurar el formulario con react-hook-form
+  const methods = useForm({
+    defaultValues: {
+      id_paquete: null,
+      fecha_reserva: null,
+      hora_inicio: null,
+      id_tematica: null,
+      id_mampara: null,
+      id_opcion_alimento: null,
+      extras: [],
+      nombre_festejado: '',
+      edad_festejado: '',
+      sexo_festejado: '',
+      color_favorito: '',
+      detalles_especiales: '',
+      tuesdayFee: 0,
+      packagePrice: 0
+    }
+  });
+  
+  const { watch, setValue, handleSubmit, formState } = methods;
+  
+  // Valores actuales del formulario
+  const formValues = watch();

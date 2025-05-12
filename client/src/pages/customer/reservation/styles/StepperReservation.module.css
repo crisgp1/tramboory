@@ -1,0 +1,276 @@
+/* 
+  StepperReservation.module.css
+  Sistema organizado de estilos para el componente StepperReservation 
+*/
+
+/* ==========================================================================
+   VARIABLES DE ESTILO
+   ========================================================================== */
+:root {
+  --color-primary: #4f46e5; /* indigo-600 */
+  --color-primary-dark: #4338ca; /* indigo-700 */
+  --color-primary-light: #6366f1; /* indigo-500 */
+  --color-primary-lightest: #eef2ff; /* indigo-50 */
+  
+  --color-success: #22c55e; /* green-500 */
+  --color-success-dark: #16a34a; /* green-600 */
+  
+  --color-danger: #ef4444; /* red-500 */
+  --color-danger-dark: #dc2626; /* red-600 */
+  
+  --color-warning: #f59e0b; /* amber-500 */
+
+  --color-info: #3b82f6; /* blue-500 */
+  
+  --color-gray-50: #f9fafb;
+  --color-gray-100: #f3f4f6;
+  --color-gray-200: #e5e7eb;
+  --color-gray-300: #d1d5db;
+  --color-gray-500: #6b7280;
+  --color-gray-600: #4b5563;
+  --color-gray-700: #374151;
+  --color-gray-800: #1f2937;
+  --color-gray-900: #111827;
+  
+  --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+  
+  --radius-md: 0.375rem; /* 6px */
+  --radius-lg: 0.5rem; /* 8px */
+  --radius-xl: 0.75rem; /* 12px */
+  --radius-2xl: 1rem; /* 16px */
+  --radius-full: 9999px;
+  
+  --transition-fast: 200ms;
+  --transition-normal: 300ms;
+}
+
+/* ==========================================================================
+   LAYOUT BASE
+   ========================================================================== */
+.container {
+  @apply container mx-auto px-0 sm:px-4 max-w-7xl;
+}
+
+.pageBackground {
+  @apply bg-gradient-to-b from-indigo-50 to-gray-50 dark:from-gray-900 dark:to-black min-h-screen transition-all duration-300;
+}
+
+.pageBackgroundFullscreen {
+  @apply fixed inset-0 z-50;
+}
+
+.header {
+  @apply bg-white dark:bg-gray-800 shadow-sm p-4 md:rounded-lg md:mt-4 sticky top-0 z-30 border-b md:border border-gray-200 dark:border-gray-700;
+}
+
+.contentGrid {
+  @apply md:mt-8 md:px-4 relative md:grid md:grid-cols-3 md:gap-8 lg:grid-cols-4;
+}
+
+.stepContent {
+  @apply md:col-span-3 bg-white dark:bg-gray-800 md:rounded-xl shadow-sm;
+}
+
+.contentPadding {
+  @apply p-4 md:p-8;
+}
+
+.infoSection {
+  @apply p-4 md:mt-8 md:mb-12;
+}
+
+/* ==========================================================================
+   COMPONENTES
+   ========================================================================== */
+
+/* Botones */
+.buttonPrimary {
+  @apply flex items-center gap-2 px-6 py-2.5 rounded-lg font-medium bg-gradient-to-r from-indigo-500 to-indigo-600 text-white hover:shadow-lg hover:from-indigo-600 hover:to-indigo-700 transition-all duration-200;
+}
+
+.buttonSuccess {
+  @apply flex items-center gap-2 px-6 py-2.5 rounded-lg font-medium bg-gradient-to-r from-green-500 to-green-600 text-white hover:shadow-lg hover:from-green-600 hover:to-green-700 transition-all duration-200;
+}
+
+.buttonDisabled {
+  @apply bg-gray-200 text-gray-500 cursor-not-allowed flex items-center gap-2 px-6 py-2.5 rounded-lg font-medium transition-all duration-200;
+}
+
+.buttonGhost {
+  @apply text-gray-500 hover:text-gray-700 px-4 py-2 hover:bg-gray-100 rounded-lg transition-colors;
+}
+
+.buttonNav {
+  @apply flex items-center gap-2 px-5 py-2.5 rounded-lg transition-all duration-200;
+}
+
+.buttonNavActive {
+  @apply text-gray-700 hover:bg-gray-100;
+}
+
+.buttonNavDisabled {
+  @apply text-gray-400 cursor-not-allowed;
+}
+
+.buttonIcon {
+  @apply p-2 text-gray-700 dark:text-gray-300 hover:text-indigo-700 dark:hover:text-indigo-400 rounded-full hover:bg-indigo-100 dark:hover:bg-indigo-900 transition-colors;
+}
+
+.buttonFloating {
+  @apply fixed bottom-4 right-4 z-20 flex items-center gap-2 px-4 py-3 rounded-full shadow-lg bg-indigo-600 dark:bg-indigo-700 text-white;
+}
+
+/* Navegación */
+.desktopStepsNav {
+  @apply hidden md:block my-6 px-4;
+}
+
+.mobileProgress {
+  @apply p-4 md:hidden;
+}
+
+.progressBar {
+  @apply h-1.5 bg-gray-200 rounded-full overflow-hidden;
+}
+
+.progressFill {
+  @apply h-full bg-gradient-to-r from-indigo-500 to-indigo-600 rounded-full;
+}
+
+.controlsContainer {
+  @apply flex justify-between mt-8 pt-4 border-t border-gray-200;
+}
+
+/* Tarjetas y Contenedores */
+.card {
+  @apply bg-white shadow-lg rounded-xl overflow-hidden;
+}
+
+.infoBox {
+  @apply bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900 dark:to-indigo-900 p-4 rounded-xl border border-blue-200 dark:border-blue-800 shadow-sm;
+}
+
+.alertBox {
+  @apply bg-red-50 p-4 rounded-lg border border-red-200;
+}
+
+.warningModal {
+  @apply fixed inset-0 bg-gray-900/70 backdrop-blur-sm flex items-center justify-center z-50;
+}
+
+.errorToast {
+  @apply fixed bottom-4 left-1/2 transform -translate-x-1/2 bg-red-50 dark:bg-red-900 border border-red-300 dark:border-red-700 p-4 rounded-xl shadow-lg max-w-sm w-full;
+}
+
+/* Resumen lateral */
+.summarySidebar {
+  @apply hidden lg:block lg:col-span-1 transition-all duration-300 ease-in-out;
+}
+
+.summarySidebarMobile {
+  @apply fixed inset-0 z-40 bg-gray-900/50 backdrop-blur-sm transition-all duration-300 ease-in-out;
+}
+
+.summarySidebarContent {
+  @apply bg-white shadow-lg h-full overflow-y-auto w-full max-w-md;
+}
+
+.summarySidebarDesktop {
+  @apply lg:h-auto lg:sticky lg:top-24 lg:rounded-xl lg:shadow-sm;
+}
+
+.summarySidebarMobileHeader {
+  @apply flex justify-between items-center p-4 border-b border-gray-200;
+}
+
+/* Indicadores */
+.loadingIndicator {
+  @apply flex items-center justify-center h-64;
+}
+
+.loadingSpinner {
+  @apply animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-indigo-500;
+}
+
+.buttonLoadingSpinner {
+  @apply w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin;
+}
+
+/* ==========================================================================
+   ANIMACIONES
+   ========================================================================== */
+@keyframes slideInRight {
+  from { transform: translateX(100%); }
+  to { transform: translateX(0); }
+}
+
+@keyframes slideUp {
+  from { transform: translate(-50%, 100%); opacity: 0; }
+  to { transform: translate(-50%, 0); opacity: 1; }
+}
+
+@keyframes zoomIn {
+  from { transform: scale(0.9); opacity: 0; }
+  to { transform: scale(1); opacity: 1; }
+}
+
+@keyframes bounceSubtle {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-5px); }
+}
+
+.animateSlideInRight {
+  animation: slideInRight 0.3s ease-out forwards;
+}
+
+.animateSlideUp {
+  animation: slideUp 0.3s ease-out forwards;
+}
+
+.animateZoomIn {
+  animation: zoomIn 0.3s ease-out forwards;
+}
+
+.animateBounceSubtle {
+  animation: bounceSubtle 2s infinite;
+}
+
+/* ==========================================================================
+   TEMA OSCURO - Ajustes específicos
+   ========================================================================== */
+.darkText {
+  @apply dark:text-white;
+}
+
+.darkCard {
+  @apply dark:bg-gray-800;
+}
+
+.darkBorder {
+  @apply dark:border-gray-700;
+}
+
+/* ==========================================================================
+   RESPONSIVIDAD - Ajustes específicos
+   ========================================================================== */
+.mobileOnly {
+  @apply block md:hidden;
+}
+
+.desktopOnly {
+  @apply hidden md:block;
+}
+
+.lgDesktopOnly {
+  @apply hidden lg:block;
+}
+
+.mobileHidden {
+  @apply hidden sm:inline;
+}
+
+.mobileFlexHidden {
+  @apply hidden sm:flex;
+}
