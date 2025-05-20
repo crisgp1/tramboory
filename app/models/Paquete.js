@@ -30,14 +30,6 @@ const Paquete = sequelize.define('Paquetes', {
     allowNull: false,
     defaultValue: true
   },
-  id_paquete_alimento: {
-    type: DataTypes.INTEGER,
-    allowNull: true,
-    references: {
-      model: 'paquetes_alimentos',
-      key: 'id'
-    }
-  }
 }, {
   tableName: 'paquetes',
   schema: MODEL_SCHEMAS.Paquete, // Usar 'main' como schema

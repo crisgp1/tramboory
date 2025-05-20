@@ -135,19 +135,19 @@ app.use(errorHandler);
 // Sincronizar la base de datos
 const { runMigrations } = require('./utils/dbMigrations');
 const initializeDatabase = async () => {
+  try {
+    // Intentamos conectar con la configuración actual o fallback a local
+    await sequelize.switchToLocalIfNeeded();
+    console.log('Conexión a la base de datos establecida correctamente.');
+    
+    // Ejecutar las migraciones SQL con mejor manejo de errores
     try {
-        // Primer intento de conexión
-        await sequelize.authenticate();
-        console.log('Conexión a la base de datos establecida correctamente.');
-        
-        // Ejecutar las migraciones SQL con mejor manejo de errores
-        try {
-            await runMigrations();
-            console.log('Migraciones SQL ejecutadas correctamente.');
-        } catch (migrationError) {
-            console.error('Error durante las migraciones, pero continuando:', migrationError.message);
-            // Continuamos a pesar del error en migraciones
-        }
+      await runMigrations();
+      console.log('Migraciones SQL ejecutadas correctamente.');
+    } catch (migrationError) {
+      console.error('Error durante las migraciones, pero continuando:', migrationError.message);
+      // Continuamos a pesar del error en migraciones
+    }
         
         // Agregar manualmente la columna id_pre_reserva a la tabla pagos
         try {
