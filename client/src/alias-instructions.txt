@@ -1,0 +1,12 @@
+
+// Agrega estos aliases a tu vite.config.js:
+/*
+resolve: {
+  alias: {
+    '@': fileURLToPath(new URL('./src', import.meta.url)),
+    '@domains': fileURLToPath(new URL('./src/domains', import.meta.url)),
+    '@shared': fileURLToPath(new URL('./src/shared', import.meta.url)),
+  },
+},
+*/
+
