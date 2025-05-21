@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef, forwardRef, useImperativeHandle } from 'react';
 import { FiEdit, FiTrash2, FiEye, FiImage, FiArrowUp, FiArrowDown, FiLink, FiCopy, FiCheck, FiAlertCircle, FiX, FiMenu } from 'react-icons/fi';
 import { DragDropContext, Droppable, Draggable } from 'react-beautiful-dnd';
-import * as galeriaService from '@/services/galeriaService';
+import * as galeriaService from '@shared/services/galeriaService';
 import { AdvancedImage } from '@cloudinary/react';
 import { Cloudinary } from '@cloudinary/url-gen';
 import { fill } from '@cloudinary/url-gen/actions/resize';

@@ -31,12 +31,12 @@ import ReviewStep from './reservationsteps/ReviewStep';
 import StepIndicator from './reservationcomponents/StepIndicator';
 import SummarySidebar from './reservationcomponents/SummarySidebar';
 import TuesdayModal from './TuesdayModal';
-import PaymentModal from './PaymentModal';
+import PaymentModal from './PaymentModalCustomer';
 import ConfirmationModal from './ConfirmationModal';
 
 // Servicios y utilidades
-import { useReservationData } from '../../../hooks/useReservationData';
-import { formatters } from '../../../utils/formatters';
+import { useReservationData } from '@shared/hooks/useReservationData';
+import { formatters } from '@shared/utils/formatters';
 
 // Definición de los pasos
 const STEPS = [

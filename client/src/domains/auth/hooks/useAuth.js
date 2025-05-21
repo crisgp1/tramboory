@@ -1,4 +1,4 @@
-// src/hooks/useAuth.js
+s// src/hooks/useAuth.js
 
 import { useState, useEffect } from 'react';
 import Cookies from 'js-cookie';

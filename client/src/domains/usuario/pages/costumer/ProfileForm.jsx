@@ -20,7 +20,7 @@ import {
   FiEye,
   FiEyeOff
 } from 'react-icons/fi';
-import axiosInstance from '../../../components/axiosConfig.js';
+import axiosInstance from '@shared/utils/axiosConfig';
 
 // Esquema de validación corregido
 const schema = yup.object().shape({

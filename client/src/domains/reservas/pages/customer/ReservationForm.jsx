@@ -7,7 +7,7 @@ import {
   TUESDAY_SURCHARGE,
   formatReservationForApi, 
   formatReservationForEditing 
-} from '@/utils/reservationUtils';
+} from '@shared/utils/reservationUtils';
 
 // Import all section components
 import PackageSection from './reservationform/PackageSection';

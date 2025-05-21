@@ -3,7 +3,7 @@ import React, { useEffect, useRef } from 'react'
 import { Link } from 'react-router-dom'
 import { motion, useAnimation, useScroll, useTransform } from 'framer-motion'
 import { FiCalendar, FiGift, FiStar } from 'react-icons/fi'
-import ScrollIndicator from '../ui/ScrollIndicator'
+import ScrollIndicator from '@shared/components/ui/ScrollIndicator'
 
 /**
  * Sección hero principal con mensaje de bienvenida, título y CTA

@@ -2,7 +2,7 @@ import React, { useRef, useEffect } from 'react';
 import { Bar } from 'react-chartjs-2';
 import { FiTrendingUp, FiTrendingDown, FiPrinter, FiDownload, FiX } from 'react-icons/fi';
 // Usar el alias @ para garantizar resolución correcta en Docker
-import { formatNumber } from '@/utils/formatters';
+import { formatNumber } from '@shared/utils/formatters';
 import html2canvas from 'html2canvas';
 import jsPDF from 'jspdf';
 

@@ -1,9 +1,9 @@
 import React, { useState, useCallback, useMemo } from 'react';
 import { FiEdit2, FiEye, FiTrash2, FiSearch, FiFilter, FiX, FiDollarSign } from 'react-icons/fi';
 // Importación con ruta relativa desde src/
-import PaymentModal from '@/pages/customer/reservation/PaymentModal';
-import { formatDate, formatTime } from '@/utils/formatters';
-import axiosInstance from '@/components/axiosConfig';
+import PaymentModal from '@shared/pages/admin/dashboard/payment-service/PaymentModal';
+import { formatDate, formatTime } from '@shared/utils/formatters';
+import axiosInstance from '@shared/utils/axiosConfig';
 import { toast } from 'react-hot-toast';
 
 const ReservationTable = ({

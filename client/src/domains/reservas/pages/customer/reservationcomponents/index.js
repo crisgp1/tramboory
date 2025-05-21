@@ -22,7 +22,7 @@ export {
 export const getModals = () => {
   const modalImports = Promise.all([
     import('../TuesdayModal'),
-    import('../PaymentModal'),
+    import('../PaymentModalCustomer'),
     import('../ConfirmationModal'),
     import('../ContractModal'),
     import('../QuotationConfirmationModal')

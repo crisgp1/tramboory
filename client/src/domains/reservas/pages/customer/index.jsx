@@ -13,7 +13,7 @@ import StepperReservation from './StepperReservation';
 
 // Modales
 import ContractModal from './ContractModal';
-import PaymentModal from './PaymentModal';
+import PaymentModal from './PaymentModalCustomer';
 import TuesdayModal from './TuesdayModal';
 import ConfirmationModal from './ConfirmationModal';
 import QuotationConfirmationModal from './QuotationConfirmationModal';

@@ -22,10 +22,10 @@ import {
   FiSun,
   FiMoon
 } from 'react-icons/fi';
-import { useTheme } from '../../context/ThemeContext';
-import ThemeToggle from '../ui/ThemeToggle';
-import Logo from '../../img/logo.webp';
-import DatabaseConnectionStatus from '../ui/DatabaseConnectionStatus';
+import { useTheme } from '@shared/context/ThemeContext';
+import ThemeToggle from '@shared/components/ThemeToggle';
+import Logo from '@shared/src/img/logo.webp';
+import DatabaseConnectionStatus from '@shared/components/DatabaseConnectionStatus';
 
 // Componente para cada item de navegación
 const NavItem = ({ icon: Icon, label, path, active, isCollapsed, hasBadge }) => {

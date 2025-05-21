@@ -1,5 +1,5 @@
 import { FiUser, FiMail, FiPhone, FiMapPin, FiKey, FiHash, FiUserCheck, FiLock, FiRefreshCw } from 'react-icons/fi';
-import withValidation from '@/components/withValidation';
+import withValidation from '@shared/components/withValidation';
 
 const Input = withValidation('input');
 const Select = withValidation('select');

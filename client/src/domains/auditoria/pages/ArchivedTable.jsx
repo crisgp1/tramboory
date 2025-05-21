@@ -1,8 +1,8 @@
 import React, { useState, useCallback, useMemo } from 'react';
 import { FiSearch, FiRefreshCw } from 'react-icons/fi';
 // Usar el alias @ para garantizar resolución correcta en Docker
-import { formatDate } from '@/utils/formatters';
-import axiosInstance from '@/components/axiosConfig';
+import { formatDate } from '@shared/utils/formatters';
+import axiosInstance from '@shared/utils/axiosConfig';
 import { toast } from 'react-toastify';
 
 const ArchivedTable = ({

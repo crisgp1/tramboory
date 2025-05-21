@@ -2,7 +2,7 @@ import React, { useMemo } from 'react';
 import { FiEdit2, FiTrash2, FiEye, FiFileText, FiFile } from 'react-icons/fi';
 import PropTypes from 'prop-types';
 // Usar el alias @ para garantizar resolución correcta en Docker
-import { formatDate, formatNumber } from '@/utils/formatters';
+import { formatDate, formatNumber } from '@shared/utils/formatters';
 
 const FinanceTable = ({ 
     finances, 

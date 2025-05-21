@@ -5,8 +5,8 @@ import {
   TIME_SLOTS, 
   formatReservationForApi, 
   formatReservationForEditing 
-} from '@/utils/reservationUtils';
-import axiosInstance from '@/components/axiosConfig';
+} from '@shared/utils/reservationUtils';
+import axiosInstance from '@shared/utils/axiosConfig';
 import { FiX, FiSearch } from 'react-icons/fi';
 import { toast } from 'react-hot-toast';
 

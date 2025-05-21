@@ -1,11 +1,11 @@
 import { useState, useEffect } from 'react';
-import Modal from '@/components/ui/Modal';
+import Modal from '@shared/components/ui/Modal';
 import { Calendar, momentLocalizer } from 'react-big-calendar';
 import moment from 'moment';
 import 'react-big-calendar/lib/css/react-big-calendar.css';
 import { motion, AnimatePresence } from 'framer-motion';
 import { FiChevronLeft, FiChevronRight, FiCalendar, FiX, FiInfo, FiCheck, FiAlertCircle } from 'react-icons/fi';
-import axios from '@/components/axiosConfig';
+import axios from '@shared/components/axiosConfig';
 import { toast } from 'react-hot-toast';
 
 const localizer = momentLocalizer(moment);

@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import { gsap } from 'gsap'
 import { ScrollTrigger } from 'gsap/ScrollTrigger'
-import NavbarPublic from '@/components/ui/NavbarPublic'
+import NavbarPublic from '@shared/components/NavbarPublic'
 import {
   FiClock,
   FiImage,

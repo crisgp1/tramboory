@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
-import axiosInstance from '@/components/axiosConfig';
-import { Card } from '@/components/ui/Card';
+import axiosInstance from '@shared/utils/axiosConfig';
+import { Card } from '@shared/components/ui/Card';
 
 const AuditHistory = () => {
   const [auditLogs, setAuditLogs] = useState([]);

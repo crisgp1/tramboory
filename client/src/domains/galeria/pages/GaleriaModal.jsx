@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { FiUpload, FiLink, FiAlignLeft, FiImage, FiX, FiCheck, FiPlusCircle, FiCamera, FiToggleRight, FiStar, FiCopy } from 'react-icons/fi';
-import Modal from '@/components/ui/Modal';
+import Modal from '@shared/components/ui/Modal';
 import { uploadImageToCloudinary, uploadMultipleImagesToCloudinary } from '@/services/galeriaService';
 
 const GaleriaModal = ({ isOpen, onClose, onSave, editingItem }) => {

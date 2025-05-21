@@ -1,11 +1,11 @@
 import React, { useState } from 'react';
 import PropTypes from 'prop-types';
 // Usar el alias @ para garantizar resolución correcta en Docker
-import Modal from '@/components/ui/Modal';
+import Modal from '@shared/components/ui/Modal';
 import { FiDollarSign, FiCalendar, FiTag, FiFileText, FiDownload, FiPrinter, FiEye, FiCode, FiFile } from 'react-icons/fi';
-import ReservationPreviewModal from '@/pages/admin/dashboard/reservation-service/ReservationPreviewModal';
-import { formatDate, formatNumber } from '@/utils/formatters';
-import CloudinaryFileSelector from '@/components/cloudinary/CloudinaryFileSelector';
+import ReservationPreviewModal from '@shared/pages/admin/dashboard/reservation-service/ReservationPreviewModal';
+import { formatDate, formatNumber } from '@shared/utils/formatters';
+import CloudinaryFileSelector from '@shared/components/cloudinary/CloudinaryFileSelector';
 
 const FinanceDetailModal = ({ finance, onClose }) => {
     const [showReservationPreview, setShowReservationPreview] = useState(false);

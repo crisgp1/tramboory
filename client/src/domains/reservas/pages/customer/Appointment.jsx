@@ -24,7 +24,7 @@ import {
 } from 'react-icons/fi'
 import { gsap } from 'gsap'
 import { ScrollTrigger } from 'gsap/ScrollTrigger'
-import Logo from '../../../img/logo.webp'
+import Logo from '@shared/src/img/logo.webp'
 
 gsap.registerPlugin(ScrollTrigger)
 

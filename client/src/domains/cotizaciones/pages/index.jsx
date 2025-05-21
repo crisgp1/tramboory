@@ -6,8 +6,8 @@ import { motion } from 'framer-motion';
 import { FiArrowLeft, FiCalendar, FiPackage, FiClock, FiUsers, FiAlertCircle } from 'react-icons/fi';
 
 // Stores
-import useCotizacionesStore from '@/store/cotizacionesStore';
-import usePreReservasStore from '@/store/preReservasStore';
+import useCotizacionesStore from '@shared/store/cotizacionesStore';
+import usePreReservasStore from '@shared/store/preReservasStore';
 
 // Componentes
 import ParticlesBackground from '../../public/home-components/decorative/ParticlesBackground';

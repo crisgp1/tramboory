@@ -7,8 +7,8 @@ import * as yup from 'yup';
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import { FiMail, FiLock, FiEye, FiEyeOff, FiUser } from 'react-icons/fi';
-import axiosInstance from '@/components/axiosConfig.js';
-import { useAuth } from '@/context/authContext';
+import axiosInstance from '@shared/utils/axiosConfig.js';
+import { useAuth } from '@shared/context/authContext';
 
 const schema = yup.object().shape({
   email: yup.string().email('Email inválido').required('El email es requerido'),

@@ -1,5 +1,5 @@
 // Usar el alias @ para garantizar resolución correcta en Docker
-import Modal from '@/components/ui/Modal'
+import Modal from '@shared/components/ui/Modal'
 import UserForm from '../user-service/UserForm.jsx'
 import ReservationForm from '../reservation-service/ReservationForm.jsx'
 import FinanceForm from '../finance-service/FinanceForm.jsx'
