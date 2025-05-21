@@ -1,7 +1,7 @@
 import React, { useMemo } from 'react';
 import { FiEdit2, FiTrash2 } from 'react-icons/fi';
 // Usar el alias @ para garantizar resolución correcta en Docker
-import { formatNumber } from '@/utils/formatters';
+import { formatNumber } from '@shared/utils/formatters';
 
 const ExtraTable = ({ extras, handleEditItem, handleDeleteItem }) => {
   const activeExtras = useMemo(() => {
