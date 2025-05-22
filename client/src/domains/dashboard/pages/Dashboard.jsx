@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useMemo } from 'react'
+﻿import { useState, useEffect, useCallback, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { toast } from 'react-toastify'
 // Asegurar que todas las importaciones usen el alias @ para resolver correctamente en Docker
@@ -6,7 +6,7 @@ import axiosInstance from '@/components/axiosConfig'
 import { useAuth } from '@/hooks/useAuth'
 import * as socketService from '@/services/socketService'
 import CrmLayout from '@/components/layout/CrmLayout'
-import { Breadcrumb } from '@/components/ui'
+import { Breadcrumb } from '@shared/components'
 // Importar tiendas Zustand
 import {
   useUiStore,
@@ -16,12 +16,12 @@ import {
   usePackagesStore,
   useCategoriesStore,
   useThemesStore,
-  useExtrasStore,
+  useextrasService,
   useFoodOptionsStore,
-  useMamparasStore,
+  usemamparasService,
   usePaymentsStore
 } from '@/store'
-import ScreenSizeAlert from './dashboard-components/ScreenSizeAlert.jsx'
+import ScreenSizeAlert from '@domains/dashboard/components/ScreenSizeAlert'
 import UserSummary from './user-service/UserSummary.jsx'
 import ReservationSummary from './reservation-service/ReservationSummary.jsx'
 import FinancialSummary from './finance-service/FinancialSummary.jsx'
@@ -29,10 +29,10 @@ import UserTable from './user-service/UserTable.jsx'
 import ReservationTable from './reservation-service/ReservationTable.jsx'
 import FinanceTable from './finance-service/FinanceTable.jsx'
 import PackageTable from './catalog-service/paquete-service/PackageTable.jsx'
-import MonthSelector from './dashboard-components/MonthSelector.jsx'
-import ReservationCalendar from './dashboard-components/ReservationCalendar.jsx'
+import MonthSelector from '@domains/dashboard/components/MonthSelector'
+import ReservationCalendar from '@domains/dashboard/components/ReservationCalendar'
 import ReservationModal from './reservation-service/ReservationModal.jsx'
-import ItemModal from './dashboard-components/ItemModal.jsx'
+import ItemModal from '@domains/dashboard/components/ItemModal'
 import FinanceDetailModal from './finance-service/FinanceDetailModal.jsx'
 import UserForm from './user-service/UserForm.jsx'
 import ReservationForm from './reservation-service/ReservationForm.jsx'
@@ -83,7 +83,7 @@ const Dashboard = () => {
     generatedPassword, generateRandomPassword
   } = useUiStore();
 
-  // Estados de entidades (todavía mantenemos el estado local por ahora)
+  // Estados de entidades (todavÃ­a mantenemos el estado local por ahora)
   const [users, setUsers] = useState([])
   const [reservations, setReservations] = useState([])
   const [finances, setFinances] = useState([])
@@ -101,32 +101,32 @@ const Dashboard = () => {
   const [selectedPayment, setSelectedPayment] = useState(null)
   const [selectedUser, setSelectedUser] = useState(null)
   
-  // Determinar si mostrar el dashboard principal o contenido específico
+  // Determinar si mostrar el dashboard principal o contenido especÃ­fico
   const isMainDashboard = activeTab === 'dashboard';
   
-  // Mapeo de categorías y sus pestañas para las migajas de pan
+  // Mapeo de categorÃ­as y sus pestaÃ±as para las migajas de pan
   const breadcrumbsMap = {
     dashboard: [{ label: 'Panel Principal', path: 'dashboard' }],
     users: [{ label: 'Usuarios', path: 'users' }],
     reservations: [{ label: 'Reservaciones', path: 'reservations' }],
     finances: [{ label: 'Finanzas', path: 'finances' }],
     payments: [{ label: 'Pagos', path: 'payments' }],
-    packages: [{ label: 'Catálogo', path: 'catalog' }, { label: 'Paquetes', path: 'packages' }],
-    extras: [{ label: 'Catálogo', path: 'catalog' }, { label: 'Extras', path: 'extras' }],
-    opcionesAlimento: [{ label: 'Catálogo', path: 'catalog' }, { label: 'Opciones de Alimento', path: 'opcionesAlimento' }],
-    tematicas: [{ label: 'Catálogo', path: 'catalog' }, { label: 'Temáticas', path: 'tematicas' }],
-    mamparas: [{ label: 'Catálogo', path: 'catalog' }, { label: 'Mamparas', path: 'mamparas' }],
-    galeria: [{ label: 'Sistema', path: 'system' }, { label: 'Galería', path: 'galeria' }],
-    auditoria: [{ label: 'Sistema', path: 'system' }, { label: 'Auditoría', path: 'auditoria' }],
+    packages: [{ label: 'CatÃ¡logo', path: 'catalog' }, { label: 'Paquetes', path: 'packages' }],
+    extras: [{ label: 'CatÃ¡logo', path: 'catalog' }, { label: 'Extras', path: 'extras' }],
+    opcionesAlimento: [{ label: 'CatÃ¡logo', path: 'catalog' }, { label: 'Opciones de Alimento', path: 'opcionesAlimento' }],
+    tematicas: [{ label: 'CatÃ¡logo', path: 'catalog' }, { label: 'TemÃ¡ticas', path: 'tematicas' }],
+    mamparas: [{ label: 'CatÃ¡logo', path: 'catalog' }, { label: 'Mamparas', path: 'mamparas' }],
+    galeria: [{ label: 'Sistema', path: 'system' }, { label: 'GalerÃ­a', path: 'galeria' }],
+    auditoria: [{ label: 'Sistema', path: 'system' }, { label: 'AuditorÃ­a', path: 'auditoria' }],
     archived: [{ label: 'Sistema', path: 'system' }, { label: 'Elementos Archivados', path: 'archived' }]
   };
   
-  // Obtener los ítems del breadcrumb actual
+  // Obtener los Ã­tems del breadcrumb actual
   const currentBreadcrumbItems = useMemo(() => {
     return breadcrumbsMap[activeTab] || [];
   }, [activeTab]);
   
-  // Manejar navegación desde el breadcrumb
+  // Manejar navegaciÃ³n desde el breadcrumb
   const handleBreadcrumbNavigation = useCallback((path) => {
     if (path === 'dashboard') {
       setActiveTab('dashboard');
@@ -162,10 +162,10 @@ const Dashboard = () => {
   const { fetchFinances: fetchFinancesZustand } = useFinancesStore();
   const { fetchPackages: fetchPackagesZustand } = usePackagesStore();
   const { fetchCategories: fetchCategoriesZustand } = useCategoriesStore();
-  const { fetchExtras: fetchExtrasZustand } = useExtrasStore();
+  const { fetchExtras: fetchExtrasZustand } = useextrasService();
   const { fetchFoodOptions: fetchFoodOptionsZustand } = useFoodOptionsStore();
   const { fetchThemes: fetchThemesZustand } = useThemesStore();
-  const { fetchMamparas: fetchMamparasZustand } = useMamparasStore();
+  const { fetchMamparas: fetchMamparasZustand } = usemamparasService();
   const { fetchPayments: fetchPaymentsZustand } = usePaymentsStore();
 
   const fetchData = useCallback(async () => {
@@ -183,7 +183,7 @@ const Dashboard = () => {
         fetchThemesZustand().then(data => setTematicas(data)),
         fetchMamparasZustand().then(data => setMamparas(data)),
         fetchPaymentsZustand().then(data => setPayments(data)),
-        // Obtener elementos archivados - todavía usando axios ya que no tenemos tiendas para estos
+        // Obtener elementos archivados - todavÃ­a usando axios ya que no tenemos tiendas para estos
         axiosInstance.get('/reservas/archived'),
         axiosInstance.get('/pagos/archived'),
         axiosInstance.get('/finanzas/archived')
@@ -207,7 +207,7 @@ const Dashboard = () => {
         if (result.status === 'rejected') {
           console.error(`Error en la solicitud ${index}:`, result.reason);
           
-          // No mostrar toast para errores 404 en solicitudes de elementos archivados (índices 10, 11, 12)
+          // No mostrar toast para errores 404 en solicitudes de elementos archivados (Ã­ndices 10, 11, 12)
           const isArchivedRequest = index >= 10 && index <= 12;
           const is404Error = result.reason?.response?.status === 404;
           
@@ -232,22 +232,22 @@ const Dashboard = () => {
   useEffect(() => {
     // Inicializar datos y configurar Socket.IO
     fetchData().then(() => {
-      // Usar la función initSocketListeners de reservationsStore para centralizar la lógica de sockets
-      // Esta función se encarga de inicializar Socket.IO y configurar todos los listeners
-      // También actualiza automáticamente el estado global de reservations en la tienda
+      // Usar la funciÃ³n initSocketListeners de reservationsStore para centralizar la lÃ³gica de sockets
+      // Esta funciÃ³n se encarga de inicializar Socket.IO y configurar todos los listeners
+      // TambiÃ©n actualiza automÃ¡ticamente el estado global de reservations en la tienda
       initSocketListeners({
         onReservaCreada: (nuevaReserva) => {
-          console.log('Reserva creada recibida vía Socket.IO:', nuevaReserva);
+          console.log('Reserva creada recibida vÃ­a Socket.IO:', nuevaReserva);
           toast.success(`Nueva reserva #${nuevaReserva.id} creada`);
         },
         onReservaActualizada: (reservaActualizada) => {
-          console.log('Reserva actualizada recibida vía Socket.IO:', reservaActualizada);
+          console.log('Reserva actualizada recibida vÃ­a Socket.IO:', reservaActualizada);
         },
         onReservaEliminada: (data) => {
-          console.log('Reserva eliminada recibida vía Socket.IO:', data);
+          console.log('Reserva eliminada recibida vÃ­a Socket.IO:', data);
         },
         onFechasBloqueadas: (data) => {
-          console.log('Fechas bloqueadas recibidas vía Socket.IO:', data);
+          console.log('Fechas bloqueadas recibidas vÃ­a Socket.IO:', data);
           if (!data.reservas || !Array.isArray(data.reservas)) {
             // Si no tenemos datos completos de las reservas, recargar todo
             fetchData();
@@ -255,7 +255,7 @@ const Dashboard = () => {
         },
         onError: (error) => {
           console.error('Error en Socket.IO:', error);
-          toast.error('Error en la comunicación en tiempo real');
+          toast.error('Error en la comunicaciÃ³n en tiempo real');
         }
       });
     });
@@ -308,7 +308,7 @@ const Dashboard = () => {
     setIsReservationModalOpen(true)
   }, [])
 
-  // Función para filtrar datos por mes
+  // FunciÃ³n para filtrar datos por mes
   const filterDataByMonth = useCallback(
     (data, dateField) => {
       // Primero verificar si data es un array
@@ -322,10 +322,10 @@ const Dashboard = () => {
         // Convertir a objeto Date
         const itemDate = new Date(item[dateField]);
         
-        // Asegurarse de que la fecha es válida
+        // Asegurarse de que la fecha es vÃ¡lida
         if (isNaN(itemDate.getTime())) return false;
         
-        // Comparar tanto mes como año
+        // Comparar tanto mes como aÃ±o
         return itemDate.getMonth() === selectedMonth && 
                itemDate.getFullYear() === selectedYear;
       });
@@ -392,9 +392,9 @@ const Dashboard = () => {
     try {
       // Usar la tienda Zustand para actualizar el estado de la reserva
       await useReservationsStore.getState().updateReservationStatus(reservationId, newStatus);
-      // No es necesario actualizar manualmente el estado local, ya que se actualizará
-      // automáticamente desde la tienda al llamar a updateReservationStatus
-      toast.success('Estado de la reserva actualizado con éxito');
+      // No es necesario actualizar manualmente el estado local, ya que se actualizarÃ¡
+      // automÃ¡ticamente desde la tienda al llamar a updateReservationStatus
+      toast.success('Estado de la reserva actualizado con Ã©xito');
     } catch (error) {
       console.error('Error al actualizar el estado de la reserva:', error);
       toast.error('Error al actualizar el estado de la reserva');
@@ -422,18 +422,18 @@ const Dashboard = () => {
           toast.warning('El elemento ya no existe')
         } else if (error.response.status === 401) {
           toast.error(
-            'Tu sesión ha expirado. Por favor, inicia sesión nuevamente.'
+            'Tu sesiÃ³n ha expirado. Por favor, inicia sesiÃ³n nuevamente.'
           )
           navigate('/signin')
         } else {
           toast.error(
             `Error del servidor al ${action} el elemento: ${
-              error.response.data.message || 'Algo salió mal'
+              error.response.data.message || 'Algo saliÃ³ mal'
             }`
           )
         }
       } else if (error.request) {
-        toast.error('No se recibió respuesta del servidor')
+        toast.error('No se recibiÃ³ respuesta del servidor')
       } else {
         toast.error(`Error al ${action} el elemento`)
       }
@@ -469,7 +469,7 @@ const Dashboard = () => {
         const cleanedData = removeCircularReferences(data)
         console.log('Datos limpios a enviar al servidor:', cleanedData)
         
-        // Para reservas, validar y asegurar que id_usuario sea un número
+        // Para reservas, validar y asegurar que id_usuario sea un nÃºmero
         if (activeTab === 'reservations' && !cleanedData.id_usuario) {
           toast.error('Debe seleccionar un usuario para la reserva')
           setLoading(false)
@@ -499,7 +499,7 @@ const Dashboard = () => {
               result = await usePackagesStore.getState().updatePackage(editingItem.id, cleanedData);
               break;
             case 'extras':
-              result = await useExtrasStore.getState().updateExtra(editingItem.id, cleanedData);
+              result = await useextrasService.getState().updateExtra(editingItem.id, cleanedData);
               break;
             case 'opcionesAlimento':
               result = await useFoodOptionsStore.getState().updateFoodOption(editingItem.id, cleanedData);
@@ -508,7 +508,7 @@ const Dashboard = () => {
               result = await useThemesStore.getState().updateTheme(editingItem.id, cleanedData);
               break;
             case 'mamparas':
-              result = await useMamparasStore.getState().updateMampara(editingItem.id, cleanedData);
+              result = await usemamparasService.getState().updateMampara(editingItem.id, cleanedData);
               break;
             case 'payments':
               result = await usePaymentsStore.getState().updatePayment(editingItem.id, cleanedData);
@@ -532,7 +532,7 @@ const Dashboard = () => {
               result = await usePackagesStore.getState().addPackage(cleanedData);
               break;
             case 'extras':
-              result = await useExtrasStore.getState().addExtra(cleanedData);
+              result = await useextrasService.getState().addExtra(cleanedData);
               break;
             case 'opcionesAlimento':
               result = await useFoodOptionsStore.getState().addFoodOption(cleanedData);
@@ -541,7 +541,7 @@ const Dashboard = () => {
               result = await useThemesStore.getState().addTheme(cleanedData);
               break;
             case 'mamparas':
-              result = await useMamparasStore.getState().addMampara(cleanedData);
+              result = await usemamparasService.getState().addMampara(cleanedData);
               break;
             case 'payments':
               result = await usePaymentsStore.getState().addPayment(cleanedData);
@@ -559,7 +559,7 @@ const Dashboard = () => {
         console.error('Error en handleSubmit:', error)
         if (error.response && error.response.status === 401) {
           toast.error(
-            'Tu sesión ha expirado. Por favor, inicia sesión nuevamente.'
+            'Tu sesiÃ³n ha expirado. Por favor, inicia sesiÃ³n nuevamente.'
           )
           navigate('/signin')
           return
@@ -575,19 +575,19 @@ const Dashboard = () => {
 
   const handleDeleteItem = async (endpoint, id, successMessage) => {
     const result = await Swal.fire({
-      title: '¿Estás seguro?',
-      text: 'Esta acción desactivará el registro. Podrás reactivarlo más tarde si es necesario.',
+      title: 'Â¿EstÃ¡s seguro?',
+      text: 'Esta acciÃ³n desactivarÃ¡ el registro. PodrÃ¡s reactivarlo mÃ¡s tarde si es necesario.',
       icon: 'warning',
       showCancelButton: true,
       confirmButtonColor: '#3085d6',
       cancelButtonColor: '#d33',
-      confirmButtonText: 'Sí, desactivar',
+      confirmButtonText: 'SÃ­, desactivar',
       cancelButtonText: 'Cancelar'
     })
 
     if (result.isConfirmed) {
       try {
-        // Determinar qué tienda usar basado en el endpoint
+        // Determinar quÃ© tienda usar basado en el endpoint
         switch (endpoint) {
           case '/api/usuarios':
             await useUsersStore.getState().deleteUser(id);
@@ -602,7 +602,7 @@ const Dashboard = () => {
             await usePackagesStore.getState().deletePackage(id);
             break;
           case '/api/extras':
-            await useExtrasStore.getState().deleteExtra(id);
+            await useextrasService.getState().deleteExtra(id);
             break;
           case '/api/opciones-alimentos':
             await useFoodOptionsStore.getState().deleteFoodOption(id);
@@ -611,17 +611,17 @@ const Dashboard = () => {
             await useThemesStore.getState().deleteTheme(id);
             break;
           case '/api/mamparas':
-            await useMamparasStore.getState().deleteMampara(id);
+            await usemamparasService.getState().deleteMampara(id);
             break;
           case '/api/pagos':
             await usePaymentsStore.getState().deletePayment(id);
             break;
           default:
-            // Si no hay una tienda específica para el endpoint, usar axios directamente
+            // Si no hay una tienda especÃ­fica para el endpoint, usar axios directamente
             await axiosInstance.delete(`${endpoint}/${id}`);
         }
         
-        Swal.fire('¡Desactivado!', successMessage, 'success');
+        Swal.fire('Â¡Desactivado!', successMessage, 'success');
         // Actualizar la UI con datos frescos
         await fetchData();
       } catch (error) {
@@ -630,7 +630,7 @@ const Dashboard = () => {
     }
   }
 
-  // Eliminada la función local generateRandomPassword ya que la estamos importando desde useUiStore
+  // Eliminada la funciÃ³n local generateRandomPassword ya que la estamos importando desde useUiStore
 
   const handleDownloadFile = useCallback(async (id, type) => {
     try {
@@ -664,13 +664,13 @@ const Dashboard = () => {
         nombre: newCategory.nombre,
         color: newCategory.color || '#000000'
       });
-      // Actualizar categorías tras la adición
+      // Actualizar categorÃ­as tras la adiciÃ³n
       const updatedCategories = await fetchCategoriesZustand();
       setCategories(updatedCategories);
-      toast.success('Categoría añadida con éxito');
+      toast.success('CategorÃ­a aÃ±adida con Ã©xito');
     } catch (error) {
-      console.error('Error al añadir la categoría:', error);
-      toast.error('Error al añadir la categoría');
+      console.error('Error al aÃ±adir la categorÃ­a:', error);
+      toast.error('Error al aÃ±adir la categorÃ­a');
     }
   }, [fetchCategoriesZustand])
 
@@ -729,7 +729,7 @@ const Dashboard = () => {
   ])
 
   
-  // Renderizar componente del panel según la categoría activa
+  // Renderizar componente del panel segÃºn la categorÃ­a activa
   const renderDashboardWidgets = () => {
     if (!isMainDashboard) return null;
     
@@ -738,10 +738,10 @@ const Dashboard = () => {
         {/* Header del Dashboard con gradiente */}
         <div className="bg-gradient-to-r from-indigo-600 to-purple-600 rounded-xl shadow-lg p-6 mb-8">
           <h1 className="text-3xl font-bold text-white mb-2">Panel de Control</h1>
-          <p className="text-indigo-100">Bienvenido al sistema de administración de Tramboory</p>
+          <p className="text-indigo-100">Bienvenido al sistema de administraciÃ³n de Tramboory</p>
         </div>
         
-        {/* Widgets de estadísticas */}
+        {/* Widgets de estadÃ­sticas */}
         <div className='grid grid-cols-1 md:grid-cols-3 gap-6 mb-8'>
           <div className="bg-gradient-to-br from-indigo-50 to-white p-0 rounded-xl shadow-md overflow-hidden border border-indigo-100 transform transition-all duration-300 hover:shadow-xl hover:-translate-y-1">
             <UserSummary users={users} />
@@ -788,9 +788,9 @@ const Dashboard = () => {
     );
   };
   
-  // Botón de acción contextual según la pestaña activa
+  // BotÃ³n de acciÃ³n contextual segÃºn la pestaÃ±a activa
   const renderActionButton = () => {
-    // No mostrar botón en el dashboard principal
+    // No mostrar botÃ³n en el dashboard principal
     if (isMainDashboard) return null;
     
     return (
@@ -806,17 +806,17 @@ const Dashboard = () => {
     );
   };
   
-  // Obtener nombre amigable para la pestaña activa
+  // Obtener nombre amigable para la pestaÃ±a activa
   const getActiveTabLabel = () => {
     switch (activeTab) {
       case 'users': return 'Usuario';
-      case 'reservations': return 'Reservación';
+      case 'reservations': return 'ReservaciÃ³n';
       case 'finances': return 'Registro';
       case 'payments': return 'Pago';
       case 'packages': return 'Paquete';
       case 'extras': return 'Extra';
-      case 'opcionesAlimento': return 'Opción de Alimento';
-      case 'tematicas': return 'Temática';
+      case 'opcionesAlimento': return 'OpciÃ³n de Alimento';
+      case 'tematicas': return 'TemÃ¡tica';
       case 'mamparas': return 'Mampara';
       case 'galeria': return 'Imagen';
       default: return 'Elemento';
@@ -834,15 +834,15 @@ const Dashboard = () => {
       
       {/* Contenedor principal contextual */}
       <div className='bg-white rounded-xl shadow-md p-6 border border-gray-100'>
-        {/* Breadcrumb para navegación contextual */}
+        {/* Breadcrumb para navegaciÃ³n contextual */}
         <Breadcrumb 
           items={currentBreadcrumbItems} 
           onNavigate={handleBreadcrumbNavigation}
         />
         
-        {/* Botón de acción contextual */}
+        {/* BotÃ³n de acciÃ³n contextual */}
         {renderActionButton()}
-        {/* Contenido según pestaña activa */}
+        {/* Contenido segÃºn pestaÃ±a activa */}
         {activeTab === 'users' && (
           <UserTable
             users={filteredUsers}
@@ -853,7 +853,7 @@ const Dashboard = () => {
               handleDeleteItem(
                 '/api/usuarios',
                 id,
-                'Usuario desactivado con éxito',
+                'Usuario desactivado con Ã©xito',
                 () => setIsModalOpen(false)
               )
             }
@@ -871,7 +871,7 @@ const Dashboard = () => {
               handleDeleteItem(
                 '/api/reservas',
                 id,
-                'Reserva desactivada con éxito'
+                'Reserva desactivada con Ã©xito'
               )
             }
             selectedMonth={selectedMonth}
@@ -885,7 +885,7 @@ const Dashboard = () => {
               handleDeleteItem(
                 '/api/finanzas',
                 id,
-                'Finanza desactivada con éxito',
+                'Finanza desactivada con Ã©xito',
                 () => setIsModalOpen(false)
               )
             }
@@ -903,7 +903,7 @@ const Dashboard = () => {
               handleDeleteItem(
                 '/api/paquetes',
                 id,
-                'Paquete desactivado con éxito',
+                'Paquete desactivado con Ã©xito',
                 () => setIsModalOpen(false),
                 'paquetes'
               )
@@ -915,7 +915,7 @@ const Dashboard = () => {
             extras={extras}
             handleEditItem={handleEditItem}
             handleDeleteItem={id =>
-              handleDeleteItem('/api/extras', id, 'Extra eliminado con éxito')
+              handleDeleteItem('/api/extras', id, 'Extra eliminado con Ã©xito')
             }
           />
         )}
@@ -927,7 +927,7 @@ const Dashboard = () => {
               handleDeleteItem(
                 '/api/opciones-alimentos',
                 id,
-                'Opción de alimento eliminada con éxito'
+                'OpciÃ³n de alimento eliminada con Ã©xito'
               )
             }
           />
@@ -940,7 +940,7 @@ const Dashboard = () => {
               handleDeleteItem(
                 '/api/tematicas',
                 id,
-                'Temática eliminada con éxito'
+                'TemÃ¡tica eliminada con Ã©xito'
               )
             }
           />
@@ -954,7 +954,7 @@ const Dashboard = () => {
               handleDeleteItem(
                 '/api/mamparas',
                 id,
-                'Mampara eliminada con éxito'
+                'Mampara eliminada con Ã©xito'
               )
             }
           />
@@ -1085,3 +1085,4 @@ const Dashboard = () => {
 }
 
 export default Dashboard
+

@@ -1,6 +1,6 @@
-import { create } from 'zustand'
+﻿import { create } from 'zustand'
 import { toast } from 'react-toastify'
-import axiosInstance from '@/components/axiosConfig'
+import axiosInstance from '@shared/utils/axiosConfig'
 
 const usePaymentsStore = create((set, get) => ({
   // Estado
@@ -56,7 +56,7 @@ const usePaymentsStore = create((set, get) => ({
       set(state => ({
         payments: state.payments.filter(payment => payment.id !== id)
       }))
-      toast.success('Pago eliminado con éxito')
+      toast.success('Pago eliminado con Ã©xito')
     } catch (error) {
       console.error('Error al eliminar pago:', error)
       toast.error('Error al eliminar el pago')
@@ -76,7 +76,7 @@ const usePaymentsStore = create((set, get) => ({
         )
       }))
       
-      toast.success('Estado del pago actualizado con éxito')
+      toast.success('Estado del pago actualizado con Ã©xito')
       return response.data
     } catch (error) {
       console.error('Error al actualizar el estado del pago:', error)
@@ -117,7 +117,7 @@ const usePaymentsStore = create((set, get) => ({
     })
   },
   
-  // Estadísticas
+  // EstadÃ­sticas
   getPaymentsSummary: () => {
     const { payments } = get()
     

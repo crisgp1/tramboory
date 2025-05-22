@@ -1,6 +1,6 @@
-import { create } from 'zustand'
+﻿import { create } from 'zustand'
 import { toast } from 'react-toastify'
-import axiosInstance from '@/components/axiosConfig'
+import axiosInstance from '@shared/utils/axiosConfig'
 
 const useFinancesStore = create((set, get) => ({
   // Estado
@@ -11,7 +11,7 @@ const useFinancesStore = create((set, get) => ({
   fetchFinances: async () => {
     try {
       const response = await axiosInstance.get('/finanzas')
-      // Convertir montos a números
+      // Convertir montos a nÃºmeros
       const formattedFinances = response.data.map(finance => ({
         ...finance,
         monto: Number(finance.monto)
@@ -69,7 +69,7 @@ const useFinancesStore = create((set, get) => ({
       set(state => ({
         finances: state.finances.filter(finance => finance.id !== id)
       }))
-      toast.success('Finanza desactivada con éxito')
+      toast.success('Finanza desactivada con Ã©xito')
     } catch (error) {
       console.error('Error al desactivar finanza:', error)
       toast.error('Error al desactivar la finanza')
@@ -92,7 +92,7 @@ const useFinancesStore = create((set, get) => ({
       document.body.appendChild(link)
       link.click()
       link.parentNode.removeChild(link)
-      toast.success('Archivo descargado con éxito')
+      toast.success('Archivo descargado con Ã©xito')
     } catch (error) {
       console.error('Error al descargar el archivo:', error)
       toast.error('Error al descargar el archivo')
@@ -110,16 +110,16 @@ const useFinancesStore = create((set, get) => ({
       // Convertir a objeto Date
       const financeDate = new Date(finance.fecha)
       
-      // Asegurarse de que la fecha es válida
+      // Asegurarse de que la fecha es vÃ¡lida
       if (isNaN(financeDate.getTime())) return false
       
-      // Comparar tanto mes como año
+      // Comparar tanto mes como aÃ±o
       return financeDate.getMonth() === month && 
              financeDate.getFullYear() === year
     })
   },
   
-  // Estadísticas
+  // EstadÃ­sticas
   getSummaryByMonth: (month, year) => {
     const financesByMonth = get().getFinancesByMonth(month, year)
     
@@ -144,10 +144,10 @@ const useFinancesStore = create((set, get) => ({
   getSummaryByCategory: (month, year) => {
     const financesByMonth = get().getFinancesByMonth(month, year)
     
-    // Agrupar por categoría
+    // Agrupar por categorÃ­a
     const categorySummary = financesByMonth.reduce((summary, finance) => {
       const categoryId = finance.id_categoria
-      const categoryName = finance.categoria?.nombre || 'Sin categoría'
+      const categoryName = finance.categoria?.nombre || 'Sin categorÃ­a'
       const categoryColor = finance.categoria?.color || '#000000'
       
       if (!summary[categoryId]) {

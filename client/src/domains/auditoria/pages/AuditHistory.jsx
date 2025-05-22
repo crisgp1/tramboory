@@ -1,6 +1,6 @@
-import { useState, useEffect } from 'react';
+﻿import { useState, useEffect } from 'react';
 import axiosInstance from '@shared/utils/axiosConfig';
-import { Card } from '@shared/components/ui/Card';
+import { Card } from '@shared/components/Card';
 
 const AuditHistory = () => {
   const [auditLogs, setAuditLogs] = useState([]);
@@ -13,7 +13,7 @@ const AuditHistory = () => {
         const response = await axiosInstance.get('/api/auditoria');
         setAuditLogs(response.data);
       } catch (error) {
-        console.error('Error al cargar el historial de auditoría:', error);
+        console.error('Error al cargar el historial de auditorÃ­a:', error);
       } finally {
         setLoading(false);
       }
@@ -32,22 +32,22 @@ const AuditHistory = () => {
 
   const getOperationType = (transaction) => {
     const lowerTransaction = transaction.toLowerCase();
-    if (lowerTransaction.includes('crear') || lowerTransaction.includes('creó')) return 'create';
-    if (lowerTransaction.includes('actualizar') || lowerTransaction.includes('actualizó')) return 'update';
-    if (lowerTransaction.includes('eliminar') || lowerTransaction.includes('eliminó')) return 'delete';
+    if (lowerTransaction.includes('crear') || lowerTransaction.includes('creÃ³')) return 'create';
+    if (lowerTransaction.includes('actualizar') || lowerTransaction.includes('actualizÃ³')) return 'update';
+    if (lowerTransaction.includes('eliminar') || lowerTransaction.includes('eliminÃ³')) return 'delete';
     return 'other';
   };
 
   const getOperationIcon = (type) => {
     switch (type) {
       case 'create':
-        return '➕';
+        return 'âž•';
       case 'update':
-        return '✏️';
+        return 'âœï¸';
       case 'delete':
-        return '🗑️';
+        return 'ðŸ—‘ï¸';
       default:
-        return '📝';
+        return 'ðŸ“';
     }
   };
 
@@ -68,7 +68,7 @@ const AuditHistory = () => {
     // Capitalizar primera letra
     let formattedTransaction = transaction.charAt(0).toUpperCase() + transaction.slice(1);
     
-    // Agregar espacios después de puntos y comas si no los hay
+    // Agregar espacios despuÃ©s de puntos y comas si no los hay
     formattedTransaction = formattedTransaction.replace(/([.,])/g, '$1 ');
     
     // Eliminar espacios duplicados
@@ -113,7 +113,7 @@ const AuditHistory = () => {
   return (
     <div className="space-y-4">
       <div className="flex justify-between items-center mb-6">
-        <h2 className="text-2xl font-bold text-gray-800">Historial de Auditoría</h2>
+        <h2 className="text-2xl font-bold text-gray-800">Historial de AuditorÃ­a</h2>
         <select
           className="px-4 py-2 border rounded-lg shadow-sm focus:ring-2 focus:ring-indigo-500"
           value={filtroFecha}
@@ -121,8 +121,8 @@ const AuditHistory = () => {
         >
           <option value="todos">Todos los registros</option>
           <option value="hoy">Hoy</option>
-          <option value="semana">Última semana</option>
-          <option value="mes">Último mes</option>
+          <option value="semana">Ãšltima semana</option>
+          <option value="mes">Ãšltimo mes</option>
         </select>
       </div>
 
@@ -162,7 +162,7 @@ const AuditHistory = () => {
       </div>
       {logsFiltrados.length === 0 && (
         <div className="text-center text-gray-500 py-8 bg-gray-50 rounded-lg">
-          <p className="text-xl">No hay registros de auditoría disponibles</p>
+          <p className="text-xl">No hay registros de auditorÃ­a disponibles</p>
           <p className="text-sm mt-2">Prueba ajustando los filtros de fecha</p>
         </div>
       )}

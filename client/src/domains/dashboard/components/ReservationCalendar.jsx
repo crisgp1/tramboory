@@ -1,5 +1,5 @@
-import { useState, useEffect } from 'react';
-import Modal from '@shared/components/ui/Modal';
+﻿import { useState, useEffect } from 'react';
+import Modal from '@shared/components/Modal';
 import { Calendar, momentLocalizer } from 'react-big-calendar';
 import moment from 'moment';
 import 'react-big-calendar/lib/css/react-big-calendar.css';
@@ -96,7 +96,7 @@ const ReservationCalendar = ({ reservations }) => {
       });
       
       if (response.status === 201) {
-        // Toast con animación personalizada
+        // Toast con animaciÃ³n personalizada
         toast.custom(
           (t) => (
             <motion.div
@@ -122,10 +122,10 @@ const ReservationCalendar = ({ reservations }) => {
                   </div>
                   <div className="ml-3 flex-1">
                     <p className="text-sm font-medium text-gray-900">
-                      ¡Días bloqueados exitosamente!
+                      Â¡DÃ­as bloqueados exitosamente!
                     </p>
                     <p className="mt-1 text-sm text-gray-500">
-                      {selectedDates.length} {selectedDates.length === 1 ? 'día administrativo' : 'días administrativos'} bloqueado(s).
+                      {selectedDates.length} {selectedDates.length === 1 ? 'dÃ­a administrativo' : 'dÃ­as administrativos'} bloqueado(s).
                     </p>
                   </div>
                 </div>
@@ -146,24 +146,24 @@ const ReservationCalendar = ({ reservations }) => {
         setIsBlockingMode(false);
         setSelectedDates([]);
         
-        // Emitir evento para actualizar reservas sin recargar la página
+        // Emitir evento para actualizar reservas sin recargar la pÃ¡gina
         window.dispatchEvent(new CustomEvent('reservationsUpdated'));
         
-        // Cerrar modal de bloqueo si está abierto
+        // Cerrar modal de bloqueo si estÃ¡ abierto
         setShowBlockModal(false);
       }
     } catch (error) {
-      let errorMessage = 'Error al bloquear los días';
+      let errorMessage = 'Error al bloquear los dÃ­as';
       let invalidDatesText = '';
       
       if (error.response?.data?.error) {
         errorMessage = error.response.data.error;
         if (error.response.data.invalidDates) {
-          invalidDatesText = 'Fechas inválidas: ' + error.response.data.invalidDates.join(', ');
+          invalidDatesText = 'Fechas invÃ¡lidas: ' + error.response.data.invalidDates.join(', ');
         }
       }
       
-      // Toast de error con animación
+      // Toast de error con animaciÃ³n
       toast.custom(
         (t) => (
           <motion.div
@@ -430,7 +430,7 @@ const ReservationCalendar = ({ reservations }) => {
           </div>
         </div>
 
-        {/* Botón flotante para seleccionar días */}
+        {/* BotÃ³n flotante para seleccionar dÃ­as */}
         <AnimatePresence>
           {isBlockingMode && (
             <motion.div
@@ -446,8 +446,8 @@ const ReservationCalendar = ({ reservations }) => {
                 <FiCalendar className="text-lg" />
                 <span>
                   {selectedDates.length === 0 
-                    ? 'Seleccionar Días' 
-                    : `${selectedDates.length} ${selectedDates.length === 1 ? 'día' : 'días'} seleccionados`}
+                    ? 'Seleccionar DÃ­as' 
+                    : `${selectedDates.length} ${selectedDates.length === 1 ? 'dÃ­a' : 'dÃ­as'} seleccionados`}
                 </span>
               </button>
             </motion.div>
@@ -479,14 +479,14 @@ const ReservationCalendar = ({ reservations }) => {
                     <FiCalendar className="text-indigo-600 text-xl" />
                   </div>
                   <div>
-                    <h4 className="text-sm font-medium text-indigo-900">Selección de Días</h4>
+                    <h4 className="text-sm font-medium text-indigo-900">SelecciÃ³n de DÃ­as</h4>
                     <p className="text-sm text-indigo-600">
-                      Selecciona los días que deseas bloquear
+                      Selecciona los dÃ­as que deseas bloquear
                     </p>
                   </div>
                 </div>
                 <p className="text-xs text-indigo-600">
-                  Haz clic en el calendario para agregar más días
+                  Haz clic en el calendario para agregar mÃ¡s dÃ­as
                 </p>
               </div>
             </div>
@@ -525,7 +525,7 @@ const ReservationCalendar = ({ reservations }) => {
 
             <div className="flex flex-col gap-3 mt-6 sticky bottom-0 bg-white pt-4 border-t shadow-lg">
               <div className="w-full text-center text-sm text-gray-500 mb-3">
-                {selectedDates.length} {selectedDates.length === 1 ? 'día seleccionado' : 'días seleccionados'}
+                {selectedDates.length} {selectedDates.length === 1 ? 'dÃ­a seleccionado' : 'dÃ­as seleccionados'}
               </div>
               <div className="flex gap-3 w-full">
                 <button
@@ -587,7 +587,7 @@ const ReservationCalendar = ({ reservations }) => {
                 </span>
               </div>
 
-              {/* Información del Cliente */}
+              {/* InformaciÃ³n del Cliente */}
               <div className="flex items-start space-x-4 bg-white p-4 rounded-lg border border-indigo-100">
                 <div className="w-12 h-12 rounded-full bg-indigo-100 flex items-center justify-center flex-shrink-0">
                   <span className="text-indigo-600 text-xl font-medium">
@@ -616,15 +616,15 @@ const ReservationCalendar = ({ reservations }) => {
                 </div>
               </div>
 
-              {/* Disponibilidad del Día */}
+              {/* Disponibilidad del DÃ­a */}
               <div className="border border-indigo-100 rounded-lg overflow-hidden">
                 <div className="bg-indigo-50 px-3 py-2">
-                  <h4 className="text-xs font-medium text-indigo-600">Disponibilidad del Día</h4>
+                  <h4 className="text-xs font-medium text-indigo-600">Disponibilidad del DÃ­a</h4>
                 </div>
                 <div className="divide-y divide-indigo-100">
                   <div className="px-3 py-2">
                     <div className="flex justify-between items-center">
-                      <span className="text-sm text-gray-600">Mañana</span>
+                      <span className="text-sm text-gray-600">MaÃ±ana</span>
                       <div className="flex items-center space-x-1">
                         <span className="text-xs text-gray-500">(11:00 - 16:00)</span>
                         <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${

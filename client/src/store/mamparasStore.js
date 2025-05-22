@@ -1,6 +1,6 @@
-import { create } from 'zustand'
+﻿import { create } from 'zustand'
 import { toast } from 'react-toastify'
-import axiosInstance from '@/components/axiosConfig'
+import axiosInstance from '@shared/utils/axiosConfig'
 
 const useMamparasStore = create((set, get) => ({
   // Estado
@@ -55,7 +55,7 @@ const useMamparasStore = create((set, get) => ({
       set(state => ({
         mamparas: state.mamparas.filter(mampara => mampara.id !== id)
       }))
-      toast.success('Mampara eliminada con éxito')
+      toast.success('Mampara eliminada con Ã©xito')
     } catch (error) {
       console.error('Error al eliminar mampara:', error)
       toast.error('Error al eliminar la mampara')

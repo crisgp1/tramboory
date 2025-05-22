@@ -1,6 +1,6 @@
-import { create } from 'zustand'
+﻿import { create } from 'zustand'
 import { toast } from 'react-toastify'
-import axiosInstance from '@/components/axiosConfig'
+import axiosInstance from '@shared/utils/axiosConfig'
 import * as socketService from '@/services/socketService'
 
 const useReservationsStore = create((set, get) => ({
@@ -23,7 +23,7 @@ const useReservationsStore = create((set, get) => ({
   
   addReservation: async (reservationData) => {
     try {
-      // Asegurarse de que id_usuario sea un número
+      // Asegurarse de que id_usuario sea un nÃºmero
       if (reservationData.id_usuario) {
         reservationData.id_usuario = Number(reservationData.id_usuario)
       }
@@ -33,15 +33,15 @@ const useReservationsStore = create((set, get) => ({
       toast.success('Reserva creada exitosamente')
       return response.data
     } catch (error) {
-      console.error('Error al crear reservación:', error)
-      toast.error('Error al crear la reservación')
+      console.error('Error al crear reservaciÃ³n:', error)
+      toast.error('Error al crear la reservaciÃ³n')
       throw error
     }
   },
   
   updateReservation: async (id, reservationData) => {
     try {
-      // Asegurarse de que id_usuario sea un número
+      // Asegurarse de que id_usuario sea un nÃºmero
       if (reservationData.id_usuario) {
         reservationData.id_usuario = Number(reservationData.id_usuario)
       }
@@ -55,8 +55,8 @@ const useReservationsStore = create((set, get) => ({
       toast.success('Reserva actualizada exitosamente')
       return response.data
     } catch (error) {
-      console.error('Error al actualizar reservación:', error)
-      toast.error('Error al actualizar la reservación')
+      console.error('Error al actualizar reservaciÃ³n:', error)
+      toast.error('Error al actualizar la reservaciÃ³n')
       throw error
     }
   },
@@ -67,10 +67,10 @@ const useReservationsStore = create((set, get) => ({
       set(state => ({
         reservations: state.reservations.filter(reservation => reservation.id !== id)
       }))
-      toast.success('Reserva desactivada con éxito')
+      toast.success('Reserva desactivada con Ã©xito')
     } catch (error) {
-      console.error('Error al desactivar reservación:', error)
-      toast.error('Error al desactivar la reservación')
+      console.error('Error al desactivar reservaciÃ³n:', error)
+      toast.error('Error al desactivar la reservaciÃ³n')
       throw error
     }
   },
@@ -88,8 +88,8 @@ const useReservationsStore = create((set, get) => ({
       toast.success('Estado de la reserva actualizado exitosamente')
       return response.data
     } catch (error) {
-      console.error('Error al actualizar estado de la reservación:', error)
-      toast.error('Error al actualizar el estado de la reservación')
+      console.error('Error al actualizar estado de la reservaciÃ³n:', error)
+      toast.error('Error al actualizar el estado de la reservaciÃ³n')
       throw error
     }
   },
@@ -99,7 +99,7 @@ const useReservationsStore = create((set, get) => ({
     const socket = socketService.initSocket()
     
     socketService.subscribe('reserva_creada', (nuevaReserva) => {
-      console.log('Reserva creada recibida vía Socket.IO:', nuevaReserva)
+      console.log('Reserva creada recibida vÃ­a Socket.IO:', nuevaReserva)
       set(state => {
         // Verificar si la reserva ya existe para evitar duplicados
         const existe = state.reservations.some(r => r.id === nuevaReserva.id)
@@ -112,7 +112,7 @@ const useReservationsStore = create((set, get) => ({
     })
     
     socketService.subscribe('reserva_actualizada', (reservaActualizada) => {
-      console.log('Reserva actualizada recibida vía Socket.IO:', reservaActualizada)
+      console.log('Reserva actualizada recibida vÃ­a Socket.IO:', reservaActualizada)
       set(state => ({ 
         reservations: state.reservations.map(reserva => 
           reserva.id === reservaActualizada.id ? reservaActualizada : reserva
@@ -121,14 +121,14 @@ const useReservationsStore = create((set, get) => ({
     })
     
     socketService.subscribe('reserva_eliminada', (data) => {
-      console.log('Reserva eliminada recibida vía Socket.IO:', data)
+      console.log('Reserva eliminada recibida vÃ­a Socket.IO:', data)
       set(state => ({ 
         reservations: state.reservations.filter(reserva => reserva.id !== data.id)
       }))
     })
     
     socketService.subscribe('fechas_bloqueadas', (data) => {
-      console.log('Fechas bloqueadas recibidas vía Socket.IO:', data)
+      console.log('Fechas bloqueadas recibidas vÃ­a Socket.IO:', data)
       if (data.reservas && Array.isArray(data.reservas)) {
         set(state => {
           const nuevasReservas = [...state.reservations]
@@ -140,7 +140,7 @@ const useReservationsStore = create((set, get) => ({
           return { reservations: nuevasReservas }
         })
       } else {
-        // Si no tenemos datos completos, es más seguro recargar todo
+        // Si no tenemos datos completos, es mÃ¡s seguro recargar todo
         get().fetchReservations()
       }
     })
@@ -170,16 +170,16 @@ const useReservationsStore = create((set, get) => ({
       // Convertir a objeto Date
       const reservationDate = new Date(reservation.fecha_reserva)
       
-      // Asegurarse de que la fecha es válida
+      // Asegurarse de que la fecha es vÃ¡lida
       if (isNaN(reservationDate.getTime())) return false
       
-      // Comparar tanto mes como año
+      // Comparar tanto mes como aÃ±o
       return reservationDate.getMonth() === month && 
              reservationDate.getFullYear() === year
     })
   },
   
-  // Función para desuscribirse de todos los eventos de socket
+  // FunciÃ³n para desuscribirse de todos los eventos de socket
   cleanupSocketListeners: () => {
     // Desuscribirse de todos los eventos de socket
     socketService.unsubscribe('reserva_creada');

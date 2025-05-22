@@ -1,6 +1,6 @@
-import { create } from 'zustand'
+﻿import { create } from 'zustand'
 import { toast } from 'react-toastify'
-import axiosInstance from '@/components/axiosConfig'
+import axiosInstance from '@shared/utils/axiosConfig'
 
 const useThemesStore = create((set, get) => ({
   // Estado
@@ -13,8 +13,8 @@ const useThemesStore = create((set, get) => ({
       set({ themes: response.data })
       return response.data
     } catch (error) {
-      console.error('Error al cargar temáticas:', error)
-      toast.error('Error al cargar las temáticas')
+      console.error('Error al cargar temÃ¡ticas:', error)
+      toast.error('Error al cargar las temÃ¡ticas')
       throw error
     }
   },
@@ -23,11 +23,11 @@ const useThemesStore = create((set, get) => ({
     try {
       const response = await axiosInstance.post('/tematicas', themeData)
       set(state => ({ themes: [...state.themes, response.data] }))
-      toast.success('Temática creada exitosamente')
+      toast.success('TemÃ¡tica creada exitosamente')
       return response.data
     } catch (error) {
-      console.error('Error al crear temática:', error)
-      toast.error('Error al crear la temática')
+      console.error('Error al crear temÃ¡tica:', error)
+      toast.error('Error al crear la temÃ¡tica')
       throw error
     }
   },
@@ -40,11 +40,11 @@ const useThemesStore = create((set, get) => ({
           theme.id === id ? { ...theme, ...response.data } : theme
         )
       }))
-      toast.success('Temática actualizada exitosamente')
+      toast.success('TemÃ¡tica actualizada exitosamente')
       return response.data
     } catch (error) {
-      console.error('Error al actualizar temática:', error)
-      toast.error('Error al actualizar la temática')
+      console.error('Error al actualizar temÃ¡tica:', error)
+      toast.error('Error al actualizar la temÃ¡tica')
       throw error
     }
   },
@@ -55,10 +55,10 @@ const useThemesStore = create((set, get) => ({
       set(state => ({
         themes: state.themes.filter(theme => theme.id !== id)
       }))
-      toast.success('Temática eliminada con éxito')
+      toast.success('TemÃ¡tica eliminada con Ã©xito')
     } catch (error) {
-      console.error('Error al eliminar temática:', error)
-      toast.error('Error al eliminar la temática')
+      console.error('Error al eliminar temÃ¡tica:', error)
+      toast.error('Error al eliminar la temÃ¡tica')
       throw error
     }
   },

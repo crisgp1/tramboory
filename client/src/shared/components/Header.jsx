@@ -1,8 +1,8 @@
-import { Link, useNavigate } from 'react-router-dom';
+﻿import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/context/authContext';
 import Logo from '@/img/logo.webp';
 import InventoryLoader from '@/components/inventory/InventoryLoader';
-import ThemeToggle from '@/components/ui/ThemeToggle';
+import ThemeToggle from '@shared/components/ThemeToggle';
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { toast } from 'react-toastify';
@@ -79,7 +79,7 @@ export const Header = () => {
       setAuthChecked(true);
       return authStatus;
     } catch (error) {
-      console.error('Error verificando autenticación:', error);
+      console.error('Error verificando autenticaciÃ³n:', error);
       setAuthChecked(true);
       return false;
     } finally {
@@ -126,11 +126,11 @@ export const Header = () => {
       setIsMenuOpen(false);
       setIsUserMenuOpen(false);
       await logout();
-      toast.success('Sesión cerrada exitosamente');
+      toast.success('SesiÃ³n cerrada exitosamente');
       navigate('/signin');
     } catch (error) {
-      console.error('Error al cerrar sesión:', error);
-      toast.error('Error al cerrar sesión');
+      console.error('Error al cerrar sesiÃ³n:', error);
+      toast.error('Error al cerrar sesiÃ³n');
       navigate('/signin');
     }
   };
@@ -146,7 +146,7 @@ export const Header = () => {
       { icon: <FiAlertCircle />, text: 'Mis Cotizaciones', link: '/customer/cotizaciones' },
       { icon: <FiUserCheck />, text: 'Mi Perfil', link: '/profile' }
     ] : [
-      { icon: <FiLogIn />, text: 'Iniciar Sesión', link: '/signin' },
+      { icon: <FiLogIn />, text: 'Iniciar SesiÃ³n', link: '/signin' },
       { icon: <FiUserPlus />, text: 'Registrarse', link: '/signup' }
     ])
   ];
@@ -205,7 +205,7 @@ export const Header = () => {
         }}
       >
         <FiLogOut className="w-4 h-4" />
-        Cerrar sesión
+        Cerrar sesiÃ³n
       </button>
     </motion.div>
   );
@@ -254,7 +254,7 @@ export const Header = () => {
               {isAuthenticated ? (
                 <>
                   <div className="flex items-center space-x-4">
-                    {menuItems.filter(link => link.text !== 'Iniciar Sesión' && link.text !== 'Registrarse').map((link) => (
+                    {menuItems.filter(link => link.text !== 'Iniciar SesiÃ³n' && link.text !== 'Registrarse').map((link) => (
                       link.onClick ? (
                         <button
                           key={link.text}
@@ -326,7 +326,7 @@ export const Header = () => {
                     className="px-4 py-2 text-gray-600 hover:text-gray-900 hover:bg-gray-50 rounded-lg transition-colors duration-200 flex items-center space-x-2"
                   >
                     <FiLogIn className="w-4 h-4" />
-                    <span>Iniciar sesión</span>
+                    <span>Iniciar sesiÃ³n</span>
                   </Link>
                   <Link
                     to="/signup"
@@ -448,7 +448,7 @@ export const Header = () => {
                     className="w-full py-3 bg-red-500 text-white rounded-lg flex items-center justify-center space-x-2 hover:bg-red-600 transition-colors duration-200"
                   >
                     <FiLogOut className="w-5 h-5" />
-                    <span>Cerrar sesión</span>
+                    <span>Cerrar sesiÃ³n</span>
                   </button>
                 ) : (
                   <div className="space-y-3">
@@ -458,7 +458,7 @@ export const Header = () => {
                       className="w-full py-3 bg-gray-100 text-gray-700 rounded-lg flex items-center justify-center space-x-2 hover:bg-gray-200 transition-colors duration-200"
                     >
                       <FiLogIn className="w-5 h-5" />
-                      <span>Iniciar sesión</span>
+                      <span>Iniciar sesiÃ³n</span>
                     </Link>
                     <Link
                       to="/signup"
@@ -487,8 +487,8 @@ export const Header = () => {
             <div className="flex">
               <FiAlertCircle className="h-5 w-5 text-yellow-400" />
               <div className="ml-2">
-                <p className="text-sm text-yellow-600 font-medium">Error de autenticación</p>
-                <p className="text-sm text-yellow-500">Hubo un error al verificar tu autenticación</p>
+                <p className="text-sm text-yellow-600 font-medium">Error de autenticaciÃ³n</p>
+                <p className="text-sm text-yellow-500">Hubo un error al verificar tu autenticaciÃ³n</p>
               </div>
             </div>
           </motion.div>
@@ -509,7 +509,7 @@ export const Header = () => {
           >
             <div className="flex items-center space-x-2 text-sm">
               <FiUserCheck className="text-green-500" />
-              <span style={{ color: 'var(--text-primary)' }}>Sesión activa</span>
+              <span style={{ color: 'var(--text-primary)' }}>SesiÃ³n activa</span>
             </div>
           </motion.div>
         )}

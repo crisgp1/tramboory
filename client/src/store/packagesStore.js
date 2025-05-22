@@ -1,6 +1,6 @@
-import { create } from 'zustand'
+﻿import { create } from 'zustand'
 import { toast } from 'react-toastify'
-import axiosInstance from '@/components/axiosConfig'
+import axiosInstance from '@shared/utils/axiosConfig'
 
 const usePackagesStore = create((set, get) => ({
   // Estado
@@ -55,7 +55,7 @@ const usePackagesStore = create((set, get) => ({
       set(state => ({
         packages: state.packages.filter(pkg => pkg.id !== id)
       }))
-      toast.success('Paquete desactivado con éxito')
+      toast.success('Paquete desactivado con Ã©xito')
     } catch (error) {
       console.error('Error al desactivar paquete:', error)
       toast.error('Error al desactivar el paquete')

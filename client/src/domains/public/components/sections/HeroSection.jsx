@@ -1,12 +1,12 @@
-
+﻿
 import React, { useEffect, useRef } from 'react'
 import { Link } from 'react-router-dom'
 import { motion, useAnimation, useScroll, useTransform } from 'framer-motion'
 import { FiCalendar, FiGift, FiStar } from 'react-icons/fi'
-import ScrollIndicator from '@shared/components/ui/ScrollIndicator'
+import ScrollIndicator from '@shared/components/ScrollIndicator'
 
 /**
- * Sección hero principal con mensaje de bienvenida, título y CTA
+ * SecciÃ³n hero principal con mensaje de bienvenida, tÃ­tulo y CTA
  * Mejorada con efectos visuales avanzados
  */
 const HeroSection = ({ sectionRefs }) => {
@@ -19,7 +19,7 @@ const HeroSection = ({ sectionRefs }) => {
   const opacityParallax = useTransform(scrollY, [0, 300], [1, 0]);
   
   useEffect(() => {
-    // Animar la aparición secuencial de los elementos decorativos
+    // Animar la apariciÃ³n secuencial de los elementos decorativos
     controls.start((i) => ({
       opacity: 1,
       scale: 1,
@@ -34,7 +34,7 @@ const HeroSection = ({ sectionRefs }) => {
     >
       {/* Elementos decorativos mejorados del hero */}
       <div ref={decorRef} className="absolute inset-0 overflow-hidden pointer-events-none">
-        {/* Gradientes circulares con animación */}
+        {/* Gradientes circulares con animaciÃ³n */}
         <motion.div 
           initial={{ opacity: 0, scale: 0.8 }}
           animate={controls}
@@ -77,7 +77,7 @@ const HeroSection = ({ sectionRefs }) => {
               text-yellow-300 border border-purple-500/30 backdrop-blur-sm 
               hover:border-yellow-400/50 transition-all duration-300 inline-flex items-center gap-2">
               <FiStar className="text-yellow-300 animate-pulse" />
-              <span>El mejor salón de fiestas infantiles en Zapopan</span>
+              <span>El mejor salÃ³n de fiestas infantiles en Zapopan</span>
               <motion.span 
                 className="absolute inset-0 -z-10 bg-gradient-to-r from-yellow-400/0 via-yellow-400/10 to-yellow-400/0 rounded-full"
                 animate={{ 
@@ -92,7 +92,7 @@ const HeroSection = ({ sectionRefs }) => {
             </span>
           </motion.div>
           
-          {/* Título principal mejorado */}
+          {/* TÃ­tulo principal mejorado */}
           <motion.h1 
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -122,15 +122,15 @@ const HeroSection = ({ sectionRefs }) => {
             </span>
           </motion.h1>
           
-          {/* Subtítulo mejorado */}
+          {/* SubtÃ­tulo mejorado */}
           <motion.p 
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 1, delay: 0.5 }}
             className="text-lg md:text-xl text-gray-200 mb-14 max-w-3xl mx-auto leading-relaxed"
           >
-            Tu salón de eventos infantiles en Zapopan con experiencias diseñadas
-            para crear recuerdos inolvidables en el cumpleaños de tus pequeños.
+            Tu salÃ³n de eventos infantiles en Zapopan con experiencias diseÃ±adas
+            para crear recuerdos inolvidables en el cumpleaÃ±os de tus pequeÃ±os.
           </motion.p>
           
           {/* Botones CTA mejorados */}

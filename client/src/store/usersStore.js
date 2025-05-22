@@ -1,6 +1,6 @@
-import { create } from 'zustand'
+﻿import { create } from 'zustand'
 import { toast } from 'react-toastify'
-import axiosInstance from '@/components/axiosConfig'
+import axiosInstance from '@shared/utils/axiosConfig'
 
 const useUsersStore = create((set, get) => ({
   // Estado
@@ -56,7 +56,7 @@ const useUsersStore = create((set, get) => ({
       set(state => ({
         users: state.users.filter(user => user.id !== id)
       }))
-      toast.success('Usuario desactivado con éxito')
+      toast.success('Usuario desactivado con Ã©xito')
     } catch (error) {
       console.error('Error al desactivar usuario:', error)
       toast.error('Error al desactivar usuario')

@@ -1,6 +1,6 @@
-import React from 'react';
+﻿import React from 'react';
 import PropTypes from 'prop-types';
-import Modal from '@/components/ui/Modal';
+import Modal from '@shared/components/Modal';
 import PaymentForm from './PaymentForm.jsx';
 
 const PaymentModal = ({
@@ -81,3 +81,4 @@ PaymentModal.propTypes = {
 };
 
 export default PaymentModal;
+

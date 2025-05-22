@@ -1,6 +1,6 @@
-import { create } from 'zustand'
+﻿import { create } from 'zustand'
 import { toast } from 'react-toastify'
-import axiosInstance from '@/components/axiosConfig'
+import axiosInstance from '@shared/utils/axiosConfig'
 
 const useFoodOptionsStore = create((set, get) => ({
   // Estado
@@ -23,11 +23,11 @@ const useFoodOptionsStore = create((set, get) => ({
     try {
       const response = await axiosInstance.post('/opciones-alimentos', foodOptionData)
       set(state => ({ foodOptions: [...state.foodOptions, response.data] }))
-      toast.success('Opción de alimento creada exitosamente')
+      toast.success('OpciÃ³n de alimento creada exitosamente')
       return response.data
     } catch (error) {
-      console.error('Error al crear opción de alimento:', error)
-      toast.error('Error al crear la opción de alimento')
+      console.error('Error al crear opciÃ³n de alimento:', error)
+      toast.error('Error al crear la opciÃ³n de alimento')
       throw error
     }
   },
@@ -40,11 +40,11 @@ const useFoodOptionsStore = create((set, get) => ({
           option.id === id ? { ...option, ...response.data } : option
         )
       }))
-      toast.success('Opción de alimento actualizada exitosamente')
+      toast.success('OpciÃ³n de alimento actualizada exitosamente')
       return response.data
     } catch (error) {
-      console.error('Error al actualizar opción de alimento:', error)
-      toast.error('Error al actualizar la opción de alimento')
+      console.error('Error al actualizar opciÃ³n de alimento:', error)
+      toast.error('Error al actualizar la opciÃ³n de alimento')
       throw error
     }
   },
@@ -55,10 +55,10 @@ const useFoodOptionsStore = create((set, get) => ({
       set(state => ({
         foodOptions: state.foodOptions.filter(option => option.id !== id)
       }))
-      toast.success('Opción de alimento eliminada con éxito')
+      toast.success('OpciÃ³n de alimento eliminada con Ã©xito')
     } catch (error) {
-      console.error('Error al eliminar opción de alimento:', error)
-      toast.error('Error al eliminar la opción de alimento')
+      console.error('Error al eliminar opciÃ³n de alimento:', error)
+      toast.error('Error al eliminar la opciÃ³n de alimento')
       throw error
     }
   },

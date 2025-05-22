@@ -1,6 +1,6 @@
-import { create } from 'zustand'
+﻿import { create } from 'zustand'
 import { toast } from 'react-toastify'
-import axiosInstance from '@/components/axiosConfig'
+import axiosInstance from '@shared/utils/axiosConfig'
 
 const useExtrasStore = create((set, get) => ({
   // Estado
@@ -55,7 +55,7 @@ const useExtrasStore = create((set, get) => ({
       set(state => ({
         extras: state.extras.filter(extra => extra.id !== id)
       }))
-      toast.success('Extra eliminado con éxito')
+      toast.success('Extra eliminado con Ã©xito')
     } catch (error) {
       console.error('Error al eliminar extra:', error)
       toast.error('Error al eliminar el extra')
