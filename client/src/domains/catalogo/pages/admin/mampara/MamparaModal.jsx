@@ -1,7 +1,7 @@
 import { FiX } from 'react-icons/fi';
 import MamparaForm from './MamparaForm.jsx';
 
-const MamparaModal = ({
+const MamparaModal Y= ({
   isOpen,
   onClose,
   activeTab,

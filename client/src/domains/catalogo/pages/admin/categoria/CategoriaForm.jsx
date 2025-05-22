@@ -1,5 +1,5 @@
-import { FiTag, FiHash } from 'react-icons/fi';
-import ColorPicker from '@/components/ColorPicker';
+    import { FiTag, FiHash } from 'react-icons/fi';
+import ColorPicker from '@shared/components/ColorPicker';
 import { useForm } from 'react-hook-form';
 
 const CategoriaForm = ({ editingItem, onSave, activeTab }) => {

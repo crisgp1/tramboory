@@ -2,7 +2,7 @@ import React, { useEffect } from 'react';
 import { FiDollarSign, FiGrid } from 'react-icons/fi';
 import { useForm, Controller } from 'react-hook-form';
 import Select from 'react-select';
-import CloudinaryImageSelector from '@/components/cloudinary/CloudinaryImageSelector';
+import CloudinaryImageSelector from '@shared/components/cloudinary/CloudinaryImageSelector';
 
 const MamparaForm = ({ editingItem, onSave, activeTab, tematicas }) => {
   const { register, handleSubmit, control, setValue, watch } = useForm({
