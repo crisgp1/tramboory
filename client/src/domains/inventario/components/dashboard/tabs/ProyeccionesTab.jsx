@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import axios from '../../../../components/axiosConfig';
+import axios from '@shared/utils/axiosConfig';
 import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
 import { format, addDays } from 'date-fns';
 import { es } from 'date-fns/locale';

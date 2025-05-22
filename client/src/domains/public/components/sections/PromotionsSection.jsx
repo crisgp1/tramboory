@@ -2,7 +2,7 @@ import React, { useRef } from 'react'
 import { Link } from 'react-router-dom'
 import { motion, useScroll, useTransform } from 'framer-motion'
 import { FiArrowRight, FiStar, FiGift } from 'react-icons/fi'
-import CloudinaryCarousel from '@/components/cloudinary/CloudinaryCarousel'
+import CloudinaryCarousel from '@shared/components/cloudinary/CloudinaryCarousel'
 
 /**
  * Sección de promociones del mes que se muestra condicionalmente

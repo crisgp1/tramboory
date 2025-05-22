@@ -1,7 +1,7 @@
 import React, { useEffect } from 'react';
 import { FiPause, FiPlay } from 'react-icons/fi';
 import { motion } from 'framer-motion';
-import BackgroundVideo from '@/video/background.webm';
+import BackgroundVideo from '@shared/assets/video/background.webm';
 
 const BackgroundVideoComponent = ({ videoRef, isVideoPlaying, toggleVideo }) => {
   useEffect(() => {

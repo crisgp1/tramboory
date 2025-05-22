@@ -2,7 +2,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { FiImage, FiInfo, FiPlus } from 'react-icons/fi';
 import GaleriaTable from './GaleriaTable.jsx';
 import GaleriaModal from './GaleriaModal.jsx';
-import * as galeriaService from '@/services/galeriaService';
+import * as galeriaService from '@domains/galeria/services/galeriaService';
 
 const GaleriaManagement = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);

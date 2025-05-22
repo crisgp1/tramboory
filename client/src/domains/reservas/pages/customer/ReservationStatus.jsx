@@ -2,7 +2,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import axiosInstance from '@/components/axiosConfig';
+import axiosInstance from '@shared/utils/axiosConfig';
 import { toast } from 'react-toastify';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
@@ -34,8 +34,8 @@ import {
   CardHeader,
   CardTitle,
   CardContent,
-} from '@/components/ui/Card';
-import { Dialog, DialogContent, DialogTitle } from '@/components/ui/Dialog';
+} from '@shared/components/Card';
+import { Dialog, DialogContent, DialogTitle } from '@shared/components/Dialog';
 
 // Helper functions
 const formatDate = (dateString) => {

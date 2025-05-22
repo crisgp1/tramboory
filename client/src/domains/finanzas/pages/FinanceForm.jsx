@@ -22,9 +22,9 @@ import {
   FiCode
 } from 'react-icons/fi'
 // Usar el alias @ para garantizar resolución correcta en Docker
-import CurrencyInput from '@/components/CurrencyInput'
-import CloudinaryFileSelector from '@/components/cloudinary/CloudinaryFileSelector'
-import ColorPalette from '@/components/ui/ColorPalette'
+import CurrencyInput from '@shared/components/CurrencyInput'
+import CloudinaryFileSelector from '@shared/components/cloudinary/CloudinaryFileSelector'
+import ColorPalette from '@shared/components/ColorPalette'
 
 // Esquema de validación con Yup
 const financeSchema = yup.object().shape({

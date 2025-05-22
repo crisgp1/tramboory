@@ -3,10 +3,10 @@ import { useNavigate } from 'react-router-dom';
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import { motion } from 'framer-motion';
-import axiosInstance from '@/components/axiosConfig';
+import axiosInstance from '@shared/utils/axiosConfig';
 import { FiArrowLeft, FiCalendar, FiPackage, FiImage, FiClock, FiUsers } from 'react-icons/fi';
-import ParticlesBackground from '../../public/home-components/decorative/ParticlesBackground';
-import AnimatedBalloons from '../../public/home-components/decorative/AnimatedBalloons';
+import ParticlesBackground from '@domains/public/components/decorative/ParticlesBackground';
+import AnimatedBalloons from '@domains/public/components/decorative/AnimatedBalloons';
 
 // Componente principal de flujo paso a paso
 import StepperReservation from './StepperReservation';
@@ -19,8 +19,8 @@ import ConfirmationModal from './ConfirmationModal';
 import QuotationConfirmationModal from './QuotationConfirmationModal';
 
 // Stores
-import usePreReservasStore from '@/store/preReservasStore';
-import useCotizacionesStore from '@/store/cotizacionesStore';
+import usePreReservasStore from '@domains/reservas/services/preReservasStore';
+import useCotizacionesStore from '@domains/cotizaciones/services/cotizacionesStore';
 
 // Constantes para slots de tiempo
 const TIME_SLOTS = {

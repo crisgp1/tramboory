@@ -19,7 +19,7 @@ import MamparaSection from './reservationform-components/MamparaSection.jsx';
 import ExtrasSection from './reservationform-components/ExtrasSection.jsx';
 import CelebrantSection from './reservationform-components/CelebrantSection.jsx';
 import CommentsSection from './reservationform-components/CommentsSection.jsx';
-import GenderSelector from '@/components/form/GenderSelector';
+import GenderSelector from '@shared/components/form/GenderSelector';
 
 
 const ReservationForm = ({

@@ -4,7 +4,7 @@ import {
   FiClock
 } from 'react-icons/fi';
 // Asegurando que todas las importaciones usen el alias @ para resolver correctamente en Docker
-import { getInventoryStats, getLowStockItems, getActiveAlerts, getProximosACaducar, getMovementStats } from '@/services/inventoryService';
+import { getInventoryStats, getLowStockItems, getActiveAlerts, getProximosACaducar, getMovementStats } from '@domains/inventario/services/inventoryService';
 
 // Importar componentes modulares del dashboard
 import {
@@ -16,10 +16,10 @@ import {
   AccionesTab,
   GraficosTab,
   AlertasTab
-} from '@/components/inventory/dashboard';
+} from '@domains/inventario/components/dashboard';
 
 // Importar tab de proyecciones
-import ProyeccionesTab from '@/components/inventory/dashboard/tabs/ProyeccionesTab';
+import ProyeccionesTab from '@domains/inventario/components/dashboard/tabs/ProyeccionesTab';
 
 /**
  * Dashboard principal de inventario con enfoque mobile-first y diseño modular

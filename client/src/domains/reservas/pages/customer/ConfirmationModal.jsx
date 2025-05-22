@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { gsap } from 'gsap';
 import { toast } from 'react-toastify';
-import usePreReservasStore from '@/store/preReservasStore';
+import usePreReservasStore from '@domains/reservas/services/preReservasStore';
 import {
   FiCreditCard,
   FiCalendar,

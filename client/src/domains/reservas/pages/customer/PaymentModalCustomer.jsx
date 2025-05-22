@@ -1,9 +1,9 @@
 import React, { useEffect, useRef, useState } from 'react';
 import PropTypes from 'prop-types';
 import { gsap } from 'gsap';
-import axios from '@/components/axiosConfig';
+import axios from '@shared/utils/axiosConfig';
 import { toast } from 'react-toastify';
-import usePreReservasStore from '@/store/preReservasStore';
+import usePreReservasStore from '@domains/reservas/services/preReservasStore';
 import {
   FiDollarSign,
   FiCreditCard,

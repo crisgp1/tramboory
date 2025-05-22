@@ -2,7 +2,7 @@ import React, { useRef } from 'react'
 import { Link } from 'react-router-dom'
 import { motion, useScroll, useTransform } from 'framer-motion'
 import { FiHeart, FiStar } from 'react-icons/fi'
-import Logo from '@/img/logo.webp'
+import Logo from '@shared/assets/img/logo.webp'
 
 /**
  * Sección de pie de página mejorada con efectos visuales sofisticados,

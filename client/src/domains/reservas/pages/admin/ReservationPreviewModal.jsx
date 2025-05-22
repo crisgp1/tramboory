@@ -1,12 +1,12 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 // Usar el alias @ para garantizar resolución correcta en Docker
-import Modal from '@/components/ui/Modal';
+import Modal from '@shared/components/Modal';
 import { 
     FiCalendar, FiUser, FiPhone, FiMail, FiPackage, 
     FiClock, FiDollarSign, FiImage, FiInfo, FiCoffee 
 } from 'react-icons/fi';
-import { formatDate, formatTime, formatNumber } from '@/utils/formatters';
+import { formatDate, formatTime, formatNumber } from '@shared/utils/formatters';
 
 const ReservationPreviewModal = ({ reservation, onClose }) => {
     const InfoItem = ({ icon: Icon, label, value, color = "text-gray-500" }) => (

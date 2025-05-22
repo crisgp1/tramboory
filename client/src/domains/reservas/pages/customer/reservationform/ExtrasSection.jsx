@@ -1,7 +1,7 @@
 import React, { useCallback, useMemo, useEffect } from 'react';
 import { useWatch } from 'react-hook-form';
 import { FiPlus, FiMinus, FiCheck, FiDollarSign, FiShoppingCart, FiInfo } from 'react-icons/fi';
-import { processExtras } from '../../../../utils/reservationUtils';
+import { processExtras } from '@shared/utils/reservationUtils';
 
 const ExtrasSection = ({ extras, control, setValue }) => {
   const selectedExtras = useWatch({

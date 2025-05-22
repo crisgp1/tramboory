@@ -1,7 +1,7 @@
 import React, { useRef } from 'react'
 import { motion, useScroll, useTransform } from 'framer-motion'
 import { FiInstagram, FiImage, FiHeart, FiCamera } from 'react-icons/fi'
-import CloudinaryCarousel from '@/components/cloudinary/CloudinaryCarousel'
+import CloudinaryCarousel from '@shared/components/cloudinary/CloudinaryCarousel'
 
 /**
  * Sección de galería mejorada que muestra imágenes del carousel

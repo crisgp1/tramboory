@@ -2,8 +2,8 @@ import React, { useState, useEffect, useRef } from 'react'
 import { gsap } from 'gsap'
 import { ScrollTrigger } from 'gsap/ScrollTrigger'
 import 'react-responsive-carousel/lib/styles/carousel.min.css'
-import { getImagenesCarousel, getPromocionesCarousel } from '@/services/galeriaService'
-import NavbarPublic from '@/components/ui/NavbarPublic'
+import { getImagenesCarousel, getPromocionesCarousel } from '@domains/galeria/services/galeriaService'
+import NavbarPublic from '@shared/components/NavbarPublic'
 
 // Componentes decorativos
 import ParticlesBackground from './home-components/decorative/ParticlesBackground'

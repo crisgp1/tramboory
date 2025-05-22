@@ -12,9 +12,9 @@ import {
   FiCamera,
   FiArrowRight
 } from 'react-icons/fi'
-import CloudinaryCarousel from '@/components/cloudinary/CloudinaryCarousel'
-import { getImagenesCarousel } from '@/services/galeriaService'
-import NavbarPublic from '@/components/ui/NavbarPublic'
+import CloudinaryCarousel from '@shared/components/cloudinary/CloudinaryCarousel'
+import { getImagenesCarousel } from '@domains/galeria/services/galeriaService'
+import NavbarPublic from '@shared/components/NavbarPublic'
 
 // Componentes decorativos
 import ParticlesBackground from './home-components/decorative/ParticlesBackground'

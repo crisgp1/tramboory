@@ -21,10 +21,10 @@ import {
   updateProvider,
   deleteProvider,
   searchProviders
-} from '@/services/inventoryService';
-import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from '@/components/ui/Table';
-import { Button } from '@/components/ui/Button';
-import Modal from '@/components/ui/Modal';
+} from '@domains/inventario/services/inventoryService';
+import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from '@shared/components/Table';
+import { Button } from '@shared/components/Button';
+import Modal from '@shared/components/Modal';
 
 const Proveedores = () => {
   const [providers, setProviders] = useState([]);

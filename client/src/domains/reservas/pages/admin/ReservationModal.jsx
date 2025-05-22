@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 // Usar el alias @ para garantizar resolución correcta en Docker
-import axiosInstance from '@/components/axiosConfig';
+import axiosInstance from '@shared/utils/axiosConfig';
 import { toast } from 'react-hot-toast';
 import {
   FiCalendar,
@@ -19,7 +19,7 @@ import {
   FiGift,
   FiImage,
 } from 'react-icons/fi';
-import PrintableReservation from '@/components/PrintableReservation';
+import PrintableReservation from '@domains/reservas/components/PrintableReservation';
 
 const ReservationModal = ({
   reservation,

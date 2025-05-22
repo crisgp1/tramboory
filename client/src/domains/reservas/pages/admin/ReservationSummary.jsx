@@ -1,6 +1,6 @@
 import { motion } from 'framer-motion';
 import { FiCalendar, FiClock, FiCheck, FiAlertTriangle, FiTrendingUp, FiTrendingDown } from 'react-icons/fi';
-import { useTheme } from '@/context/ThemeContext';
+import { useTheme } from '@shared/context/ThemeContext';
 
 const ReservationSummary = ({ reservations, filterDataByMonth }) => {
     const { theme } = useTheme();

@@ -17,11 +17,11 @@ import {
   deleteAdjustmentType,
   getTiposAjusteAutorizacion,
   getTiposAjusteCostos
-} from '@/services/inventoryService';
-import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from '@/components/ui/Table';
-import { Button } from '@/components/ui/Button';
-import Modal from '@/components/ui/Modal';
-import { Badge } from '@/components/ui/Badge';
+} from '@domains/inventario/services/inventoryService';
+import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from '@shared/components/Table';
+import { Button } from '@shared/components/Button';
+import Modal from '@shared/components/Modal';
+import { Badge } from '@shared/components/Badge';
 
 const TiposAjuste = () => {
   const [tiposAjuste, setTiposAjuste] = useState([]);

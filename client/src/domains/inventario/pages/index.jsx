@@ -1,9 +1,9 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { toast } from 'react-toastify';
-import { useAuth } from '@/hooks/useAuth';
-import InventorySidebarLayout from '@/components/inventory/InventorySidebarLayout';
-import InventoryLoader from '@/components/inventory/InventoryLoader';
+import { useAuth } from '@domains/hooks/useAuth';
+import InventorySidebarLayout from '@domains/inventario/components/InventorySidebarLayout';
+import InventoryLoader from '@domains/inventario/components/InventoryLoader';
 import InventoryDashboard from './InventoryDashboard';
 import MateriasPrimas from './MateriasPrimas';
 import UnidadesMedida from './UnidadesMedida';
